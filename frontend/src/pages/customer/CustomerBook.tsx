@@ -22,8 +22,11 @@ import {
   Clock,
   CheckCircle2,
   ArrowRight,
+  Loader2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { api } from "@/api/client"
+import type { ApiJob } from "@/api/types"
 
 const serviceTypes = [
   {
@@ -56,6 +59,16 @@ const serviceTypes = [
   },
 ]
 
+const equipmentTypes = [
+  { id: "ac", label: "Air Conditioner" },
+  { id: "furnace", label: "Furnace" },
+  { id: "heat-pump", label: "Heat Pump" },
+  { id: "boiler", label: "Boiler" },
+  { id: "ductwork", label: "Ductwork" },
+  { id: "thermostat", label: "Thermostat" },
+  { id: "other", label: "Other" },
+]
+
 const timeSlots = [
   "8:00 AM - 10:00 AM",
   "10:00 AM - 12:00 PM",
@@ -69,12 +82,43 @@ export default function CustomerBook() {
   const [selectedService, setSelectedService] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState("")
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
-  const [priority, setPriority] = useState("medium")
+  const [priority, setPriority] = useState("normal")
   const [notes, setNotes] = useState("")
   const [submitted, setSubmitted] = useState(false)
+  const [selectedEquipment, setSelectedEquipment] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [jobId, setJobId] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  function handleSubmit() {
-    setSubmitted(true)
+  async function handleSubmit() {
+    if (!selectedService || !selectedDate || !selectedTime) return;
+    setSubmitting(true);
+    setError(null);
+
+    // Parse time slot start time: "8:00 AM - 10:00 AM" → "08:00"
+    const startTime = selectedTime.split(" - ")[0];
+    const [time, period] = startTime.split(" ");
+    const [hours, minutes] = time.split(":");
+    let hour24 = parseInt(hours);
+    if (period === "PM" && hour24 !== 12) hour24 += 12;
+    if (period === "AM" && hour24 === 12) hour24 = 0;
+    const scheduledAt = new Date(`${selectedDate}T${String(hour24).padStart(2, "0")}:${minutes}:00`).toISOString();
+
+    try {
+      const job = await api.post<ApiJob>("/api/jobs", {
+        scheduledAt,
+        priority,
+        symptomSummary: notes || undefined,
+        equipmentType: selectedEquipment || undefined,
+        serviceType: selectedService,
+      });
+      setJobId(job.id);
+      setSubmitted(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to book service");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (submitted) {
@@ -93,7 +137,7 @@ export default function CustomerBook() {
           {"You'll"} receive a confirmation message shortly.
         </p>
         <div className="mt-4 flex items-center gap-2 rounded-md border border-border bg-secondary/50 px-4 py-2 font-mono text-[11px] text-muted-foreground">
-          <span>REF: JOB-{String(Math.floor(Math.random() * 900) + 100).padStart(3, "0")}</span>
+          <span>REF: {jobId?.slice(0, 12)}</span>
         </div>
         <Button
           className="mt-6 gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
@@ -104,6 +148,9 @@ export default function CustomerBook() {
             setSelectedTime(null)
             setNotes("")
             setSubmitted(false)
+            setSelectedEquipment(null)
+            setError(null)
+            setJobId(null)
           }}
         >
           Book Another Service
@@ -260,6 +307,24 @@ export default function CustomerBook() {
 
           <div className="space-y-2">
             <label className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
+              Equipment Type
+            </label>
+            <Select value={selectedEquipment ?? ""} onValueChange={setSelectedEquipment}>
+              <SelectTrigger className="h-10 max-w-xs bg-secondary border-border text-foreground text-xs">
+                <SelectValue placeholder="Select equipment" />
+              </SelectTrigger>
+              <SelectContent className="bg-card border-border">
+                {equipmentTypes.map((eq) => (
+                  <SelectItem key={eq.id} value={eq.id} className="text-xs text-foreground">
+                    {eq.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
               Priority
             </label>
             <Select value={priority} onValueChange={setPriority}>
@@ -268,9 +333,9 @@ export default function CustomerBook() {
               </SelectTrigger>
               <SelectContent className="bg-card border-border">
                 <SelectItem value="low" className="text-xs text-foreground">Low - Flexible timing</SelectItem>
-                <SelectItem value="medium" className="text-xs text-foreground">Medium - Within the week</SelectItem>
+                <SelectItem value="normal" className="text-xs text-foreground">Normal - Within the week</SelectItem>
                 <SelectItem value="high" className="text-xs text-foreground">High - Within 24 hours</SelectItem>
-                <SelectItem value="emergency" className="text-xs text-foreground">Emergency - ASAP</SelectItem>
+                <SelectItem value="urgent" className="text-xs text-foreground">Urgent - ASAP</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -351,7 +416,7 @@ export default function CustomerBook() {
                   variant="outline"
                   className={cn(
                     "rounded-sm text-[10px] font-mono uppercase border",
-                    priority === "emergency"
+                    priority === "urgent"
                       ? "bg-destructive/15 text-destructive border-destructive/30"
                       : priority === "high"
                         ? "bg-accent/15 text-accent border-accent/30"
@@ -382,6 +447,12 @@ export default function CustomerBook() {
             </CardContent>
           </Card>
 
+          {error && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive">
+              {error}
+            </div>
+          )}
+
           <div className="flex justify-between">
             <Button
               variant="outline"
@@ -392,10 +463,15 @@ export default function CustomerBook() {
             </Button>
             <Button
               onClick={handleSubmit}
+              disabled={submitting}
               className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              <CalendarDays className="h-4 w-4" />
-              Confirm Booking
+              {submitting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <CalendarDays className="h-4 w-4" />
+              )}
+              {submitting ? "Booking..." : "Confirm Booking"}
             </Button>
           </div>
         </div>
