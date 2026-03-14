@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { api } from "@/api/client"
-import type { ApiCustomer, ApiTechnician, CreateJobPayload } from "@/api/types"
+import type { ApiCustomer, ApiTechnician } from "@/api/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -82,7 +82,7 @@ export function CreateJobDialog({
     setSubmitting(true)
     setError(null)
 
-    const payload: CreateJobPayload = {
+    const payload = {
       customerId,
       scheduledAt: new Date(`${scheduledAt}T${scheduledTime}`).toISOString(),
       priority,
