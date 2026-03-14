@@ -1,21 +1,22 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { z } from "zod";
+import { isValidTransition, getAllowedTransitions } from "../services/job-status.js";
 
 export const jobsRouter = Router();
 
 const createJobSchema = z.object({
-  customerId: z.string().cuid(),
   technicianId: z.string().cuid().optional(),
   scheduledAt: z.string().datetime(),
   priority: z.enum(["low", "normal", "high", "urgent"]).default("normal"),
   symptomSummary: z.string().optional(),
   equipmentType: z.string().optional(),
   equipmentNotes: z.string().optional(),
+  serviceType: z.enum(["repair", "maintenance", "inspection", "installation"]).optional(),
 });
 
 const updateJobSchema = createJobSchema.partial().extend({
-  status: z.enum(["scheduled", "en_route", "in_progress", "completed", "cancelled"]).optional(),
+  status: z.enum(["pending", "scheduled", "en_route", "in_progress", "completed", "cancelled"]).optional(),
   summary: z.string().optional(),
   actionsTaken: z.string().optional(),
   partsUsed: z.array(z.string()).optional(),
@@ -80,16 +81,38 @@ jobsRouter.post("/", async (req, res) => {
     return res.status(400).json({ error: parsed.error.flatten() });
   }
   try {
+    // Resolve customerId from authenticated user if role is customer
+    let customerId: string | undefined;
+    if (req.user!.role === "customer") {
+      const user = await prisma.user.findUnique({
+        where: { id: req.user!.userId },
+        select: { customerId: true },
+      });
+      if (!user?.customerId) {
+        return res.status(400).json({ error: "No customer profile linked to this account" });
+      }
+      customerId = user.customerId;
+    } else {
+      // Office users must provide customerId in the body
+      const bodyCustomerId = (req.body as { customerId?: string }).customerId;
+      if (!bodyCustomerId) {
+        return res.status(400).json({ error: "customerId is required for office-created jobs" });
+      }
+      customerId = bodyCustomerId;
+    }
+
     const job = await prisma.job.create({
       data: {
         organizationId: req.user!.organizationId,
-        customerId: parsed.data.customerId,
+        customerId,
         technicianId: parsed.data.technicianId,
         scheduledAt: new Date(parsed.data.scheduledAt),
         priority: parsed.data.priority,
         symptomSummary: parsed.data.symptomSummary,
         equipmentType: parsed.data.equipmentType,
         equipmentNotes: parsed.data.equipmentNotes,
+        serviceType: parsed.data.serviceType,
+        status: "pending",
       },
       include: {
         customer: { select: { id: true, name: true, address: true } },
@@ -108,9 +131,29 @@ jobsRouter.patch("/:id", async (req, res) => {
     return res.status(400).json({ error: parsed.error.flatten() });
   }
   try {
+    // If status is being changed, validate the transition
+    if (parsed.data.status) {
+      const currentJob = await prisma.job.findFirst({
+        where: { id: req.params.id, organizationId: req.user!.organizationId },
+      });
+      if (!currentJob) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+      if (!isValidTransition(currentJob.status, parsed.data.status)) {
+        return res.status(400).json({
+          error: `Cannot transition from '${currentJob.status}' to '${parsed.data.status}'. Allowed: ${getAllowedTransitions(currentJob.status).join(", ") || "none"}`,
+        });
+      }
+    }
+
     const data: Record<string, unknown> = { ...parsed.data };
     if (data.scheduledAt) data.scheduledAt = new Date(data.scheduledAt as string);
     if (data.completedAt) data.completedAt = new Date(data.completedAt as string);
+
+    // Auto-set completedAt when transitioning to completed
+    if (parsed.data.status === "completed" && !data.completedAt) {
+      data.completedAt = new Date();
+    }
 
     const job = await prisma.job.update({
       where: { id: req.params.id, organizationId: req.user!.organizationId },

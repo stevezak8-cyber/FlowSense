@@ -112,7 +112,7 @@ model Job {
   technicianId   String?
   technician     Technician?  @relation(fields: [technicianId], references: [id], onDelete: SetNull)
 
-  status         String       @default("scheduled") // scheduled | en_route | in_progress | completed | cancelled
+  status         String       @default("pending") // pending | scheduled | en_route | in_progress | completed | cancelled
   priority       String       @default("normal")   // low | normal | high | urgent
   scheduledAt    DateTime
   symptomSummary String?      // AI intake summary
