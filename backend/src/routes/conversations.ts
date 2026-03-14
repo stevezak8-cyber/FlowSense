@@ -4,13 +4,11 @@ import { z } from "zod";
 
 export const conversationsRouter = Router();
 
-const ORG_ID = "default-org";
-
 // GET /api/conversations
-conversationsRouter.get("/", async (_req, res) => {
+conversationsRouter.get("/", async (req, res) => {
   try {
     const conversations = await prisma.conversation.findMany({
-      where: { organizationId: ORG_ID },
+      where: { organizationId: req.user!.organizationId },
       include: {
         messages: {
           orderBy: { createdAt: "desc" },
@@ -29,7 +27,7 @@ conversationsRouter.get("/", async (_req, res) => {
 conversationsRouter.get("/:id", async (req, res) => {
   try {
     const conversation = await prisma.conversation.findFirst({
-      where: { id: req.params.id, organizationId: ORG_ID },
+      where: { id: req.params.id, organizationId: req.user!.organizationId },
       include: {
         messages: { orderBy: { createdAt: "asc" } },
       },
@@ -66,7 +64,7 @@ conversationsRouter.post("/", async (req, res) => {
   try {
     const conversation = await prisma.conversation.create({
       data: {
-        organizationId: ORG_ID,
+        organizationId: req.user!.organizationId,
         subject: parsed.data.subject,
         channel: parsed.data.channel,
         participants: parsed.data.participants,
@@ -103,7 +101,7 @@ conversationsRouter.post("/:id/messages", async (req, res) => {
   }
   try {
     const conversation = await prisma.conversation.findFirst({
-      where: { id: req.params.id, organizationId: ORG_ID },
+      where: { id: req.params.id, organizationId: req.user!.organizationId },
     });
     if (!conversation) return res.status(404).json({ error: "Conversation not found" });
 

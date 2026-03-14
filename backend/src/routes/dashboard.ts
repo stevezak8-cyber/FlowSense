@@ -3,10 +3,8 @@ import { prisma } from "../lib/prisma.js";
 
 export const dashboardRouter = Router();
 
-const ORG_ID = "default-org";
-
 // GET /api/dashboard/stats
-dashboardRouter.get("/stats", async (_req, res) => {
+dashboardRouter.get("/stats", async (req, res) => {
   try {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -28,38 +26,38 @@ dashboardRouter.get("/stats", async (_req, res) => {
       totalCustomers,
       completedJobs,
     ] = await Promise.all([
-      prisma.job.count({ where: { organizationId: ORG_ID } }),
+      prisma.job.count({ where: { organizationId: req.user!.organizationId } }),
       prisma.job.count({
         where: {
-          organizationId: ORG_ID,
+          organizationId: req.user!.organizationId,
           status: { in: ["scheduled", "en_route", "in_progress"] },
         },
       }),
       prisma.job.count({
         where: {
-          organizationId: ORG_ID,
+          organizationId: req.user!.organizationId,
           status: "completed",
           completedAt: { gte: todayStart, lt: todayEnd },
         },
       }),
       prisma.job.count({
         where: {
-          organizationId: ORG_ID,
+          organizationId: req.user!.organizationId,
           scheduledAt: { gte: weekStart, lt: weekEnd },
         },
       }),
       prisma.job.count({
-        where: { organizationId: ORG_ID, priority: "urgent", status: { not: "completed" } },
+        where: { organizationId: req.user!.organizationId, priority: "urgent", status: { not: "completed" } },
       }),
-      prisma.technician.count({ where: { organizationId: ORG_ID } }),
-      prisma.customer.count({ where: { organizationId: ORG_ID } }),
-      prisma.job.count({ where: { organizationId: ORG_ID, status: "completed" } }),
+      prisma.technician.count({ where: { organizationId: req.user!.organizationId } }),
+      prisma.customer.count({ where: { organizationId: req.user!.organizationId } }),
+      prisma.job.count({ where: { organizationId: req.user!.organizationId, status: "completed" } }),
     ]);
 
     // Revenue MTD from invoices
     const revenueResult = await prisma.invoice.aggregate({
       where: {
-        organizationId: ORG_ID,
+        organizationId: req.user!.organizationId,
         status: "paid",
         issuedDate: { gte: monthStart },
       },
@@ -84,7 +82,7 @@ dashboardRouter.get("/stats", async (_req, res) => {
 });
 
 // GET /api/dashboard/chart - weekly job volume
-dashboardRouter.get("/chart", async (_req, res) => {
+dashboardRouter.get("/chart", async (req, res) => {
   try {
     const now = new Date();
     const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -100,13 +98,13 @@ dashboardRouter.get("/chart", async (_req, res) => {
       const [scheduled, completed] = await Promise.all([
         prisma.job.count({
           where: {
-            organizationId: ORG_ID,
+            organizationId: req.user!.organizationId,
             scheduledAt: { gte: dayStart, lt: dayEnd },
           },
         }),
         prisma.job.count({
           where: {
-            organizationId: ORG_ID,
+            organizationId: req.user!.organizationId,
             status: "completed",
             completedAt: { gte: dayStart, lt: dayEnd },
           },

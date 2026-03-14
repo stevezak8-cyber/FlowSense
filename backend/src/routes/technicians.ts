@@ -14,12 +14,10 @@ const createTechnicianSchema = z.object({
 
 const updateTechnicianSchema = createTechnicianSchema.partial();
 
-const ORG_ID = "default-org";
-
-techniciansRouter.get("/", async (_req, res) => {
+techniciansRouter.get("/", async (req, res) => {
   try {
     const technicians = await prisma.technician.findMany({
-      where: { organizationId: ORG_ID },
+      where: { organizationId: req.user!.organizationId },
       orderBy: { name: "asc" },
       include: { vehicle: { select: { id: true, name: true } } },
     });
@@ -32,7 +30,7 @@ techniciansRouter.get("/", async (_req, res) => {
 techniciansRouter.get("/:id", async (req, res) => {
   try {
     const technician = await prisma.technician.findFirst({
-      where: { id: req.params.id, organizationId: ORG_ID },
+      where: { id: req.params.id, organizationId: req.user!.organizationId },
       include: { vehicle: true, jobs: { take: 20, orderBy: { scheduledAt: "desc" } } },
     });
     if (!technician) return res.status(404).json({ error: "Technician not found" });
@@ -50,7 +48,7 @@ techniciansRouter.post("/", async (req, res) => {
   try {
     const technician = await prisma.technician.create({
       data: {
-        organizationId: ORG_ID,
+        organizationId: req.user!.organizationId,
         name: parsed.data.name,
         email: parsed.data.email,
         phone: parsed.data.phone,
@@ -71,7 +69,7 @@ techniciansRouter.patch("/:id", async (req, res) => {
   }
   try {
     const technician = await prisma.technician.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id, organizationId: req.user!.organizationId },
       data: parsed.data,
     });
     res.json(technician);

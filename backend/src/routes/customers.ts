@@ -18,14 +18,12 @@ const createCustomerSchema = z.object({
 
 const updateCustomerSchema = createCustomerSchema.partial();
 
-const ORG_ID = "default-org";
-
 customersRouter.get("/", async (req, res) => {
   try {
     const q = (req.query.q as string)?.trim();
     const customers = await prisma.customer.findMany({
       where: {
-        organizationId: ORG_ID,
+        organizationId: req.user!.organizationId,
         ...(q && {
           OR: [
             { name: { contains: q, mode: "insensitive" } },
@@ -46,7 +44,7 @@ customersRouter.get("/", async (req, res) => {
 customersRouter.get("/:id", async (req, res) => {
   try {
     const customer = await prisma.customer.findFirst({
-      where: { id: req.params.id, organizationId: ORG_ID },
+      where: { id: req.params.id, organizationId: req.user!.organizationId },
       include: { jobs: { take: 20, orderBy: { scheduledAt: "desc" } } },
     });
     if (!customer) return res.status(404).json({ error: "Customer not found" });
@@ -64,7 +62,7 @@ customersRouter.post("/", async (req, res) => {
   try {
     const customer = await prisma.customer.create({
       data: {
-        organizationId: ORG_ID,
+        organizationId: req.user!.organizationId,
         ...parsed.data,
       },
     });
@@ -81,7 +79,7 @@ customersRouter.patch("/:id", async (req, res) => {
   }
   try {
     const customer = await prisma.customer.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id, organizationId: req.user!.organizationId },
       data: parsed.data,
     });
     res.json(customer);

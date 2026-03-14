@@ -4,8 +4,6 @@ import { z } from "zod";
 
 export const invoicesRouter = Router();
 
-const ORG_ID = "default-org";
-
 const createInvoiceSchema = z.object({
   jobId: z.string().cuid(),
   customerId: z.string().cuid(),
@@ -18,10 +16,10 @@ const createInvoiceSchema = z.object({
 const updateInvoiceSchema = createInvoiceSchema.partial();
 
 // GET /api/invoices
-invoicesRouter.get("/", async (_req, res) => {
+invoicesRouter.get("/", async (req, res) => {
   try {
     const invoices = await prisma.invoice.findMany({
-      where: { organizationId: ORG_ID },
+      where: { organizationId: req.user!.organizationId },
       include: {
         customer: { select: { id: true, name: true } },
         job: { select: { id: true, equipmentType: true, symptomSummary: true } },
@@ -35,7 +33,7 @@ invoicesRouter.get("/", async (_req, res) => {
 });
 
 // GET /api/invoices/revenue - monthly revenue data for charts
-invoicesRouter.get("/revenue", async (_req, res) => {
+invoicesRouter.get("/revenue", async (req, res) => {
   try {
     const now = new Date();
     const months: { month: string; revenue: number; jobs: number }[] = [];
@@ -48,7 +46,7 @@ invoicesRouter.get("/revenue", async (_req, res) => {
       const [revenueResult, jobCount] = await Promise.all([
         prisma.invoice.aggregate({
           where: {
-            organizationId: ORG_ID,
+            organizationId: req.user!.organizationId,
             status: "paid",
             issuedDate: { gte: monthDate, lt: monthEnd },
           },
@@ -56,7 +54,7 @@ invoicesRouter.get("/revenue", async (_req, res) => {
         }),
         prisma.job.count({
           where: {
-            organizationId: ORG_ID,
+            organizationId: req.user!.organizationId,
             status: "completed",
             completedAt: { gte: monthDate, lt: monthEnd },
           },
@@ -85,7 +83,7 @@ invoicesRouter.post("/", async (req, res) => {
   try {
     const invoice = await prisma.invoice.create({
       data: {
-        organizationId: ORG_ID,
+        organizationId: req.user!.organizationId,
         jobId: parsed.data.jobId,
         customerId: parsed.data.customerId,
         description: parsed.data.description,
@@ -115,7 +113,7 @@ invoicesRouter.patch("/:id", async (req, res) => {
     if (data.dueDate) data.dueDate = new Date(data.dueDate as string);
 
     const invoice = await prisma.invoice.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id, organizationId: req.user!.organizationId },
       data,
       include: {
         customer: { select: { id: true, name: true } },

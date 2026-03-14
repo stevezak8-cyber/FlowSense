@@ -26,9 +26,6 @@ const updateJobSchema = createJobSchema.partial().extend({
   completedAt: z.string().datetime().optional(),
 });
 
-// TODO: scope by organizationId from auth
-const ORG_ID = "default-org";
-
 jobsRouter.get("/", async (req, res) => {
   try {
     const status = req.query.status as string | undefined;
@@ -38,7 +35,7 @@ jobsRouter.get("/", async (req, res) => {
 
     const jobs = await prisma.job.findMany({
       where: {
-        organizationId: ORG_ID,
+        organizationId: req.user!.organizationId,
         ...(status && { status }),
         ...(technicianId && { technicianId }),
         ...(from && to && {
@@ -63,7 +60,7 @@ jobsRouter.get("/", async (req, res) => {
 jobsRouter.get("/:id", async (req, res) => {
   try {
     const job = await prisma.job.findFirst({
-      where: { id: req.params.id, organizationId: ORG_ID },
+      where: { id: req.params.id, organizationId: req.user!.organizationId },
       include: {
         customer: true,
         technician: true,
@@ -85,7 +82,7 @@ jobsRouter.post("/", async (req, res) => {
   try {
     const job = await prisma.job.create({
       data: {
-        organizationId: ORG_ID,
+        organizationId: req.user!.organizationId,
         customerId: parsed.data.customerId,
         technicianId: parsed.data.technicianId,
         scheduledAt: new Date(parsed.data.scheduledAt),
@@ -116,7 +113,7 @@ jobsRouter.patch("/:id", async (req, res) => {
     if (data.completedAt) data.completedAt = new Date(data.completedAt as string);
 
     const job = await prisma.job.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id, organizationId: req.user!.organizationId },
       data,
       include: {
         customer: { select: { id: true, name: true, address: true } },
