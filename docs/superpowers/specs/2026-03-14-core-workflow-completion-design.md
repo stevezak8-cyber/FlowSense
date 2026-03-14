@@ -124,7 +124,9 @@ The `User` model currently has no foreign key relationship to `Customer` or `Tec
 
 ### 4. Job Status Workflow Update
 
-Add `pending` to the status enum in the Prisma schema.
+Add `pending` to the status enum in both:
+- The Prisma schema (database level)
+- The `updateJobSchema` Zod enum in `backend/src/routes/jobs.ts` (API validation level — currently only allows `scheduled`, `en_route`, `in_progress`, `completed`, `cancelled`)
 
 **Allowed transitions:**
 - `pending` → `scheduled` (office assigns technician)
@@ -143,19 +145,24 @@ The existing form has service type (`repair`, `maintenance`, `inspection`, `inst
 
 - **Add an equipment type selector** to the form (separate from service type). Options: AC, furnace, heat pump, boiler, ductwork, thermostat, other. The existing `equipmentType` field on Job is for the equipment being serviced, not the type of service.
 - **Standardize priority values** to match the backend Zod schema: `low`, `normal`, `high`, `urgent`. Update the form to use these values (rename "medium" → "normal", "emergency" → "urgent").
+- **Map `serviceType`** to a new field on the Job model. Add `serviceType String?` to the Prisma schema with allowed values: `repair`, `maintenance`, `inspection`, `installation`. This is distinct from `equipmentType` — service type is what you're doing, equipment type is what you're doing it to. Both are valuable for dispatching and reporting.
 
 On form submit, call `POST /api/jobs` with:
   - `status: "pending"`
   - `customerId`: resolved server-side from the authenticated user's linked Customer record (not sent by frontend)
+  - `serviceType`: from the service type selection
   - `equipmentType`: from the new equipment type selector
   - `symptomSummary`: from the description/notes field
-  - `scheduledAt`: from date + time selection
+  - `scheduledAt`: from date + time selection (use the start time of the selected time slot, e.g., `"8:00 AM - 10:00 AM"` → `8:00 AM` combined with the selected date)
   - `priority`: from priority selection (using standardized values)
 - Show success confirmation with job reference number
 - Redirect to customer dashboard
 
+**Frontend types (`api/types.ts`):**
+- Update `CreateJobPayload` interface: remove `customerId` (server-resolved), add `serviceType`
+
 **Backend (`POST /api/jobs`):**
-- Modify the existing `createJobSchema` Zod schema: remove `customerId` as a required client field (the server injects it)
+- Modify the existing `createJobSchema` Zod schema: remove `customerId` as a required client field (the server injects it), add `serviceType` as an optional enum field
 - Accept jobs without a `technicianId` (null for pending jobs)
 - Resolve `customerId` from `req.user.userId` → User → `customerId` relation
 - Validate remaining fields with Zod, create with `status: "pending"`
@@ -199,7 +206,7 @@ interface NotificationEvent {
 
 **Frontend:**
 - `frontend/src/lib/websocket.ts` — WebSocket client module:
-  - Connects after auth, passing JWT as query parameter: `new WebSocket(\`ws://...?token=${token}\`)`
+  - Connects after auth, passing JWT as query parameter. Derives `ws://` vs `wss://` from the current page protocol (`location.protocol === 'https:' ? 'wss:' : 'ws:'`)
   - Auto-reconnects with exponential backoff (1s, 2s, 4s, max 30s)
   - Exposes `useNotifications()` React hook
 - Toast notifications rendered via Sonner (already installed)
@@ -236,7 +243,7 @@ interface NotificationEvent {
 
 3. **Job Completed + Invoice** — Triggered on status → `completed`
    - To: customer email
-   - Content: work summary, invoice amount, due date
+   - Content: work summary, note that an invoice will follow (omit amount since it's $0.00 at auto-creation; the office sets the real amount later)
 
 ### 9. Technician Profile Page
 
