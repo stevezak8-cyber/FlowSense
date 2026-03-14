@@ -189,6 +189,18 @@ async function main() {
     update: {},
   });
 
+  // Link technician user to Technician record
+  await prisma.user.update({
+    where: { email: "tech@flowsense.demo" },
+    data: { technicianId: "seed-tech-1" },
+  });
+
+  // Link customer user to Customer record
+  await prisma.user.update({
+    where: { email: "customer@flowsense.demo" },
+    data: { customerId: "seed-customer-1" },
+  });
+
   console.log("Seed complete!");
   console.log("Login credentials:");
   console.log("  Office:     office@flowsense.demo / office123");

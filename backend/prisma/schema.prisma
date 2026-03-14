@@ -35,6 +35,10 @@ model User {
   role           String       @default("office") // office | technician | customer
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customerId     String?      @unique
+  customer       Customer?    @relation(fields: [customerId], references: [id])
+  technicianId   String?      @unique
+  technician     Technician?  @relation(fields: [technicianId], references: [id])
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
@@ -56,6 +60,7 @@ model Technician {
 
   jobs    Job[]
   vehicle Vehicle?
+  user    User?
 
   @@index([organizationId])
 }
@@ -92,6 +97,7 @@ model Customer {
 
   jobs     Job[]
   invoices Invoice[]
+  user     User?
 
   @@index([organizationId])
 }
@@ -112,6 +118,7 @@ model Job {
   symptomSummary String?      // AI intake summary
   equipmentType  String?      // furnace, ac, heat-pump, etc.
   equipmentNotes String?
+  serviceType    String?      // repair | maintenance | inspection | installation
 
   // Pre-arrival intelligence (populated for technician)
   preArrivalNotes String?
