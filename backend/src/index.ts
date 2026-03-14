@@ -13,6 +13,7 @@ import { dashboardRouter } from "./routes/dashboard.js";
 import { invoicesRouter } from "./routes/invoices.js";
 import { conversationsRouter } from "./routes/conversations.js";
 import { authRouter } from "./routes/auth.js";
+import { setupWebSocket } from "./services/notifications.js";
 
 const app = express();
 const PORT = process.env.PORT ?? 4000;
@@ -42,6 +43,8 @@ app.get("/", (_req, res) => {
   });
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`FlowSense API running at http://localhost:${PORT}`);
 });
+
+setupWebSocket(server);
