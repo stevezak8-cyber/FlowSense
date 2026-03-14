@@ -2,6 +2,8 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import { requireAuth } from "./middleware/auth.js";
+import "./middleware/types.js";
 import { healthRouter } from "./routes/health.js";
 import { jobsRouter } from "./routes/jobs.js";
 import { techniciansRouter } from "./routes/technicians.js";
@@ -19,16 +21,18 @@ app.use(helmet());
 app.use(cors({ origin: process.env.FRONTEND_URL ?? "http://localhost:5173" }));
 app.use(express.json());
 
-// API routes (aligned to FlowSense modules)
+// Public routes (no auth required)
 app.use("/health", healthRouter);
 app.use("/api/auth", authRouter);
-app.use("/api/jobs", jobsRouter);
-app.use("/api/technicians", techniciansRouter);
-app.use("/api/customers", customersRouter);
-app.use("/api/compliance", complianceRouter);
-app.use("/api/dashboard", dashboardRouter);
-app.use("/api/invoices", invoicesRouter);
-app.use("/api/conversations", conversationsRouter);
+
+// Protected routes (auth required)
+app.use("/api/jobs", requireAuth, jobsRouter);
+app.use("/api/technicians", requireAuth, techniciansRouter);
+app.use("/api/customers", requireAuth, customersRouter);
+app.use("/api/compliance", requireAuth, complianceRouter);
+app.use("/api/dashboard", requireAuth, dashboardRouter);
+app.use("/api/invoices", requireAuth, invoicesRouter);
+app.use("/api/conversations", requireAuth, conversationsRouter);
 
 app.get("/", (_req, res) => {
   res.json({
