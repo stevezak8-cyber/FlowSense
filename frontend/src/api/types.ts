@@ -5,12 +5,13 @@ export interface ApiJob {
   organizationId: string
   customerId: string
   technicianId: string | null
-  status: "scheduled" | "en_route" | "in_progress" | "completed" | "cancelled"
+  status: "pending" | "scheduled" | "en_route" | "in_progress" | "completed" | "cancelled"
   priority: "low" | "normal" | "high" | "urgent"
   scheduledAt: string
   symptomSummary: string | null
   equipmentType: string | null
   equipmentNotes: string | null
+  serviceType: string | null
   preArrivalNotes: string | null
   suggestedParts: string[]
   suggestedTools: string[]
@@ -119,11 +120,18 @@ export interface ApiMessage {
 }
 
 export interface CreateJobPayload {
-  customerId: string
   technicianId?: string
   scheduledAt: string
   priority?: "low" | "normal" | "high" | "urgent"
   symptomSummary?: string
   equipmentType?: string
   equipmentNotes?: string
+  serviceType?: "repair" | "maintenance" | "inspection" | "installation"
+}
+
+export interface NotificationEvent {
+  type: "job.created" | "job.assigned" | "job.status_changed" | "job.completed"
+  message: string
+  jobId: string
+  timestamp: string
 }
