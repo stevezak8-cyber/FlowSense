@@ -1,0 +1,193 @@
+import { useState, useEffect } from "react"
+import { api } from "@/api/client"
+import type { ApiJob } from "@/api/types"
+import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import {
+  MapPin, Clock, ChevronDown, ChevronUp, Navigation, AlertTriangle,
+  Wrench, CheckCircle2, Truck, User, Phone, Loader2,
+} from "lucide-react"
+import { cn } from "@/lib/utils"
+
+type ApiStatus = ApiJob["status"]
+
+const statusFlow: Record<string, { next: ApiStatus; label: string; icon: typeof Wrench }> = {
+  scheduled: { next: "en_route", label: "Start / En Route", icon: Truck },
+  en_route: { next: "in_progress", label: "Arrived - Begin Work", icon: Wrench },
+  in_progress: { next: "completed", label: "Mark Complete", icon: CheckCircle2 },
+}
+
+const statusConfig: Record<string, { label: string; className: string; icon: typeof Wrench }> = {
+  scheduled: { label: "Scheduled", className: "bg-primary/15 text-primary border-primary/30", icon: Clock },
+  en_route: { label: "En Route", className: "bg-accent/15 text-accent border-accent/30", icon: Truck },
+  in_progress: { label: "In Progress", className: "bg-chart-4/15 text-chart-4 border-chart-4/30", icon: Wrench },
+  completed: { label: "Completed", className: "bg-success/15 text-success border-success/30", icon: CheckCircle2 },
+  cancelled: { label: "Cancelled", className: "bg-destructive/15 text-destructive border-destructive/30", icon: Clock },
+}
+
+const priorityConfig: Record<string, { label: string; className: string }> = {
+  low: { label: "Low", className: "text-muted-foreground" },
+  normal: { label: "Normal", className: "text-primary" },
+  high: { label: "High", className: "text-accent" },
+  urgent: { label: "Urgent", className: "text-destructive" },
+}
+
+export default function TechnicianJobsPage() {
+  const [jobs, setJobs] = useState<ApiJob[]>([])
+  const [loading, setLoading] = useState(true)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+
+  useEffect(() => {
+    api.get<ApiJob[]>("/api/jobs")
+      .then(setJobs)
+      .catch((e) => console.error("Failed to load jobs:", e))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const activeJobs = jobs.filter((j) => j.status !== "completed" && j.status !== "cancelled")
+  const completedJobs = jobs.filter((j) => j.status === "completed")
+
+  function handleStatusChange(jobId: string, newStatus: ApiStatus) {
+    api.patch<ApiJob>(`/api/jobs/${jobId}`, { status: newStatus })
+      .then((updated) => {
+        setJobs((prev) => prev.map((j) => (j.id === updated.id ? updated : j)))
+      })
+      .catch((e) => console.error("Failed to update job:", e))
+  }
+
+  function JobCard({ job }: { job: ApiJob }) {
+    const isExpanded = expandedId === job.id
+    const status = statusConfig[job.status] ?? statusConfig.scheduled
+    const priority = priorityConfig[job.priority] ?? priorityConfig.normal
+    const StatusIcon = status.icon
+    const nextAction = statusFlow[job.status]
+    const scheduled = new Date(job.scheduledAt)
+
+    return (
+      <Card className="border-border bg-card overflow-hidden">
+        <button onClick={() => setExpandedId(isExpanded ? null : job.id)} className="w-full text-left">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <div className={cn("flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg", status.className, "border")}>
+                <StatusIcon className="h-5 w-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-sm font-semibold text-card-foreground truncate">
+                    {job.equipmentType
+                      ? job.equipmentType.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())
+                      : "Service"}
+                    {job.symptomSummary ? ` — ${job.symptomSummary}` : ""}
+                  </h3>
+                  {isExpanded ? <ChevronUp className="h-4 w-4 flex-shrink-0 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 flex-shrink-0 text-muted-foreground" />}
+                </div>
+                <div className="mt-1 flex items-center gap-2">
+                  <span className="font-mono text-[10px] text-muted-foreground">{job.id.slice(0, 8)}</span>
+                  <Badge variant="outline" className={cn("rounded-sm px-1.5 py-0 text-[9px] font-mono uppercase border", status.className)}>{status.label}</Badge>
+                  {job.priority === "urgent" && <AlertTriangle className="h-3.5 w-3.5 text-destructive" />}
+                </div>
+                <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1"><User className="h-3 w-3" /><span>{job.customer.name}</span></div>
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    <span>{scheduled.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </button>
+
+        {isExpanded && (
+          <div className="border-t border-border px-4 pb-4 pt-3 space-y-4">
+            <div className="rounded-lg border border-border bg-secondary/50 p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start gap-2">
+                  <MapPin className="mt-0.5 h-4 w-4 text-primary flex-shrink-0" />
+                  <div>
+                    <p className="text-xs font-medium text-card-foreground">{job.customer.address}</p>
+                    <p className={cn("mt-0.5 text-[10px] font-mono uppercase", priority.className)}>{priority.label} Priority</p>
+                  </div>
+                </div>
+                <Button size="sm" variant="outline" className="h-8 gap-1.5 border-primary/30 text-primary hover:bg-primary/10 text-xs"
+                  onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(job.customer.address)}`, "_blank")}>
+                  <Navigation className="h-3.5 w-3.5" />Navigate
+                </Button>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-border bg-secondary/50 p-3">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Customer</span>
+              <div className="mt-2 space-y-1.5">
+                <div className="flex items-center gap-2 text-xs text-card-foreground">
+                  <User className="h-3 w-3 text-muted-foreground" />{job.customer.name}
+                </div>
+                {job.customer.phone && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Phone className="h-3 w-3" />
+                    <a href={`tel:${job.customer.phone}`} className="text-primary hover:underline">{job.customer.phone}</a>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {(job.symptomSummary || job.equipmentNotes || job.preArrivalNotes) && (
+              <div className="rounded-lg border border-border bg-secondary/50 p-3">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Job Notes</span>
+                <p className="mt-1.5 text-xs text-card-foreground leading-relaxed">
+                  {job.symptomSummary || job.equipmentNotes || job.preArrivalNotes || "No notes"}
+                </p>
+              </div>
+            )}
+
+            {nextAction && (
+              <Button className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => handleStatusChange(job.id, nextAction.next)}>
+                <nextAction.icon className="h-4 w-4" />{nextAction.label}
+              </Button>
+            )}
+          </div>
+        )}
+      </Card>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-sm text-muted-foreground">Loading jobs...</span>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <h1 className="text-lg font-semibold text-foreground">{"Today's Jobs"}</h1>
+        <p className="text-xs text-muted-foreground font-mono">{activeJobs.length} active, {completedJobs.length} completed</p>
+      </div>
+
+      {activeJobs.length > 0 && (
+        <div className="space-y-3">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Active</span>
+          {activeJobs.map((job) => (<JobCard key={job.id} job={job} />))}
+        </div>
+      )}
+
+      {completedJobs.length > 0 && (
+        <div className="space-y-3">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Completed</span>
+          {completedJobs.map((job) => (<JobCard key={job.id} job={job} />))}
+        </div>
+      )}
+
+      {activeJobs.length === 0 && completedJobs.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <Wrench className="h-8 w-8 text-muted-foreground/50" />
+          <p className="mt-3 text-sm text-muted-foreground">No jobs assigned yet</p>
+        </div>
+      )}
+    </div>
+  )
+}

@@ -1,0 +1,207 @@
+// FlowSense - HVAC business operating system
+// MVP: Technician co-pilot, job docs, pre-arrival intel, compliance
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Organizations (HVAC companies, 1–5 trucks for MVP)
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users         User[]
+  technicians   Technician[]
+  customers     Customer[]
+  jobs          Job[]
+  vehicles      Vehicle[]
+  invoices      Invoice[]
+  conversations Conversation[]
+}
+
+model User {
+  id             String       @id @default(cuid())
+  email          String       @unique
+  name           String?
+  passwordHash   String       @default("")
+  role           String       @default("office") // office | technician | customer
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+}
+
+// Field technicians
+model Technician {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  email          String?
+  phone          String?
+  epa608Level    String?      // EPA 608 compliance level
+  skills         String[]     @default([])  // e.g. ["furnace", "ac", "heat-pump"]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  jobs    Job[]
+  vehicle Vehicle?
+
+  @@index([organizationId])
+}
+
+model Vehicle {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String       // e.g. "Truck 1"
+  technicianId   String?      @unique
+  technician     Technician?  @relation(fields: [technicianId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+}
+
+// Customers (property / contact)
+model Customer {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  email          String?
+  phone          String
+  address        String
+  addressLine2   String?
+  city           String
+  state          String
+  postalCode     String
+  notes          String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  jobs     Job[]
+  invoices Invoice[]
+
+  @@index([organizationId])
+}
+
+// Service jobs (MVP core)
+model Job {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customerId     String
+  customer       Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  technicianId   String?
+  technician     Technician?  @relation(fields: [technicianId], references: [id], onDelete: SetNull)
+
+  status         String       @default("scheduled") // scheduled | en_route | in_progress | completed | cancelled
+  priority       String       @default("normal")   // low | normal | high | urgent
+  scheduledAt    DateTime
+  symptomSummary String?      // AI intake summary
+  equipmentType  String?      // furnace, ac, heat-pump, etc.
+  equipmentNotes String?
+
+  // Pre-arrival intelligence (populated for technician)
+  preArrivalNotes String?
+  suggestedParts  String[]    @default([])
+  suggestedTools  String[]    @default([])
+  riskFlags       String[]    @default([])
+
+  // Documentation (auto + voice-to-report)
+  summary         String?
+  actionsTaken    String?
+  partsUsed       String[]    @default([])
+  photos          String[]    @default([])  // URLs after upload
+  completedAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  complianceLogs ComplianceLog[]
+  invoices       Invoice[]
+
+  @@index([organizationId])
+  @@index([technicianId])
+  @@index([customerId])
+  @@index([status])
+  @@index([scheduledAt])
+}
+
+// Invoices tied to jobs
+model Invoice {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  jobId          String
+  job            Job          @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  customerId     String
+  customer       Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  description    String
+  amount         Float
+  status         String       @default("pending") // pending | paid | overdue
+  issuedDate     DateTime     @default(now())
+  dueDate        DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([jobId])
+  @@index([customerId])
+  @@index([status])
+}
+
+// Conversations & messages
+model Conversation {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  subject        String
+  channel        String       @default("internal") // internal | sms | email | phone
+  participants   String[]     @default([])
+  unreadCount    Int          @default(0)
+  lastMessageAt  DateTime     @default(now())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  messages Message[]
+
+  @@index([organizationId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         String
+  senderRole     String       @default("dispatch") // dispatch | technician | customer | system
+  content        String
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId])
+}
+
+// Compliance & audit trail (EPA 608, safety, timestamps)
+model ComplianceLog {
+  id        String   @id @default(cuid())
+  jobId     String
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  type      String   // epa608_prompt | safety_ack | code_reminder | photo_audit | ai_disclaimer
+  payload   Json     // type-specific data
+  createdAt DateTime @default(now())
+
+  @@index([jobId])
+  @@index([type])
+}
