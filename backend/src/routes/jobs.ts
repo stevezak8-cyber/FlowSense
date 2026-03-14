@@ -3,6 +3,10 @@ import { prisma } from "../lib/prisma.js";
 import { z } from "zod";
 import { isValidTransition, getAllowedTransitions } from "../services/job-status.js";
 import { broadcastToRole, notifyInApp } from "../services/notifications.js";
+import { sendEmail } from "../services/email.js";
+import { bookingConfirmationHtml } from "../templates/booking-confirmation.js";
+import { statusUpdateHtml } from "../templates/status-update.js";
+import { jobCompletedHtml } from "../templates/job-completed.js";
 
 export const jobsRouter = Router();
 
@@ -46,6 +50,42 @@ async function sendStatusNotifications(
         : `Your technician is ${job.status === "en_route" ? "on the way" : "working on your system"}`,
       jobId: job.id,
       timestamp: now,
+    });
+  }
+}
+
+async function sendStatusEmails(
+  job: { id: string; customerId: string; status: string; equipmentType: string | null; completedAt: Date | null; technician: { name: string } | null },
+) {
+  const customer = await prisma.customer.findUnique({
+    where: { id: job.customerId },
+    select: { email: true, name: true },
+  });
+  if (!customer?.email) return;
+
+  if (job.status === "en_route" && job.technician) {
+    sendEmail({
+      to: customer.email,
+      subject: "FlowSense: Your Technician Is On The Way",
+      html: statusUpdateHtml({
+        customerName: customer.name,
+        technicianName: job.technician.name,
+        equipmentType: job.equipmentType,
+        status: job.status,
+      }),
+    });
+  }
+
+  if (job.status === "completed" && job.technician) {
+    sendEmail({
+      to: customer.email,
+      subject: "FlowSense: Service Complete",
+      html: jobCompletedHtml({
+        customerName: customer.name,
+        equipmentType: job.equipmentType,
+        technicianName: job.technician.name,
+        completedAt: (job.completedAt ?? new Date()).toISOString(),
+      }),
     });
   }
 }
@@ -173,6 +213,26 @@ jobsRouter.post("/", async (req, res) => {
       jobId: job.id,
       timestamp: new Date().toISOString(),
     });
+
+    // Send booking confirmation email
+    const customer = await prisma.customer.findUnique({
+      where: { id: job.customerId },
+      select: { email: true, name: true },
+    });
+    if (customer?.email) {
+      sendEmail({
+        to: customer.email,
+        subject: "FlowSense: Service Request Received",
+        html: bookingConfirmationHtml({
+          customerName: customer.name,
+          serviceType: parsed.data.serviceType ?? null,
+          equipmentType: parsed.data.equipmentType ?? null,
+          scheduledAt: parsed.data.scheduledAt,
+          symptomSummary: parsed.data.symptomSummary ?? null,
+          jobId: job.id,
+        }),
+      });
+    }
   } catch (e) {
     res.status(500).json({ error: e instanceof Error ? e.message : "Failed to create job" });
   }
@@ -239,6 +299,7 @@ jobsRouter.patch("/:id", async (req, res) => {
       });
       res.json(result);
       sendStatusNotifications(result, req.user!.organizationId);
+      sendStatusEmails(result);
       return;
     }
 
@@ -252,6 +313,7 @@ jobsRouter.patch("/:id", async (req, res) => {
     });
     res.json(job);
     sendStatusNotifications(job, req.user!.organizationId);
+    sendStatusEmails(job);
   } catch (e) {
     if ((e as { code?: string })?.code === "P2025") {
       return res.status(404).json({ error: "Job not found" });
