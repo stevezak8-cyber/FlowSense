@@ -82,11 +82,13 @@ A single middleware function that:
 - Attaches `req.user = { userId, role, organizationId }` to the request
 - Returns 401 with `{ error: "Unauthorized" }` if missing or invalid
 
-**Applied to:** All routes except `POST /api/auth/login` and `GET /health`.
+**Applied to:** All routes except `POST /api/auth/login` and `GET /health`. This includes `GET /api/auth/me` — once behind the middleware, it uses `req.user` directly instead of doing its own inline JWT verification (removing the duplicate verification logic currently in `auth.ts` lines 60-91).
 
 **Route file changes:** Every route file replaces `const ORG_ID = "default-org"` with `req.user.organizationId`.
 
-**Frontend changes:** Update `api/client.ts` to handle 401 responses globally — clear token from localStorage, redirect to login page.
+**Frontend changes (`api/client.ts`):**
+- Attach the JWT token from `localStorage` (`flowsense_token`) as a `Bearer` token in the `Authorization` header on every API request
+- Handle 401 responses globally — clear token from localStorage, redirect to login page
 
 ### 2. Environment Configuration
 
@@ -96,13 +98,31 @@ Move hardcoded values to environment variables:
 |----------|---------|----------|
 | `JWT_SECRET` | Token signing key | Yes (no default) |
 | `DATABASE_URL` | PostgreSQL connection | Yes |
-| `CORS_ORIGIN` | Allowed frontend origin | Yes (e.g., `http://localhost:5173`) |
+| `FRONTEND_URL` | Allowed CORS origin (matches existing env var name in `index.ts`) | Yes (e.g., `http://localhost:5173`) |
 | `RESEND_API_KEY` | Email delivery | No (emails silently skipped if missing) |
 | `PORT` | Server port | No (defaults to 4000) |
 
-Update `.env.example` with all variables documented.
+Update the existing `.env.example` (in `backend/`) with all variables documented.
 
-### 3. Job Status Workflow Update
+### 3. Data Model: User ↔ Role Entity Linking
+
+The `User` model currently has no foreign key relationship to `Customer` or `Technician`. A customer-role user can't resolve which `Customer` record they are, and a technician-role user can't resolve which `Technician` record they are. This blocks booking, profile loading, and scoped data access.
+
+**Schema changes:**
+- Add `customerId String? @unique` to the `User` model, with a relation to `Customer`
+- Add `technicianId String? @unique` to the `User` model, with a relation to `Technician`
+- These are optional fields (an office-role user has neither)
+
+**Seed update:** Link demo users to their corresponding records:
+- `tech@flowsense.demo` → linked to `seed-tech-1` (or first seeded Technician)
+- `customer@flowsense.demo` → linked to `seed-customer-1` (or first seeded Customer)
+- Office-role users have neither field set
+
+**Usage:**
+- When a customer-role user books a job, the backend reads `req.user.userId`, fetches the User to get `customerId`, and creates the job with that `customerId`
+- When a technician-role user loads their profile, the backend reads `req.user.userId`, fetches the User to get `technicianId`, and returns that technician's data
+
+### 4. Job Status Workflow Update
 
 Add `pending` to the status enum in the Prisma schema.
 
@@ -115,24 +135,33 @@ Add `pending` to the status enum in the Prisma schema.
 
 The `PATCH /api/jobs/:id` endpoint validates that the requested status transition is allowed. Invalid transitions return 400 with a clear error message.
 
-### 4. Customer Booking → API Connection
+### 5. Customer Booking → API Connection
 
 **Frontend (`CustomerBook` component):**
-- On form submit, call `POST /api/jobs` with:
+
+The existing form has service type (`repair`, `maintenance`, `inspection`, `installation`) and priority (`low`, `medium`, `high`, `emergency`) fields. These need alignment with the backend schema:
+
+- **Add an equipment type selector** to the form (separate from service type). Options: AC, furnace, heat pump, boiler, ductwork, thermostat, other. The existing `equipmentType` field on Job is for the equipment being serviced, not the type of service.
+- **Standardize priority values** to match the backend Zod schema: `low`, `normal`, `high`, `urgent`. Update the form to use these values (rename "medium" → "normal", "emergency" → "urgent").
+
+On form submit, call `POST /api/jobs` with:
   - `status: "pending"`
-  - `customerId` from auth context
-  - `equipmentType` mapped from service type selection
-  - `symptomSummary` mapped from description field
-  - `scheduledAt` from date + time selection
-  - `priority` from priority selection
+  - `customerId`: resolved server-side from the authenticated user's linked Customer record (not sent by frontend)
+  - `equipmentType`: from the new equipment type selector
+  - `symptomSummary`: from the description/notes field
+  - `scheduledAt`: from date + time selection
+  - `priority`: from priority selection (using standardized values)
 - Show success confirmation with job reference number
 - Redirect to customer dashboard
 
 **Backend (`POST /api/jobs`):**
+- Modify the existing `createJobSchema` Zod schema: remove `customerId` as a required client field (the server injects it)
 - Accept jobs without a `technicianId` (null for pending jobs)
-- Validate with Zod, create with `status: "pending"`
+- Resolve `customerId` from `req.user.userId` → User → `customerId` relation
+- Validate remaining fields with Zod, create with `status: "pending"`
+- Return the created job (including its `id`) so the frontend can show a real reference number (replacing the current client-side random `JOB-XXX` generation)
 
-### 5. Auto-Invoice on Job Completion
+### 6. Auto-Invoice on Job Completion
 
 When `PATCH /api/jobs/:id` transitions status to `completed`:
 
@@ -147,19 +176,30 @@ When `PATCH /api/jobs/:id` transitions status to `completed`:
      - `dueDate`: current date + 30 days
 
 - If either operation fails, both roll back.
+- The office updates the invoice amount via the existing `PATCH /api/invoices/:id` endpoint after reviewing the completed job.
 
-### 6. WebSocket Notifications
+### 7. WebSocket Notifications
+
+**NotificationEvent type:**
+```ts
+interface NotificationEvent {
+  type: "job.created" | "job.assigned" | "job.status_changed" | "job.completed";
+  message: string;       // Human-readable message for the toast
+  jobId: string;         // Reference to the related job
+  timestamp: string;     // ISO 8601 timestamp
+}
+```
 
 **Backend:**
-- Add `ws` package to Express server on the same port (upgrade path)
-- Authenticate WebSocket connections: client sends JWT on connect, server verifies and maps `userId → socket`
+- Add `ws` package to Express server on the same port (HTTP upgrade). Capture the `http.Server` instance returned by `app.listen()` in `index.ts` and attach the WebSocket upgrade handler to it.
+- **Authentication protocol:** Client sends JWT as a URL query parameter on connection: `ws://localhost:4000?token=<jwt>`. Server extracts and verifies the token during the WebSocket upgrade handshake, rejects the connection if invalid, and maps `userId → socket` on success.
 - `backend/src/services/notifications.ts` exposes:
   - `notifyInApp(userId: string, event: NotificationEvent)` — sends to connected socket
   - `broadcastToRole(organizationId: string, role: string, event: NotificationEvent)` — sends to all connected users with that role in that org
 
 **Frontend:**
 - `frontend/src/lib/websocket.ts` — WebSocket client module:
-  - Connects after auth, sends JWT for authentication
+  - Connects after auth, passing JWT as query parameter: `new WebSocket(\`ws://...?token=${token}\`)`
   - Auto-reconnects with exponential backoff (1s, 2s, 4s, max 30s)
   - Exposes `useNotifications()` React hook
 - Toast notifications rendered via Sonner (already installed)
@@ -173,7 +213,7 @@ When `PATCH /api/jobs/:id` transitions status to `completed`:
 | `job.status_changed` | Office + customer | "[Tech name] is en route / has started / completed" |
 | `job.completed` | Office + customer | "Job completed — invoice ready" |
 
-### 7. Email Integration
+### 8. Email Integration
 
 **Service:** Resend (free tier: 100 emails/day)
 
@@ -198,20 +238,22 @@ When `PATCH /api/jobs/:id` transitions status to `completed`:
    - To: customer email
    - Content: work summary, invoice amount, due date
 
-### 8. Technician Profile Page
+### 9. Technician Profile Page
 
 Complete the existing stub at `/technician/profile`:
-- Display and edit: name, phone, email, EPA 608 level, skills
+- Display and edit: name, phone, email, EPA 608 level, skills (inline edit with save/cancel buttons)
 - Show assigned vehicle info (read-only)
 - Job history summary: completed jobs count, this month's stats
-- Uses `GET /api/technicians/:id` and `PATCH /api/technicians/:id`
-- Technician ID resolved from the authenticated user's linked technician record
+- Technician ID resolved via the User → Technician relation added in Section 3
+- Add a new endpoint: `GET /api/auth/me/profile` — returns the authenticated user's linked Technician or Customer record (based on role). This avoids creating a generic `users` route and keeps role-specific data retrieval in the auth context.
+- Frontend calls `GET /api/auth/me/profile` to load the technician's data
+- Edit calls `PATCH /api/technicians/:id` with updated fields, validated by existing Zod schema
 
-### 9. Git Repository Initialization
+### 10. Git Repository Initialization
 
-- `git init` in project root
+Already completed — repo initialized and this spec committed. Remaining:
 - Create `.gitignore` covering: `node_modules/`, `.env`, `dist/`, `*.log`, `.claude/`
-- Initial commit with current state
+- Commit existing codebase as the baseline
 
 ---
 
