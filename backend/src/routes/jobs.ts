@@ -155,6 +155,38 @@ jobsRouter.patch("/:id", async (req, res) => {
       data.completedAt = new Date();
     }
 
+    // If completing, use transaction to also create invoice
+    if (parsed.data.status === "completed") {
+      const result = await prisma.$transaction(async (tx) => {
+        const updatedJob = await tx.job.update({
+          where: { id: req.params.id, organizationId: req.user!.organizationId },
+          data,
+          include: {
+            customer: { select: { id: true, name: true, address: true, email: true } },
+            technician: { select: { id: true, name: true } },
+          },
+        });
+
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + 30);
+
+        await tx.invoice.create({
+          data: {
+            organizationId: req.user!.organizationId,
+            jobId: updatedJob.id,
+            customerId: updatedJob.customerId,
+            description: `Service completed — ${updatedJob.equipmentType ?? "HVAC service"}`,
+            amount: 0,
+            status: "pending",
+            dueDate,
+          },
+        });
+
+        return updatedJob;
+      });
+      return res.json(result);
+    }
+
     const job = await prisma.job.update({
       where: { id: req.params.id, organizationId: req.user!.organizationId },
       data,
