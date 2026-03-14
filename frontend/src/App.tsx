@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { RequireAuth } from "./auth/require-auth";
+import { useNotifications } from "@/lib/websocket";
 
 // Pages
 import LoginPage from "./pages/LoginPage";
@@ -28,6 +29,8 @@ import CustomerInvoices from "./pages/customer/CustomerInvoices";
 import CustomerMessages from "./pages/customer/CustomerMessages";
 
 function App() {
+  useNotifications();
+
   return (
     <Routes>
       {/* Login */}
