@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { prisma } from "../lib/prisma.js";
 import { z } from "zod";
+import { requireAuth } from "../middleware/auth.js";
 
 export const authRouter = Router();
 
@@ -17,7 +18,7 @@ const loginSchema = z.object({
   password: z.string().min(1),
 });
 
-// POST /api/auth/login
+// POST /api/auth/login (public)
 authRouter.post("/login", async (req, res) => {
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -59,23 +60,11 @@ authRouter.post("/login", async (req, res) => {
   }
 });
 
-// GET /api/auth/me — verify token and return user info
-authRouter.get("/me", async (req, res) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "Not authenticated" });
-  }
-
-  const token = authHeader.slice(7);
+// GET /api/auth/me — uses middleware, no inline JWT verification
+authRouter.get("/me", requireAuth, async (req, res) => {
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as {
-      userId: string;
-      role: string;
-      organizationId: string;
-    };
-
     const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
+      where: { id: req.user!.userId },
     });
 
     if (!user) {
@@ -90,7 +79,46 @@ authRouter.get("/me", async (req, res) => {
       organizationId: user.organizationId,
     });
   } catch {
-    return res.status(401).json({ error: "Invalid or expired token" });
+    return res.status(500).json({ error: "Failed to fetch user" });
+  }
+});
+
+// GET /api/auth/me/profile — returns linked Technician or Customer record
+authRouter.get("/me/profile", requireAuth, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user!.userId },
+      include: {
+        technician: {
+          include: {
+            vehicle: { select: { id: true, name: true } },
+            jobs: {
+              orderBy: { scheduledAt: "desc" },
+              take: 20,
+              include: {
+                customer: { select: { id: true, name: true, address: true } },
+              },
+            },
+          },
+        },
+        customer: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (user.role === "technician" && user.technician) {
+      return res.json({ role: "technician", profile: user.technician });
+    }
+    if (user.role === "customer" && user.customer) {
+      return res.json({ role: "customer", profile: user.customer });
+    }
+
+    return res.json({ role: user.role, profile: null });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : "Failed to fetch profile" });
   }
 });
 
