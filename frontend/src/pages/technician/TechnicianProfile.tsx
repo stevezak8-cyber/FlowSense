@@ -4,6 +4,8 @@ import type { ApiTechnician, ApiJob } from "@/api/types"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   Award,
   Wrench,
@@ -32,22 +34,44 @@ const statusStyles: Record<string, string> = {
 }
 
 export default function TechnicianProfile() {
-  const [technicians, setTechnicians] = useState<ApiTechnician[]>([])
+  const [tech, setTech] = useState<ApiTechnician | null>(null)
   const [jobs, setJobs] = useState<ApiJob[]>([])
   const [loading, setLoading] = useState(true)
+  const [editing, setEditing] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [editForm, setEditForm] = useState({ name: "", phone: "", email: "", epa608Level: "", skills: "" })
 
   useEffect(() => {
-    Promise.all([
-      api.get<ApiTechnician[]>("/api/technicians"),
-      api.get<ApiJob[]>("/api/jobs"),
-    ])
-      .then(([techs, j]) => {
-        setTechnicians(techs)
-        setJobs(j)
+    api.get<{ role: string; profile: ApiTechnician & { jobs: ApiJob[] } }>("/api/auth/me/profile")
+      .then((data) => {
+        if (data.profile) {
+          setTech(data.profile)
+          setJobs(data.profile.jobs ?? [])
+        }
       })
       .catch((e) => console.error("Failed to load profile:", e))
       .finally(() => setLoading(false))
   }, [])
+
+  async function handleSave() {
+    if (!tech) return
+    setSaving(true)
+    try {
+      const updated = await api.patch<ApiTechnician>(`/api/technicians/${tech.id}`, {
+        name: editForm.name,
+        phone: editForm.phone || undefined,
+        email: editForm.email || undefined,
+        epa608Level: editForm.epa608Level || undefined,
+        skills: editForm.skills.split(",").map((s) => s.trim()).filter(Boolean),
+      })
+      setTech({ ...tech, ...updated })
+      setEditing(false)
+    } catch (e) {
+      console.error("Failed to save:", e)
+    } finally {
+      setSaving(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -58,8 +82,6 @@ export default function TechnicianProfile() {
     )
   }
 
-  // Use first technician as the "current" technician
-  const tech = technicians[0]
   if (!tech) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -69,11 +91,17 @@ export default function TechnicianProfile() {
     )
   }
 
-  const myJobs = jobs.filter((j) => j.technicianId === tech.id)
-  const activeJobs = myJobs.filter(
-    (j) => j.status === "in_progress" || j.status === "scheduled" || j.status === "en_route"
-  ).length
+  const myJobs = jobs
   const completedCount = myJobs.filter((j) => j.status === "completed").length
+  const thisMonth = new Date()
+  const monthStart = new Date(thisMonth.getFullYear(), thisMonth.getMonth(), 1)
+  const completedThisMonth = myJobs.filter(
+    (j) => j.status === "completed" && j.completedAt && new Date(j.completedAt) >= monthStart
+  ).length
+  const activeJobs = myJobs.filter(
+    (j) => ["scheduled", "en_route", "in_progress"].includes(j.status)
+  ).length
+
   const initials = tech.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
 
   return (
@@ -104,8 +132,63 @@ export default function TechnicianProfile() {
               )}
             </div>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setEditing(true)
+              setEditForm({
+                name: tech.name,
+                phone: tech.phone ?? "",
+                email: tech.email ?? "",
+                epa608Level: tech.epa608Level ?? "",
+                skills: tech.skills.join(", "),
+              })
+            }}
+          >
+            Edit Profile
+          </Button>
         </CardContent>
       </Card>
+
+      {/* Edit Form */}
+      {editing && (
+        <Card className="border-border bg-card">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-mono uppercase tracking-wider text-muted-foreground">Edit Profile</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 p-5">
+            <div className="space-y-1">
+              <label className="text-xs font-mono text-muted-foreground">Name</label>
+              <Input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="h-9 bg-secondary border-border text-sm" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-mono text-muted-foreground">Phone</label>
+              <Input value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} className="h-9 bg-secondary border-border text-sm" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-mono text-muted-foreground">Email</label>
+              <Input value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} className="h-9 bg-secondary border-border text-sm" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-mono text-muted-foreground">EPA 608 Level</label>
+              <Input value={editForm.epa608Level} onChange={(e) => setEditForm({ ...editForm, epa608Level: e.target.value })} className="h-9 bg-secondary border-border text-sm" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-mono text-muted-foreground">Skills (comma-separated)</label>
+              <Input value={editForm.skills} onChange={(e) => setEditForm({ ...editForm, skills: e.target.value })} placeholder="furnace, ac, heat-pump" className="h-9 bg-secondary border-border text-sm" />
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button onClick={handleSave} disabled={saving} size="sm">
+                {saving ? "Saving..." : "Save"}
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setEditing(false)}>
+                Cancel
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
@@ -119,15 +202,15 @@ export default function TechnicianProfile() {
         <Card className="border-border bg-card">
           <CardContent className="p-3 text-center">
             <TrendingUp className="mx-auto h-5 w-5 text-primary" />
-            <div className="mt-1.5 text-xl font-bold text-card-foreground">{activeJobs}</div>
-            <p className="text-[10px] font-mono text-muted-foreground uppercase">Active</p>
+            <div className="mt-1.5 text-xl font-bold text-card-foreground">{completedThisMonth}</div>
+            <p className="text-[10px] font-mono text-muted-foreground uppercase">This Month</p>
           </CardContent>
         </Card>
         <Card className="border-border bg-card">
           <CardContent className="p-3 text-center">
             <Wrench className="mx-auto h-5 w-5 text-accent" />
-            <div className="mt-1.5 text-xl font-bold text-card-foreground">{myJobs.length}</div>
-            <p className="text-[10px] font-mono text-muted-foreground uppercase">Total Jobs</p>
+            <div className="mt-1.5 text-xl font-bold text-card-foreground">{activeJobs}</div>
+            <p className="text-[10px] font-mono text-muted-foreground uppercase">Active</p>
           </CardContent>
         </Card>
       </div>
