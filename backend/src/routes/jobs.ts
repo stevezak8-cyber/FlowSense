@@ -2,8 +2,53 @@ import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { z } from "zod";
 import { isValidTransition, getAllowedTransitions } from "../services/job-status.js";
+import { broadcastToRole, notifyInApp } from "../services/notifications.js";
 
 export const jobsRouter = Router();
+
+async function sendStatusNotifications(
+  job: { id: string; customerId: string; technicianId: string | null; status: string; equipmentType: string | null; customer: { name: string; address: string }; technician: { name: string } | null },
+  organizationId: string
+) {
+  const now = new Date().toISOString();
+
+  if (job.status === "scheduled" && job.technicianId) {
+    // Look up the assigned technician's userId via the User-Technician link
+    const techUser = await prisma.user.findFirst({
+      where: { technicianId: job.technicianId },
+      select: { id: true },
+    });
+    if (techUser) {
+      notifyInApp(techUser.id, {
+        type: "job.assigned",
+        message: `New job assigned: ${job.equipmentType ?? "HVAC"} at ${job.customer.address}`,
+        jobId: job.id,
+        timestamp: now,
+      });
+    }
+  }
+
+  if (["en_route", "in_progress", "completed"].includes(job.status)) {
+    broadcastToRole(organizationId, "office", {
+      type: job.status === "completed" ? "job.completed" : "job.status_changed",
+      message: job.status === "completed"
+        ? `Job completed — invoice ready`
+        : `${job.technician?.name ?? "Technician"} is ${job.status === "en_route" ? "en route" : "working on"} ${job.equipmentType ?? "a job"}`,
+      jobId: job.id,
+      timestamp: now,
+    });
+
+    // Also notify the customer
+    broadcastToRole(organizationId, "customer", {
+      type: job.status === "completed" ? "job.completed" : "job.status_changed",
+      message: job.status === "completed"
+        ? `Your service is complete`
+        : `Your technician is ${job.status === "en_route" ? "on the way" : "working on your system"}`,
+      jobId: job.id,
+      timestamp: now,
+    });
+  }
+}
 
 const createJobSchema = z.object({
   technicianId: z.string().cuid().optional(),
@@ -120,6 +165,14 @@ jobsRouter.post("/", async (req, res) => {
       },
     });
     res.status(201).json(job);
+
+    // Notify office users of new booking
+    broadcastToRole(req.user!.organizationId, "office", {
+      type: "job.created",
+      message: `New booking from ${job.customer.name}`,
+      jobId: job.id,
+      timestamp: new Date().toISOString(),
+    });
   } catch (e) {
     res.status(500).json({ error: e instanceof Error ? e.message : "Failed to create job" });
   }
@@ -184,7 +237,9 @@ jobsRouter.patch("/:id", async (req, res) => {
 
         return updatedJob;
       });
-      return res.json(result);
+      res.json(result);
+      sendStatusNotifications(result, req.user!.organizationId);
+      return;
     }
 
     const job = await prisma.job.update({
@@ -196,6 +251,7 @@ jobsRouter.patch("/:id", async (req, res) => {
       },
     });
     res.json(job);
+    sendStatusNotifications(job, req.user!.organizationId);
   } catch (e) {
     if ((e as { code?: string })?.code === "P2025") {
       return res.status(404).json({ error: "Job not found" });
