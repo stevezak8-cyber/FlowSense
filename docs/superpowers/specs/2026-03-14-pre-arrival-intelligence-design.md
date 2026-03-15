@@ -31,7 +31,7 @@ generatePreArrival(jobId)
 Fetch from Prisma:
   - Current job (symptomSummary, equipmentType, serviceType, priority, equipmentNotes)
   - Customer (name, address, notes)
-  - Customer's last 10 completed jobs (summary, actionsTaken, partsUsed, equipmentType)
+  - Customer's last 10 completed jobs (symptomSummary, summary, actionsTaken, partsUsed, equipmentType)
   ↓
 Build structured prompt → Claude Haiku
   ↓
@@ -63,13 +63,21 @@ POST /api/jobs/:id/generate-pre-arrival
 
 **Behavior:**
 1. Module-level check: if `ANTHROPIC_API_KEY` env var is missing, log a warning once at startup and return immediately from all calls
-2. Fetch the job with customer and technician includes from Prisma
-3. Fetch the customer's last 10 completed jobs (ordered by `completedAt desc`) with `summary`, `actionsTaken`, `partsUsed`, `equipmentType`
+2. Fetch the job with full customer record (`include: { customer: true, technician: true }`) — the service does its own Prisma query, not relying on the route's partial select
+3. Fetch the customer's last 10 completed jobs:
+   ```ts
+   prisma.job.findMany({
+     where: { customerId: job.customerId, status: "completed" },
+     orderBy: { completedAt: "desc" },
+     take: 10,
+     select: { symptomSummary: true, summary: true, actionsTaken: true, partsUsed: true, equipmentType: true, completedAt: true },
+   })
+   ```
 4. Build a system prompt establishing HVAC domain expertise
 5. Build a user prompt with the job details and customer history as structured context
 6. Call `anthropic.messages.create()` with:
    - `model: "claude-haiku-4-20250514"`
-   - `max_tokens: 500`
+   - `max_tokens: 800`
    - JSON response requested via system prompt instruction
 7. Parse the text response as JSON, validate it has the expected four fields
 8. Update the job record via `prisma.job.update()` with the parsed fields
@@ -97,13 +105,18 @@ POST /api/jobs/:id/generate-pre-arrival
 ```
 
 - Protected by `requireAuth` (inherited from router-level middleware)
+- **Role guard:** reject `customer` role with 403 — only `office` and `technician` roles can regenerate
 - Calls `generatePreArrival(req.params.id)` and awaits the result
 - Returns the updated job via `prisma.job.findFirst()`
 - Returns 404 if job not found or not in caller's organization
 
 ### Auto-trigger in PATCH handler
 
-In the existing PATCH handler in `jobs.ts`, after detecting a `pending → scheduled` transition (where `isValidTransition` passes), call `generatePreArrival(jobId)` as fire-and-forget (no await). This goes after the response is sent, alongside the existing `sendStatusNotifications()` and `sendStatusEmails()` calls.
+In the existing PATCH handler in `jobs.ts`, capture the previous status from `currentJob.status` (which is already fetched in the status validation block). After the response is sent, check if the transition was specifically `pending → scheduled` and call `generatePreArrival(jobId)` as fire-and-forget (no await), alongside the existing `sendStatusNotifications()` and `sendStatusEmails()` calls.
+
+Implementation note: hoist `currentJob.status` into a variable (`const previousStatus = currentJob?.status`) before the update so it's available after `res.json()`.
+
+**No changes needed to `POST /api/jobs`** — all new jobs start as `pending`, so the pre-arrival trigger only fires via the PATCH transition.
 
 ---
 
@@ -161,6 +174,7 @@ Replace the existing generic "Job Notes" section in the expanded job card with s
 **Fallback:** If all four AI fields are empty/null, show the existing generic "Job Notes" display (no change from current behavior).
 
 **Regenerate button behavior:**
+- Button is disabled while the API call is in progress (prevents double-clicks)
 - Shows a Loader2 spinner during the API call
 - On success, updates the job in local state with the response
 - On error, shows a toast notification via Sonner
@@ -194,6 +208,8 @@ riskFlags: ["Repeat issue — similar symptom reported 6 months ago"],
 
 This makes the pre-arrival UI visible during demos without requiring an Anthropic API key.
 
+**Important:** The seed uses `upsert` with `update: {}` for the demo job, meaning existing databases won't get the new fields. Add the pre-arrival fields to the `update` block as well, or developers must re-seed (`npx prisma db push --force-reset && npm run db:seed`).
+
 ---
 
 ## Testing
@@ -224,8 +240,8 @@ All tests mock both the Anthropic SDK and Prisma client.
 | File | Changes |
 |------|---------|
 | `backend/src/routes/jobs.ts` | Add `POST /:id/generate-pre-arrival` endpoint; add fire-and-forget call on `pending → scheduled` |
-| `backend/.env.example` | Add `ANTHROPIC_API_KEY` |
-| `backend/.env` | Add `ANTHROPIC_API_KEY=` |
+| `backend/.env.example` | Add `ANTHROPIC_API_KEY` documentation |
+| `backend/.env` | Add `ANTHROPIC_API_KEY=` (empty, not committed) |
 | `backend/prisma/seed.ts` | Pre-populate demo job with pre-arrival data |
 | `backend/package.json` | Add `@anthropic-ai/sdk` dependency |
 | `frontend/src/pages/technician/TechnicianJobs.tsx` | Replace generic notes with structured pre-arrival sections |
@@ -240,3 +256,5 @@ All tests mock both the Anthropic SDK and Prisma client.
 - Token usage tracking/billing
 - Streaming responses
 - Office-side view of pre-arrival data (technician-only for now)
+- Backend-side rate limiting on regeneration (frontend button-disable is sufficient for MVP)
+- Anthropic tool_use for guaranteed JSON (prompt-based JSON is adequate for Haiku; truncated responses caught by JSON parse handler)
