@@ -123,8 +123,19 @@ async function main() {
       symptomSummary: "No heat, furnace not igniting",
       equipmentType: "furnace",
       priority: "high",
+      preArrivalNotes:
+        "Customer reports furnace not igniting. Check hot surface igniter and flame sensor first — these are the most common failure points. If igniter glows but no flame, inspect gas valve and pressure. Unit is high priority, likely a no-heat emergency.",
+      suggestedParts: ["Hot surface igniter", "Flame sensor", "Gas valve"],
+      suggestedTools: ["Multimeter", "Combustion analyzer", "Manometer"],
+      riskFlags: ["Gas appliance — verify gas shutoff location before service"],
     },
-    update: {},
+    update: {
+      preArrivalNotes:
+        "Customer reports furnace not igniting. Check hot surface igniter and flame sensor first — these are the most common failure points. If igniter glows but no flame, inspect gas valve and pressure. Unit is high priority, likely a no-heat emergency.",
+      suggestedParts: ["Hot surface igniter", "Flame sensor", "Gas valve"],
+      suggestedTools: ["Multimeter", "Combustion analyzer", "Manometer"],
+      riskFlags: ["Gas appliance — verify gas shutoff location before service"],
+    },
   });
 
   // Additional technicians
