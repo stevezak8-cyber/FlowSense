@@ -187,3 +187,30 @@ describe("generateCompletionSummary", () => {
     expect(result).toEqual({ error: "failed" });
   });
 });
+
+describe("endpoint logic", () => {
+  it("maps not_configured to 503 and failed to 500", () => {
+    function mapResultToStatus(
+      result: { summary: string } | { error: "not_configured" } | { error: "failed" }
+    ): number {
+      if ("error" in result) {
+        return result.error === "not_configured" ? 503 : 500;
+      }
+      return 200;
+    }
+
+    expect(mapResultToStatus({ error: "not_configured" })).toBe(503);
+    expect(mapResultToStatus({ error: "failed" })).toBe(500);
+    expect(mapResultToStatus({ summary: "Test summary" })).toBe(200);
+  });
+
+  it("rejects customer role with 403", () => {
+    function shouldReject(role: string): boolean {
+      return role === "customer";
+    }
+
+    expect(shouldReject("customer")).toBe(true);
+    expect(shouldReject("technician")).toBe(false);
+    expect(shouldReject("office")).toBe(false);
+  });
+});

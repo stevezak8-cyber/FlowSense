@@ -8,6 +8,7 @@ import { bookingConfirmationHtml } from "../templates/booking-confirmation.js";
 import { statusUpdateHtml } from "../templates/status-update.js";
 import { jobCompletedHtml } from "../templates/job-completed.js";
 import { generatePreArrival } from "../services/pre-arrival.js";
+import { generateCompletionSummary } from "../services/job-completion-ai.js";
 
 export const jobsRouter = Router();
 
@@ -111,6 +112,12 @@ const updateJobSchema = createJobSchema.partial().extend({
   suggestedTools: z.array(z.string()).optional(),
   riskFlags: z.array(z.string()).optional(),
   completedAt: z.string().datetime().optional(),
+});
+
+const completionSummarySchema = z.object({
+  actionsTaken: z.string().min(1),
+  partsUsed: z.array(z.string()),
+  notes: z.string().optional(),
 });
 
 jobsRouter.get("/", async (req, res) => {
@@ -356,5 +363,48 @@ jobsRouter.post("/:id/generate-pre-arrival", async (req, res) => {
     res.json(updated);
   } catch (e) {
     res.status(500).json({ error: e instanceof Error ? e.message : "Failed to generate pre-arrival briefing" });
+  }
+});
+
+jobsRouter.post("/:id/generate-completion-summary", async (req, res) => {
+  try {
+    if (req.user!.role === "customer") {
+      return res
+        .status(403)
+        .json({ error: "Customers cannot generate completion summaries" });
+    }
+
+    const parsed = completionSummarySchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.flatten() });
+    }
+
+    const job = await prisma.job.findFirst({
+      where: {
+        id: req.params.id,
+        organizationId: req.user!.organizationId,
+      },
+    });
+    if (!job) {
+      return res.status(404).json({ error: "Job not found" });
+    }
+
+    const result = await generateCompletionSummary(req.params.id, parsed.data);
+
+    if ("error" in result) {
+      const status = result.error === "not_configured" ? 503 : 500;
+      const message =
+        result.error === "not_configured"
+          ? "AI summary generation not configured"
+          : "AI summary generation failed";
+      return res.status(status).json({ error: message });
+    }
+
+    res.json({ summary: result.summary });
+  } catch (e) {
+    res.status(500).json({
+      error:
+        e instanceof Error ? e.message : "Failed to generate completion summary",
+    });
   }
 });
