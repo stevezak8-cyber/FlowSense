@@ -6,8 +6,9 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   MapPin, Clock, ChevronDown, ChevronUp, Navigation, AlertTriangle,
-  Wrench, CheckCircle2, Truck, User, Phone, Loader2,
+  Wrench, CheckCircle2, Truck, User, Phone, Loader2, Sparkles, RefreshCw,
 } from "lucide-react"
+import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 
 type ApiStatus = ApiJob["status"]
@@ -57,6 +58,22 @@ export default function TechnicianJobsPage() {
   }
 
   function JobCard({ job }: { job: ApiJob }) {
+    const [regenerating, setRegenerating] = useState(false)
+
+    async function handleRegenerate() {
+      setRegenerating(true)
+      try {
+        const updated = await api.post<ApiJob>(`/api/jobs/${job.id}/generate-pre-arrival`, {})
+        setJobs((prev) => prev.map((j) => (j.id === updated.id ? updated : j)))
+        toast.success("Pre-arrival briefing regenerated")
+      } catch (e) {
+        toast.error("Failed to regenerate briefing")
+        console.error("Regenerate failed:", e)
+      } finally {
+        setRegenerating(false)
+      }
+    }
+
     const isExpanded = expandedId === job.id
     const status = statusConfig[job.status] ?? statusConfig.scheduled
     const priority = priorityConfig[job.priority] ?? priorityConfig.normal
@@ -132,13 +149,89 @@ export default function TechnicianJobsPage() {
               </div>
             </div>
 
-            {(job.symptomSummary || job.equipmentNotes || job.preArrivalNotes) && (
+            {/* Customer-provided notes (always show if present) */}
+            {(job.symptomSummary || job.equipmentNotes) && (
               <div className="rounded-lg border border-border bg-secondary/50 p-3">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Job Notes</span>
-                <p className="mt-1.5 text-xs text-card-foreground leading-relaxed">
-                  {job.symptomSummary || job.equipmentNotes || job.preArrivalNotes || "No notes"}
-                </p>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Customer Notes</span>
+                <div className="mt-1.5 space-y-1">
+                  {job.symptomSummary && (
+                    <p className="text-xs text-card-foreground leading-relaxed">{job.symptomSummary}</p>
+                  )}
+                  {job.equipmentNotes && (
+                    <p className="text-xs text-muted-foreground leading-relaxed">{job.equipmentNotes}</p>
+                  )}
+                </div>
               </div>
+            )}
+
+            {/* AI Pre-Arrival Briefing */}
+            {job.preArrivalNotes ? (
+              <>
+                <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <Sparkles className="h-3.5 w-3.5 text-primary" />
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-primary">AI Briefing</span>
+                      <Badge variant="outline" className="ml-1 rounded-sm px-1 py-0 text-[8px] text-primary/70 border-primary/30">AI-generated</Badge>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 gap-1 px-2 text-[10px] text-muted-foreground hover:text-primary"
+                      onClick={handleRegenerate}
+                      disabled={regenerating}
+                    >
+                      {regenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+                      Regenerate
+                    </Button>
+                  </div>
+                  <p className="mt-2 text-xs text-card-foreground leading-relaxed">{job.preArrivalNotes}</p>
+                </div>
+
+                {job.suggestedParts.length > 0 && (
+                  <div className="rounded-lg border border-border bg-secondary/50 p-3">
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Suggested Parts</span>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {job.suggestedParts.map((part) => (
+                        <Badge key={part} variant="outline" className="rounded-sm text-[10px]">{part}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {job.suggestedTools.length > 0 && (
+                  <div className="rounded-lg border border-border bg-secondary/50 p-3">
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Suggested Tools</span>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {job.suggestedTools.map((tool) => (
+                        <Badge key={tool} variant="outline" className="rounded-sm text-[10px]">{tool}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {job.riskFlags.length > 0 && (
+                  <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
+                    <div className="flex items-center gap-1.5">
+                      <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-amber-600 dark:text-amber-400">Risk Flags</span>
+                    </div>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {job.riskFlags.map((flag) => (
+                        <Badge key={flag} variant="outline" className="rounded-sm text-[10px] border-amber-500/30 text-amber-600 dark:text-amber-400">{flag}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              /* Fallback: no AI data, show generic notes if present */
+              !job.symptomSummary && !job.equipmentNotes && (
+                <div className="rounded-lg border border-border bg-secondary/50 p-3">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Job Notes</span>
+                  <p className="mt-1.5 text-xs text-muted-foreground">No notes available</p>
+                </div>
+              )
             )}
 
             {nextAction && (
