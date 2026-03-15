@@ -7,6 +7,7 @@ import { sendEmail } from "../services/email.js";
 import { bookingConfirmationHtml } from "../templates/booking-confirmation.js";
 import { statusUpdateHtml } from "../templates/status-update.js";
 import { jobCompletedHtml } from "../templates/job-completed.js";
+import { generatePreArrival } from "../services/pre-arrival.js";
 
 export const jobsRouter = Router();
 
@@ -244,6 +245,9 @@ jobsRouter.patch("/:id", async (req, res) => {
     return res.status(400).json({ error: parsed.error.flatten() });
   }
   try {
+    // Track previous status for auto-trigger logic
+    let previousStatus: string | undefined;
+
     // If status is being changed, validate the transition
     if (parsed.data.status) {
       const currentJob = await prisma.job.findFirst({
@@ -252,6 +256,7 @@ jobsRouter.patch("/:id", async (req, res) => {
       if (!currentJob) {
         return res.status(404).json({ error: "Job not found" });
       }
+      previousStatus = currentJob.status;
       if (!isValidTransition(currentJob.status, parsed.data.status)) {
         return res.status(400).json({
           error: `Cannot transition from '${currentJob.status}' to '${parsed.data.status}'. Allowed: ${getAllowedTransitions(currentJob.status).join(", ") || "none"}`,
@@ -314,10 +319,42 @@ jobsRouter.patch("/:id", async (req, res) => {
     res.json(job);
     sendStatusNotifications(job, req.user!.organizationId);
     sendStatusEmails(job);
+    if (previousStatus === "pending" && job.status === "scheduled") {
+      generatePreArrival(req.params.id);
+    }
   } catch (e) {
     if ((e as { code?: string })?.code === "P2025") {
       return res.status(404).json({ error: "Job not found" });
     }
     res.status(500).json({ error: e instanceof Error ? e.message : "Failed to update job" });
+  }
+});
+
+jobsRouter.post("/:id/generate-pre-arrival", async (req, res) => {
+  try {
+    // Role guard — only office and technician can regenerate
+    if (req.user!.role === "customer") {
+      return res.status(403).json({ error: "Customers cannot regenerate pre-arrival briefings" });
+    }
+
+    const job = await prisma.job.findFirst({
+      where: { id: req.params.id, organizationId: req.user!.organizationId },
+    });
+    if (!job) {
+      return res.status(404).json({ error: "Job not found" });
+    }
+
+    await generatePreArrival(req.params.id);
+
+    const updated = await prisma.job.findFirst({
+      where: { id: req.params.id, organizationId: req.user!.organizationId },
+      include: {
+        customer: { select: { id: true, name: true, address: true, phone: true } },
+        technician: { select: { id: true, name: true } },
+      },
+    });
+    res.json(updated);
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : "Failed to generate pre-arrival briefing" });
   }
 });
