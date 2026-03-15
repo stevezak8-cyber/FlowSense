@@ -10,6 +10,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { CompletionDialog } from "@/components/jobs/completion-dialog"
 
 type ApiStatus = ApiJob["status"]
 
@@ -38,6 +39,7 @@ export default function TechnicianJobsPage() {
   const [jobs, setJobs] = useState<ApiJob[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [completingJob, setCompletingJob] = useState<ApiJob | null>(null)
 
   useEffect(() => {
     api.get<ApiJob[]>("/api/jobs")
@@ -55,6 +57,12 @@ export default function TechnicianJobsPage() {
         setJobs((prev) => prev.map((j) => (j.id === updated.id ? updated : j)))
       })
       .catch((e) => console.error("Failed to update job:", e))
+  }
+
+  function handleJobCompleted(updatedJob: ApiJob) {
+    setJobs((prev) => prev.map((j) => (j.id === updatedJob.id ? updatedJob : j)))
+    setCompletingJob(null)
+    setExpandedId(null)
   }
 
   function JobCard({ job }: { job: ApiJob }) {
@@ -235,7 +243,14 @@ export default function TechnicianJobsPage() {
             )}
 
             {nextAction && (
-              <Button className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => handleStatusChange(job.id, nextAction.next)}>
+              <Button
+                className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+                onClick={() =>
+                  nextAction.next === "completed"
+                    ? setCompletingJob(job)
+                    : handleStatusChange(job.id, nextAction.next)
+                }
+              >
                 <nextAction.icon className="h-4 w-4" />{nextAction.label}
               </Button>
             )}
@@ -280,6 +295,15 @@ export default function TechnicianJobsPage() {
           <Wrench className="h-8 w-8 text-muted-foreground/50" />
           <p className="mt-3 text-sm text-muted-foreground">No jobs assigned yet</p>
         </div>
+      )}
+
+      {completingJob && (
+        <CompletionDialog
+          job={completingJob}
+          open={!!completingJob}
+          onOpenChange={(open) => !open && setCompletingJob(null)}
+          onCompleted={handleJobCompleted}
+        />
       )}
     </div>
   )
