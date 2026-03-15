@@ -14,11 +14,9 @@ vi.mock("../lib/prisma.js", () => ({
 // Mock the Anthropic SDK
 vi.mock("@anthropic-ai/sdk", () => {
   return {
-    default: vi.fn().mockImplementation(() => ({
-      messages: {
-        create: vi.fn(),
-      },
-    })),
+    default: class MockAnthropic {
+      messages = { create: vi.fn() };
+    },
   };
 });
 
@@ -94,9 +92,9 @@ describe("generatePreArrival", () => {
     });
 
     vi.doMock("@anthropic-ai/sdk", () => ({
-      default: vi.fn().mockImplementation(() => ({
-        messages: { create: mockCreate },
-      })),
+      default: class MockAnthropic {
+        messages = { create: mockCreate };
+      },
     }));
 
     const { generatePreArrival: fn } = await import("../services/pre-arrival.js");
@@ -147,8 +145,8 @@ describe("generatePreArrival", () => {
     }));
 
     vi.doMock("@anthropic-ai/sdk", () => ({
-      default: vi.fn().mockImplementation(() => ({
-        messages: {
+      default: class MockAnthropic {
+        messages = {
           create: vi.fn().mockResolvedValue({
             content: [
               {
@@ -162,8 +160,8 @@ describe("generatePreArrival", () => {
               },
             ],
           }),
-        },
-      })),
+        };
+      },
     }));
 
     const { generatePreArrival: fn } = await import("../services/pre-arrival.js");
@@ -205,13 +203,13 @@ describe("generatePreArrival", () => {
     }));
 
     vi.doMock("@anthropic-ai/sdk", () => ({
-      default: vi.fn().mockImplementation(() => ({
-        messages: {
+      default: class MockAnthropic {
+        messages = {
           create: vi.fn().mockResolvedValue({
             content: [{ type: "text", text: "This is not valid JSON at all" }],
           }),
-        },
-      })),
+        };
+      },
     }));
 
     const mod = await import("../lib/prisma.js");
@@ -249,11 +247,11 @@ describe("generatePreArrival", () => {
     }));
 
     vi.doMock("@anthropic-ai/sdk", () => ({
-      default: vi.fn().mockImplementation(() => ({
-        messages: {
+      default: class MockAnthropic {
+        messages = {
           create: vi.fn().mockRejectedValue(new Error("Network error")),
-        },
-      })),
+        };
+      },
     }));
 
     const { generatePreArrival: fn } = await import("../services/pre-arrival.js");
