@@ -138,6 +138,35 @@ async function main() {
     },
   });
 
+  await prisma.job.upsert({
+    where: { id: "default-job-2" },
+    create: {
+      id: "default-job-2",
+      organizationId: org.id,
+      customerId: customer.id,
+      technicianId: tech.id,
+      status: "completed",
+      scheduledAt: new Date(Date.now() - 7 * 86400000),
+      completedAt: new Date(Date.now() - 7 * 86400000 + 3600000),
+      symptomSummary: "AC not cooling, warm air from vents",
+      equipmentType: "central-ac",
+      serviceType: "repair",
+      priority: "normal",
+      actionsTaken:
+        "Inspected outdoor unit. Found run capacitor bulging and reading low. Replaced capacitor and tested system. Verified proper cooling across all vents.",
+      partsUsed: ["Run capacitor 45/5 MFD 440V"],
+      summary:
+        "Diagnosed and repaired a Central AC system that was blowing warm air. The run capacitor had failed and was replaced with a 45/5 MFD 440V unit. System tested and confirmed cooling properly across all zones.",
+    },
+    update: {
+      summary:
+        "Diagnosed and repaired a Central AC system that was blowing warm air. The run capacitor had failed and was replaced with a 45/5 MFD 440V unit. System tested and confirmed cooling properly across all zones.",
+      actionsTaken:
+        "Inspected outdoor unit. Found run capacitor bulging and reading low. Replaced capacitor and tested system. Verified proper cooling across all vents.",
+      partsUsed: ["Run capacitor 45/5 MFD 440V"],
+    },
+  });
+
   // Additional technicians
   await prisma.technician.upsert({
     where: { id: "seed-tech-2" },
