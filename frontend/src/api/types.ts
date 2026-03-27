@@ -135,3 +135,23 @@ export interface NotificationEvent {
   jobId: string
   timestamp: string
 }
+
+export interface DispatchSuggestion {
+  technician: {
+    id: string
+    name: string
+    skills: string[]
+    vehicle: { id: string; name: string } | null
+  }
+  score: number
+  driveMinutes: number | null
+  todayJobCount: number
+  servedCustomerBefore: boolean
+  skillMatch: boolean
+}
+
+export interface DispatchResult {
+  suggestions: DispatchSuggestion[]
+  fallbackMode: boolean
+  driveTimesAvailable: boolean
+}
