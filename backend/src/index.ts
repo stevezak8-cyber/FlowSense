@@ -12,6 +12,7 @@ import { complianceRouter } from "./routes/compliance.js";
 import { dashboardRouter } from "./routes/dashboard.js";
 import { invoicesRouter } from "./routes/invoices.js";
 import { conversationsRouter } from "./routes/conversations.js";
+import { dispatchRouter } from "./routes/dispatch.js";
 import { authRouter } from "./routes/auth.js";
 import { setupWebSocket } from "./services/notifications.js";
 
@@ -34,6 +35,7 @@ app.use("/api/compliance", requireAuth, complianceRouter);
 app.use("/api/dashboard", requireAuth, dashboardRouter);
 app.use("/api/invoices", requireAuth, invoicesRouter);
 app.use("/api/conversations", requireAuth, conversationsRouter);
+app.use("/api/dispatch", requireAuth, dispatchRouter);
 
 app.get("/", (_req, res) => {
   res.json({
