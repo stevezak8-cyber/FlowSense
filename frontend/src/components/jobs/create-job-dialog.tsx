@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Loader2 } from "lucide-react"
+import { DispatchSuggestions } from "./dispatch-suggestions"
 
 interface CreateJobDialogProps {
   open: boolean
@@ -47,6 +48,16 @@ export function CreateJobDialog({
   const [equipmentType, setEquipmentType] = useState("")
   const [symptomSummary, setSymptomSummary] = useState("")
   const [equipmentNotes, setEquipmentNotes] = useState("")
+  const [showSuggestions, setShowSuggestions] = useState(true)
+
+  const selectedCustomer = customers.find((c) => c.id === customerId)
+  const customerAddress = selectedCustomer
+    ? `${selectedCustomer.address}, ${selectedCustomer.city}, ${selectedCustomer.state} ${selectedCustomer.postalCode}`
+    : null
+
+  useEffect(() => {
+    setShowSuggestions(true)
+  }, [equipmentType, customerId])
 
   useEffect(() => {
     if (!open) return
@@ -73,6 +84,7 @@ export function CreateJobDialog({
     setSymptomSummary("")
     setEquipmentNotes("")
     setError(null)
+    setShowSuggestions(true)
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -143,23 +155,37 @@ export function CreateJobDialog({
             </div>
 
             {/* Technician */}
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
-                Assign Technician
-              </label>
-              <Select value={technicianId} onValueChange={setTechnicianId}>
-                <SelectTrigger className="h-10 bg-secondary border-border text-foreground text-xs">
-                  <SelectValue placeholder="Unassigned (optional)" />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  {technicians.map((t) => (
-                    <SelectItem key={t.id} value={t.id} className="text-xs text-foreground">
-                      {t.name}{t.skills.length > 0 ? ` (${t.skills.join(", ")})` : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {showSuggestions ? (
+              <DispatchSuggestions
+                equipmentType={equipmentType || null}
+                customerAddress={customerAddress}
+                scheduledAt={scheduledAt ? new Date(`${scheduledAt}T${scheduledTime || "09:00"}`).toISOString() : null}
+                customerId={customerId || null}
+                priority={priority}
+                selectedTechId={technicianId || null}
+                onSelect={(id) => setTechnicianId(id ?? "")}
+                onSkip={() => setShowSuggestions(false)}
+                onError={() => setShowSuggestions(false)}
+              />
+            ) : (
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
+                  Assign Technician
+                </label>
+                <Select value={technicianId} onValueChange={setTechnicianId}>
+                  <SelectTrigger className="h-10 bg-secondary border-border text-foreground text-xs">
+                    <SelectValue placeholder="Unassigned (optional)" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border-border">
+                    {technicians.map((t) => (
+                      <SelectItem key={t.id} value={t.id} className="text-xs text-foreground">
+                        {t.name}{t.skills.length > 0 ? ` (${t.skills.join(", ")})` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Schedule */}
             <div className="grid grid-cols-2 gap-3">
