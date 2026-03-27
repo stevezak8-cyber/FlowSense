@@ -196,6 +196,46 @@ async function main() {
     update: {},
   });
 
+  // Vehicles for tech-2 and tech-3
+  await prisma.vehicle.upsert({
+    where: { id: "seed-vehicle-2" },
+    create: {
+      id: "seed-vehicle-2",
+      organizationId: org.id,
+      technicianId: "seed-tech-2",
+      name: "Van 2",
+    },
+    update: {},
+  });
+
+  await prisma.vehicle.upsert({
+    where: { id: "seed-vehicle-3" },
+    create: {
+      id: "seed-vehicle-3",
+      organizationId: org.id,
+      technicianId: "seed-tech-3",
+      name: "Van 3",
+    },
+    update: {},
+  });
+
+  // Dispatch demo job
+  await prisma.job.upsert({
+    where: { id: "seed-job-dispatch-demo" },
+    create: {
+      id: "seed-job-dispatch-demo",
+      organizationId: org.id,
+      customerId: "seed-customer-2",
+      technicianId: "seed-tech-2",
+      status: "scheduled",
+      scheduledAt: new Date(new Date().setHours(8, 0, 0, 0)),
+      symptomSummary: "AC unit making noise during operation",
+      equipmentType: "ac",
+      priority: "normal",
+    },
+    update: {},
+  });
+
   // Additional customers
   await prisma.customer.upsert({
     where: { id: "seed-customer-2" },
