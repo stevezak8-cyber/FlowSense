@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback, useRef } from "react"
+import { useEffect, useState, useCallback } from "react"
+import { useNavigate } from "react-router-dom"
 import FullCalendar from "@fullcalendar/react"
 import timeGridPlugin from "@fullcalendar/timegrid"
 import interactionPlugin from "@fullcalendar/interaction"
@@ -12,7 +13,7 @@ import { PageError } from "@/components/page-error"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
-const NON_EDITABLE_STATUSES = new Set(["completed", "cancelled"])
+const NON_EDITABLE_STATUSES = new Set(["completed", "cancelled", "en_route", "in_progress"])
 
 export function jobsToEvents(jobs: ApiJob[]): EventInput[] {
   return jobs.map((job) => {
@@ -36,15 +37,14 @@ interface ReassignState {
 
 interface ScheduleCalendarProps {
   technicianId?: string | null
-  onCreateJob?: () => void
 }
 
 export function ScheduleCalendar({ technicianId }: ScheduleCalendarProps) {
+  const navigate = useNavigate()
   const [jobs, setJobs] = useState<ApiJob[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [reassign, setReassign] = useState<ReassignState | null>(null)
-  const calendarRef = useRef<FullCalendar | null>(null)
 
   const fetchJobs = useCallback(async () => {
     setLoading(true)
@@ -118,7 +118,6 @@ export function ScheduleCalendar({ technicianId }: ScheduleCalendarProps) {
 
       {!loading && (
         <FullCalendar
-          ref={calendarRef}
           plugins={[timeGridPlugin, interactionPlugin]}
           initialView="timeGridWeek"
           headerToolbar={{
@@ -139,7 +138,7 @@ export function ScheduleCalendar({ technicianId }: ScheduleCalendarProps) {
           )}
           eventClick={(info) => {
             const job = info.event.extendedProps.job as ApiJob
-            window.location.href = `/office/jobs?job=${job.id}`
+            navigate(`/office/jobs?job=${job.id}`)
           }}
           height="auto"
           slotMinTime="07:00:00"
@@ -151,11 +150,11 @@ export function ScheduleCalendar({ technicianId }: ScheduleCalendarProps) {
 
       {!loading && filteredJobs.length === 0 && (
         <div style={{ textAlign: "center", padding: "48px", color: "#64748b" }}>
-          No jobs scheduled for this week
+          No jobs found
         </div>
       )}
 
-      <UnassignedStrip jobs={filteredJobs} />
+      {!loading && <UnassignedStrip jobs={filteredJobs} />}
 
       {reassign && (
         <div
