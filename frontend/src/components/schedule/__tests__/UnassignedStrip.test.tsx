@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest"
+import { describe, it, expect } from "vitest"
 import { render, screen } from "@testing-library/react"
 import { UnassignedStrip } from "../UnassignedStrip"
 import type { ApiJob } from "@/api/types"
@@ -73,5 +73,12 @@ describe("UnassignedStrip", () => {
     const jobs = [makeJob("job-1")]
     const { container } = render(<UnassignedStrip jobs={jobs} />)
     expect(container.firstChild).toBeNull()
+  })
+
+  it("sets data-job-id on each pill to the job id", () => {
+    const jobs = [makeJob("job-99", { technicianId: null, technician: null })]
+    render(<UnassignedStrip jobs={jobs} />)
+    const pill = screen.getByText(/Sarah Johnson/).closest("[data-job-id]")
+    expect(pill).toHaveAttribute("data-job-id", "job-99")
   })
 })

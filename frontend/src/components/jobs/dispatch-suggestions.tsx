@@ -13,8 +13,13 @@ interface DispatchSuggestionsProps {
   onSelect: (technicianId: string | null) => void
   onSkip: () => void
   onError: () => void
-  mode?: "suggest" | "reassign"
-  jobId?: string
+  mode?: "suggest"
+  jobId?: never
+}
+
+interface DispatchSuggestionsReassignProps extends Omit<DispatchSuggestionsProps, "mode" | "jobId"> {
+  mode: "reassign"
+  jobId: string
 }
 
 export function DispatchSuggestions({
@@ -29,7 +34,7 @@ export function DispatchSuggestions({
   onError,
   mode,
   jobId,
-}: DispatchSuggestionsProps) {
+}: DispatchSuggestionsProps | DispatchSuggestionsReassignProps) {
   const [result, setResult] = useState<DispatchResult | null>(null)
   const [loading, setLoading] = useState(false)
   const abortRef = useRef<AbortController | null>(null)

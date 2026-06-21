@@ -202,4 +202,26 @@ describe("DispatchSuggestions — reassign mode", () => {
 
     expect(api.patch).toHaveBeenCalledWith("/api/jobs/job-123", { technicianId: "t1" })
   })
+
+  it("shows toast error and does not call onSelect when PATCH fails in reassign mode", async () => {
+    const { toast } = await import("sonner")
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    vi.mocked(api.post).mockResolvedValue(mockResult)
+    vi.mocked(api.patch).mockRejectedValue(new Error("Server error"))
+
+    render(
+      <DispatchSuggestions
+        {...defaultProps}
+        mode="reassign"
+        jobId="job-123"
+      />
+    )
+
+    await vi.advanceTimersByTimeAsync(350)
+    await waitFor(() => expect(screen.getByText("Jordan Smith")).toBeInTheDocument())
+
+    await user.click(screen.getByText("Jordan Smith"))
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Failed to reassign technician"))
+    expect(defaultProps.onSelect).not.toHaveBeenCalled()
+  })
 })

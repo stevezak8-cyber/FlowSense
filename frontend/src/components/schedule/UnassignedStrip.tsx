@@ -1,4 +1,10 @@
+import type { DragEvent } from "react"
 import type { ApiJob } from "@/api/types"
+
+function handleDragStart(e: DragEvent<HTMLDivElement>, jobId: string) {
+  e.dataTransfer.setData("text/plain", jobId)
+  e.dataTransfer.effectAllowed = "move"
+}
 
 interface UnassignedStripProps {
   jobs: ApiJob[]
@@ -8,11 +14,6 @@ export function UnassignedStrip({ jobs }: UnassignedStripProps) {
   const unassigned = jobs.filter((j) => !j.technicianId)
 
   if (unassigned.length === 0) return null
-
-  function handleDragStart(e: React.DragEvent, jobId: string) {
-    e.dataTransfer.setData("text/plain", jobId)
-    e.dataTransfer.effectAllowed = "move"
-  }
 
   return (
     <div
