@@ -8,6 +8,7 @@ import {
   BarChart3,
   Settings,
   LogOut,
+  Calendar,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { FlowSenseLogo } from "@/components/brand"
@@ -15,6 +16,7 @@ import { useAuth } from "@/auth/auth-context"
 
 const navItems = [
   { label: "Dashboard", href: "/office", icon: LayoutDashboard },
+  { label: "Schedule", href: "/office/schedule", icon: Calendar },
   { label: "Jobs", href: "/office/jobs", icon: Wrench },
   { label: "Technicians", href: "/office/technicians", icon: UserCog },
   { label: "Customers", href: "/office/customers", icon: Users },

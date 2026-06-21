@@ -4,6 +4,10 @@ import { useNotifications } from "@/lib/websocket";
 
 // Pages
 import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
+import InvitePage from "./pages/InvitePage";
 
 // Office
 import OfficeLayout from "./pages/office/OfficeLayout";
@@ -12,7 +16,9 @@ import OfficeJobs from "./pages/office/OfficeJobs";
 import OfficeTechnicians from "./pages/office/OfficeTechnicians";
 import OfficeCustomers from "./pages/office/OfficeCustomers";
 import OfficeMessages from "./pages/office/OfficeMessages";
-import OfficeRevenue from "./pages/office/OfficeRevenue";
+import OfficeRevenue from "./pages/office/OfficeRevenue"
+import OfficeSchedule from "./pages/office/OfficeSchedule"
+import OfficeSettings from "./pages/office/OfficeSettings";
 
 // Technician
 import TechnicianLayout from "./pages/technician/TechnicianLayout";
@@ -33,8 +39,14 @@ function App() {
 
   return (
     <Routes>
-      {/* Login */}
+      {/* Auth — public */}
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+
+      {/* Invite accept — public, no auth required */}
+      <Route path="/invite/:token" element={<InvitePage />} />
 
       {/* Root redirects to login */}
       <Route path="/" element={<Navigate to="/login" replace />} />
@@ -49,11 +61,13 @@ function App() {
         }
       >
         <Route index element={<OfficeDashboard />} />
+        <Route path="schedule" element={<OfficeSchedule />} />
         <Route path="jobs" element={<OfficeJobs />} />
         <Route path="technicians" element={<OfficeTechnicians />} />
         <Route path="customers" element={<OfficeCustomers />} />
         <Route path="messages" element={<OfficeMessages />} />
         <Route path="reports" element={<OfficeRevenue />} />
+        <Route path="settings" element={<OfficeSettings />} />
       </Route>
 
       {/* Technician Dashboard — requires technician role */}
