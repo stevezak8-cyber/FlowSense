@@ -17,6 +17,7 @@ export default function OfficeSchedule() {
   const [techFilter, setTechFilter] = useState<string | null>(null)
   const [technicians, setTechnicians] = useState<ApiTechnician[]>([])
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     api.get<ApiTechnician[]>("/api/technicians").then(setTechnicians).catch(() => {})
@@ -55,14 +56,14 @@ export default function OfficeSchedule() {
         </div>
       </div>
 
-      <ScheduleCalendar technicianId={techFilter} />
+      <ScheduleCalendar technicianId={techFilter} refreshKey={refreshKey} />
 
       <CreateJobDialog
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onCreated={() => {
           setCreateDialogOpen(false)
-          window.location.reload()
+          setRefreshKey((k) => k + 1)
         }}
       />
     </div>

@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect, useCallback } from "react"
 import { api } from "@/api/client"
 import type { ApiJob } from "@/api/types"

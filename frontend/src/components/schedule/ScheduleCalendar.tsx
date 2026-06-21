@@ -37,9 +37,10 @@ interface ReassignState {
 
 interface ScheduleCalendarProps {
   technicianId?: string | null
+  refreshKey?: number
 }
 
-export function ScheduleCalendar({ technicianId }: ScheduleCalendarProps) {
+export function ScheduleCalendar({ technicianId, refreshKey }: ScheduleCalendarProps) {
   const navigate = useNavigate()
   const [jobs, setJobs] = useState<ApiJob[]>([])
   const [loading, setLoading] = useState(true)
@@ -59,7 +60,7 @@ export function ScheduleCalendar({ technicianId }: ScheduleCalendarProps) {
     }
   }, [])
 
-  useEffect(() => { fetchJobs() }, [fetchJobs])
+  useEffect(() => { fetchJobs() }, [fetchJobs, refreshKey])
 
   const filteredJobs = technicianId
     ? jobs.filter((j) => j.technicianId === technicianId)
