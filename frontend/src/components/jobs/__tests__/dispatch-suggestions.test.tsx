@@ -7,6 +7,7 @@ import { DispatchSuggestions } from "../dispatch-suggestions"
 vi.mock("@/api/client", () => ({
   api: {
     post: vi.fn(),
+    patch: vi.fn(),
   },
 }))
 
@@ -167,5 +168,38 @@ describe("DispatchSuggestions", () => {
     await waitFor(() => {
       expect(onError).toHaveBeenCalledTimes(1)
     })
+  })
+})
+
+describe("DispatchSuggestions — reassign mode", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it("calls PATCH /api/jobs/:id when a tech is selected in reassign mode", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    vi.mocked(api.post).mockResolvedValue(mockResult)
+    vi.mocked(api.patch).mockResolvedValue({})
+
+    render(
+      <DispatchSuggestions
+        {...defaultProps}
+        mode="reassign"
+        jobId="job-123"
+      />
+    )
+
+    await vi.advanceTimersByTimeAsync(350)
+    await waitFor(() => expect(screen.getByText("Jordan Smith")).toBeInTheDocument())
+
+    // Clicking the tech row triggers handleAssign which calls PATCH in reassign mode
+    await user.click(screen.getByText("Jordan Smith"))
+
+    expect(api.patch).toHaveBeenCalledWith("/api/jobs/job-123", { technicianId: "t1" })
   })
 })

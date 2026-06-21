@@ -13,6 +13,8 @@ interface DispatchSuggestionsProps {
   onSelect: (technicianId: string | null) => void
   onSkip: () => void
   onError: () => void
+  mode?: "suggest" | "reassign"
+  jobId?: string
 }
 
 export function DispatchSuggestions({
@@ -25,6 +27,8 @@ export function DispatchSuggestions({
   onSelect,
   onSkip,
   onError,
+  mode,
+  jobId,
 }: DispatchSuggestionsProps) {
   const [result, setResult] = useState<DispatchResult | null>(null)
   const [loading, setLoading] = useState(false)
@@ -106,6 +110,19 @@ export function DispatchSuggestions({
 
   if (!result) return null
 
+  async function handleAssign(technicianId: string) {
+    if (mode === "reassign" && jobId) {
+      try {
+        await api.patch(`/api/jobs/${jobId}`, { technicianId })
+        onSelect(technicianId)
+      } catch {
+        toast.error("Failed to reassign technician")
+      }
+    } else {
+      onSelect(technicianId)
+    }
+  }
+
   return (
     <div className="space-y-2">
       {/* Fallback warning */}
@@ -148,7 +165,7 @@ export function DispatchSuggestions({
             if (selectedTechId === suggestion.technician.id) {
               onSelect(null)
             } else {
-              onSelect(suggestion.technician.id)
+              handleAssign(suggestion.technician.id)
             }
           }}
         />
