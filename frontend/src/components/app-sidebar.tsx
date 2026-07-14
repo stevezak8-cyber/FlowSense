@@ -1,4 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom"
+import { OnboardingChecklist } from "@/components/office/onboarding-checklist"
+import { useOnboarding } from "@/components/office/onboarding-context"
 import {
   LayoutDashboard,
   Wrench,
@@ -46,6 +48,7 @@ export function AppSidebar() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const { user, logout } = useAuth()
+  const { refreshKey } = useOnboarding()
 
   function handleLogout() {
     logout()
@@ -83,6 +86,9 @@ export function AppSidebar() {
           )
         })}
       </nav>
+
+      {/* Onboarding Checklist */}
+      <OnboardingChecklist refreshKey={refreshKey} />
 
       {/* Bottom Items */}
       <div className="px-3 py-4 space-y-1">
