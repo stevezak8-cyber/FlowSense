@@ -43,6 +43,11 @@ model Organization {
   vehicles      Vehicle[]
   invoices      Invoice[]
   conversations Conversation[]
+
+  estimateDepositThreshold Float  @default(500)
+  estimateDepositPercent   Int    @default(25)
+  pricebookItems           PricebookItem[]
+  estimates                Estimate[]
 }
 
 model User {
@@ -157,6 +162,7 @@ model Job {
 
   complianceLogs ComplianceLog[]
   invoices       Invoice[]
+  estimates      Estimate[]
 
   @@index([organizationId])
   @@index([technicianId])
@@ -187,6 +193,67 @@ model Invoice {
   @@index([jobId])
   @@index([customerId])
   @@index([status])
+}
+
+model PricebookItem {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  description    String?
+  category       String
+  unit           String?
+  unitPrice      Float
+  locked         Boolean  @default(false)
+  source         String   @default("admin")
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  lines          EstimateLine[]
+
+  @@index([organizationId])
+}
+
+model Estimate {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  jobId          String
+  job            Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  token          String   @unique @default(cuid())
+  status         String   @default("draft")
+  selectedTier   String?
+  signatureData  String?
+  signedAt       DateTime?
+  depositAmount  Float?
+  depositPaidAt  DateTime?
+  stripePaymentIntentId String?
+  sentAt         DateTime?
+  approvedAt     DateTime?
+  expiresAt      DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  lines          EstimateLine[]
+
+  @@index([jobId])
+  @@index([organizationId])
+  @@index([token])
+}
+
+model EstimateLine {
+  id              String   @id @default(cuid())
+  estimateId      String
+  estimate        Estimate @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+  pricebookItemId String?
+  pricebookItem   PricebookItem? @relation(fields: [pricebookItemId], references: [id])
+  tier            String
+  name            String
+  quantity        Float    @default(1)
+  unitPrice       Float
+  locked          Boolean  @default(false)
+  source          String   @default("manual")
 }
 
 // Conversations & messages
