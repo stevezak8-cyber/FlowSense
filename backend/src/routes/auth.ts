@@ -5,6 +5,7 @@ import { prisma } from "../lib/prisma.js";
 import { z } from "zod";
 import { requireAuth } from "../middleware/auth.js";
 import { stripe, getPriceId } from "../services/stripe.js";
+import { seedPricebook } from "../services/estimate-ai.js";
 
 export const authRouter = Router();
 
@@ -109,6 +110,11 @@ authRouter.post("/register", async (req, res) => {
       console.error("[register] DB transaction failed:", e)
       return res.status(500).json({ error: "Registration failed. Please try again." })
     }
+
+    // Fire-and-forget pricebook seeding
+    seedPricebook(org.id).catch((err) =>
+      console.error("[Register] Pricebook seeding error:", err)
+    );
 
     // Issue a JWT so the frontend can store it before redirecting to Stripe
     const token = jwt.sign(
