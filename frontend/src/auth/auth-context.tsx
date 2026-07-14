@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react"
 import type { ReactNode } from "react"
+import type { ApiOrganization } from "../api/types"
 
 export type UserRole = "office" | "technician" | "customer"
 
@@ -9,6 +10,7 @@ export interface AuthUser {
   name: string | null
   role: UserRole
   organizationId: string
+  organization?: ApiOrganization
 }
 
 interface AuthContextValue {
@@ -39,17 +41,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
-        if (!res.ok) throw new Error("Invalid token")
+        if (res.status === 401) {
+          // Definitively invalid token — clear it so user re-authenticates
+          localStorage.removeItem(TOKEN_KEY)
+          setToken(null)
+          setUser(null)
+          return null
+        }
+        if (!res.ok) {
+          // Server error or backend restarting — keep the token, just don't set user yet
+          // The next navigation or reload will retry
+          return null
+        }
         return res.json()
       })
-      .then((data: AuthUser) => {
-        setUser(data)
+      .then((data: AuthUser | null) => {
+        if (data) setUser({ ...data, organization: data.organization })
       })
       .catch(() => {
-        // Token expired or invalid — clear it
-        localStorage.removeItem(TOKEN_KEY)
-        setToken(null)
-        setUser(null)
+        // Network error (backend restarting, offline, etc.) — do NOT clear the token
+        // Clearing here would log users out every time tsx watch restarts
+        // Leave the token in place; the next successful request will restore the session
       })
       .finally(() => setLoading(false))
   }, [token])
@@ -76,6 +88,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(TOKEN_KEY)
     setToken(null)
     setUser(null)
+  }, [])
+
+  // Listen for session-expired events fired by the API client on 401 responses
+  useEffect(() => {
+    const handleExpired = () => {
+      setToken(null)
+      setUser(null)
+    }
+    window.addEventListener("flowsense:session-expired", handleExpired)
+    return () => window.removeEventListener("flowsense:session-expired", handleExpired)
   }, [])
 
   return (

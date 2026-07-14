@@ -25,16 +25,28 @@ async function request<T>(
   });
 
   if (res.status === 401) {
-    // Token expired or invalid — clear and redirect to login
+    // Token expired or definitively invalid — clear it and let the auth
+    // context redirect. Use a custom event rather than a hard page reload
+    // so React Router handles navigation without nuking component state.
     localStorage.removeItem(TOKEN_KEY);
-    window.location.href = "/login";
+    window.dispatchEvent(new CustomEvent("flowsense:session-expired"));
     throw new Error("Session expired");
+  }
+
+  if (res.status === 402) {
+    const data = await res.json().catch(() => ({ error: "subscription_cancelled" }));
+    if ((data as { error?: string }).error === "subscription_cancelled") {
+      window.dispatchEvent(new CustomEvent("subscription:cancelled"));
+    }
+    throw new Error((data as { error?: string }).error ?? "subscription_cancelled");
   }
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error((err as { error?: string }).error ?? "Request failed");
   }
+  // 204 No Content — return null rather than trying to parse empty body
+  if (res.status === 204) return null as unknown as T;
   return res.json() as Promise<T>;
 }
 
@@ -44,4 +56,6 @@ export const api = {
     request<T>(path, { method: "POST", body: JSON.stringify(body) }),
   patch: <T>(path: string, body: unknown) =>
     request<T>(path, { method: "PATCH", body: JSON.stringify(body) }),
+  delete: <T = void>(path: string) =>
+    request<T>(path, { method: "DELETE" }),
 };

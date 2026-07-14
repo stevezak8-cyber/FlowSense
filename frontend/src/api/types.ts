@@ -155,3 +155,23 @@ export interface DispatchResult {
   fallbackMode: boolean
   driveTimesAvailable: boolean
 }
+
+export interface NotificationPreferences {
+  booking: boolean
+  statusChange: boolean
+  completion: boolean
+  urgent: boolean
+}
+
+export interface ApiOrganization {
+  id: string
+  name: string
+  slug: string
+  phone: string | null
+  email: string | null
+  address: string | null
+  notificationPreferences: NotificationPreferences | null
+  createdAt: string
+  plan: "trial" | "entry" | "core" | "premium" | "cancelled"
+  trialEndsAt: string | null
+}
