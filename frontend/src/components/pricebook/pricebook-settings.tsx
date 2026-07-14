@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { api } from "@/api/client"
-import { PricebookItem } from "@/api/types"
+import { PricebookItem, ApiOrganization } from "@/api/types"
 import { PricebookTable } from "./pricebook-table"
 import { PricebookItemDialog } from "./pricebook-item-dialog"
 import { Button } from "@/components/ui/button"
@@ -30,6 +30,11 @@ export function PricebookSettings() {
 
   useEffect(() => {
     loadItems()
+    api.get<ApiOrganization>("/api/organizations/me").then((org) => {
+      const o = org as any
+      if (o.estimateDepositThreshold != null) setDepositThreshold(String(o.estimateDepositThreshold))
+      if (o.estimateDepositPercent != null) setDepositPercent(String(o.estimateDepositPercent))
+    }).catch(() => {})
   }, [])
 
   async function handleSave(data: Partial<PricebookItem>) {

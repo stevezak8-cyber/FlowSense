@@ -35,6 +35,8 @@ organizationsRouter.get("/me", async (req, res) => {
         address: true,
         notificationPreferences: true,
         createdAt: true,
+        estimateDepositThreshold: true,
+        estimateDepositPercent: true,
       },
     });
 
@@ -69,6 +71,8 @@ organizationsRouter.patch("/me", async (req, res) => {
         address: true,
         notificationPreferences: true,
         createdAt: true,
+        estimateDepositThreshold: true,
+        estimateDepositPercent: true,
       },
     });
     res.json(updated);
