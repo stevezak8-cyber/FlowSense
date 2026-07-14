@@ -10,7 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Building2, User, Bell, Mail, Phone, Loader2, AlertCircle } from "lucide-react"
+import { Building2, User, Bell, Mail, Phone, Loader2, AlertCircle, BookOpen } from "lucide-react"
+import { PricebookSettings } from "@/components/pricebook/pricebook-settings"
 import { toast } from "sonner"
 
 const DEFAULT_PREFS: NotificationPreferences = {
@@ -325,6 +326,19 @@ export default function OfficeSettings() {
           <p className="mt-3 text-[11px] text-muted-foreground">
             Notification emails are sent to your dispatch email address. Configure your email provider in your environment settings.
           </p>
+        </CardContent>
+      </Card>
+
+      {/* Pricebook */}
+      <Card className="border-border bg-card">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-base font-semibold text-card-foreground">
+            <BookOpen className="h-4 w-4 text-muted-foreground" />
+            Pricebook &amp; Estimates
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PricebookSettings />
         </CardContent>
       </Card>
 
