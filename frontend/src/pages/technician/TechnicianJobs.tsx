@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react"
 import { api } from "@/api/client"
-import type { ApiJob } from "@/api/types"
+import type { ApiJob, Estimate } from "@/api/types"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Sheet, SheetContent } from "@/components/ui/sheet"
 import {
   MapPin, Clock, ChevronDown, ChevronUp, Navigation, AlertTriangle,
   Wrench, CheckCircle2, Truck, User, Phone, Loader2, Sparkles, RefreshCw,
@@ -11,6 +12,7 @@ import {
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { CompletionDialog } from "@/components/jobs/completion-dialog"
+import { EstimateBuilder } from "@/components/estimates/estimate-builder"
 
 type ApiStatus = ApiJob["status"]
 
@@ -41,6 +43,9 @@ export default function TechnicianJobsPage() {
   const [error, setError] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [completingJob, setCompletingJob] = useState<ApiJob | null>(null)
+  const [estimateJob, setEstimateJob] = useState<ApiJob | null>(null)
+  const [currentEstimate, setCurrentEstimate] = useState<Estimate | null>(null)
+  const [generatingEstimate, setGeneratingEstimate] = useState(false)
 
   function fetchJobs() {
     setLoading(true)
@@ -62,6 +67,20 @@ export default function TechnicianJobsPage() {
         setJobs((prev) => prev.map((j) => (j.id === updated.id ? updated : j)))
       })
       .catch((e) => console.error("Failed to update job:", e))
+  }
+
+  async function handleCreateEstimate(job: ApiJob) {
+    setEstimateJob(job)
+    setGeneratingEstimate(true)
+    try {
+      const est = await api.post<Estimate>("/api/estimates/generate", { jobId: job.id })
+      setCurrentEstimate(est)
+    } catch {
+      toast.error("Failed to generate estimate")
+      setEstimateJob(null)
+    } finally {
+      setGeneratingEstimate(false)
+    }
   }
 
   function handleJobCompleted(updatedJob: ApiJob) {
@@ -247,6 +266,22 @@ export default function TechnicianJobsPage() {
               )
             )}
 
+            {(job.status === "scheduled" || job.status === "en_route" || job.status === "in_progress") && (
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={() => handleCreateEstimate(job)}
+                disabled={generatingEstimate && estimateJob?.id === job.id}
+              >
+                {generatingEstimate && estimateJob?.id === job.id ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Sparkles className="h-4 w-4 text-indigo-500" />
+                )}
+                {generatingEstimate && estimateJob?.id === job.id ? "Generating…" : "Create Estimate"}
+              </Button>
+            )}
+
             {nextAction && (
               <Button
                 className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
@@ -322,6 +357,24 @@ export default function TechnicianJobsPage() {
           onCompleted={handleJobCompleted}
         />
       )}
+
+      <Sheet open={!!currentEstimate} onOpenChange={(v) => { if (!v) { setCurrentEstimate(null); setEstimateJob(null) } }}>
+        <SheetContent side="right" className="w-full sm:max-w-md p-0">
+          {currentEstimate && estimateJob && (
+            <EstimateBuilder
+              estimate={currentEstimate}
+              jobTitle={
+                estimateJob.equipmentType
+                  ? estimateJob.equipmentType.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())
+                  : "Job"
+              }
+              jobNotes={estimateJob.symptomSummary}
+              onPresent={() => { setCurrentEstimate(null) }}
+              onSend={() => { setCurrentEstimate(null); setEstimateJob(null) }}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   )
 }
