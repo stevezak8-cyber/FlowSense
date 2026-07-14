@@ -9,6 +9,7 @@ import {
   Settings,
   LogOut,
   Calendar,
+  CreditCard,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { FlowSenseLogo } from "@/components/brand"
@@ -27,6 +28,19 @@ const navItems = [
 const bottomItems = [
   { label: "Settings", href: "/office/settings", icon: Settings },
 ]
+
+async function openBillingPortal() {
+  const token = localStorage.getItem("flowsense_token")
+  const res = await fetch("/api/billing/portal", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  })
+  const data = (await res.json()) as { url?: string }
+  if (data.url) window.location.href = data.url
+}
 
 export function AppSidebar() {
   const { pathname } = useLocation()
@@ -72,6 +86,14 @@ export function AppSidebar() {
 
       {/* Bottom Items */}
       <div className="px-3 py-4 space-y-1">
+        <button
+          type="button"
+          onClick={openBillingPortal}
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium text-sidebar-foreground transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+        >
+          <CreditCard className="h-[18px] w-[18px] text-muted-foreground" />
+          Billing
+        </button>
         {bottomItems.map((item) => (
           <Link
             key={item.href}
