@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Navigate } from "react-router-dom"
+import { Link, Navigate } from "react-router-dom"
 import { useAuth } from "@/auth/auth-context"
 import type { UserRole } from "@/auth/auth-context"
 import { Button } from "@/components/ui/button"
@@ -123,9 +123,14 @@ export default function LoginPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
-                  Password
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
+                    Password
+                  </label>
+                  <Link to="/forgot-password" className="text-[11px] font-medium text-primary hover:underline">
+                    Forgot password?
+                  </Link>
+                </div>
                 <Input
                   type="password"
                   placeholder="••••••••"
@@ -154,6 +159,13 @@ export default function LoginPage() {
               </Button>
             </form>
           </div>
+
+          <p className="mt-5 text-center text-sm text-muted-foreground">
+            New to FlowSense?{" "}
+            <Link to="/register" className="font-medium text-primary hover:underline">
+              Create an account
+            </Link>
+          </p>
 
           {/* Demo quick-login buttons */}
           <div className="mt-8">
