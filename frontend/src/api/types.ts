@@ -1,5 +1,15 @@
 // Types matching the backend Prisma models + API response shapes
 
+export interface OnboardingStatus {
+  dismissed: boolean
+  steps: {
+    companyProfile: boolean
+    technician: boolean
+    customer: boolean
+    job: boolean
+  }
+}
+
 export interface ApiJob {
   id: string
   organizationId: string
