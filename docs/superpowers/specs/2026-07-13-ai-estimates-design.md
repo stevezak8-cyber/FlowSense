@@ -34,7 +34,7 @@ This feature directly targets the #1 gap versus ServiceTitan: the absence of a s
 
 **Locking:** Admins can lock individual pricebook items. Locked items appear on AI-generated estimates with a lock icon and cannot be edited or removed by technicians. Intended for big-ticket items (equipment replacements, full installs) where price accuracy is critical.
 
-**Deposit threshold:** Admin sets a dollar amount (default $500). When an estimate total exceeds this, the customer approval flow prompts for an optional deposit. The deposit is always skippable.
+**Deposit threshold:** Admin sets a dollar amount (default $500) and a deposit percentage (default 25%). Both are stored on the `Organization` model as `estimateDepositThreshold` (Float, default 500) and `estimateDepositPercent` (Int, default 25). Updated via `PATCH /api/organizations/me`. When an estimate total exceeds the threshold, the customer approval flow prompts for a deposit of `total × depositPercent / 100`, rounded to the nearest dollar. The deposit is always skippable.
 
 ### AI Seeding on Signup
 
@@ -49,6 +49,8 @@ Seeded categories:
 
 ### Pricebook Data Model
 
+`PricebookItem` stores a single unit price per item. Tier differentiation is **emergent** — AI decides which items appear in each tier based on job type (scope logic vs. parts quality logic). The item's `unitPrice` is what it costs when selected; the AI controls which tier(s) include it. Admins can optionally override the AI's tier placement for an item via the pricebook UI, but pricing is always a single `unitPrice` — not three separate tier prices.
+
 ```prisma
 model PricebookItem {
   id             String   @id @default(cuid())
@@ -58,14 +60,14 @@ model PricebookItem {
   description    String?
   category       String   // cooling | heating | parts | labor | maintenance
   unit           String?  // e.g. "per lb", "each", "per hour"
-  priceGood      Float
-  priceBetter    Float?   // null = not included in Better tier by default
-  priceBest      Float?   // null = not included in Best tier by default
+  unitPrice      Float    // single price; tier totals emerge from AI line-item selection
   locked         Boolean  @default(false)
   source         String   @default("admin") // "admin" | "ai"
   active         Boolean  @default(true)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  lines          EstimateLine[]
 
   @@index([organizationId])
 }
@@ -98,16 +100,17 @@ model Estimate {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   jobId          String
   job            Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  token          String   @unique @default(cuid()) // used for customer portal URL — no auth required, knowledge of token is authorization
   status         String   @default("draft") // draft | sent | approved | declined | expired
   selectedTier   String?  // good | better | best
-  signatureData  String?  // base64 SVG or typed name
+  signatureData  String?  // base64 SVG path data (on-device) or typed full name (portal)
   signedAt       DateTime?
-  depositAmount  Float?
+  depositAmount  Float?   // computed at approval time: total × org.estimateDepositPercent / 100
   depositPaidAt  DateTime?
   stripePaymentIntentId String?
   sentAt         DateTime?
   approvedAt     DateTime?
-  expiresAt      DateTime?
+  expiresAt      DateTime? // set to sentAt + 48h when status changes to "sent"
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -115,6 +118,7 @@ model Estimate {
 
   @@index([jobId])
   @@index([organizationId])
+  @@index([token])
 }
 
 model EstimateLine {
@@ -198,13 +202,15 @@ Flow:
 | POST | `/api/pricebook` | admin | Create item |
 | PATCH | `/api/pricebook/:id` | admin | Update item |
 | DELETE | `/api/pricebook/:id` | admin | Soft-delete (set active: false) |
-| POST | `/api/estimates/generate` | technician | AI-generate estimate for a job |
+| POST | `/api/estimates/generate` | office + tech | AI-generate estimate for a job (`{ jobId }` in body) |
+| GET | `/api/jobs/:jobId/estimates` | office + tech | List all estimates for a job |
 | GET | `/api/estimates/:id` | office + tech | Get estimate with lines |
-| PATCH | `/api/estimates/:id` | tech | Update lines (add/remove unlocked) |
-| POST | `/api/estimates/:id/send` | tech | Email portal link to customer |
-| POST | `/api/estimates/:id/approve` | customer (token) | Record signature + tier selection |
-| POST | `/api/estimates/:id/deposit` | customer (token) | Create Stripe payment intent for deposit |
-| GET | `/api/estimates/token/:token` | public | Load estimate for customer portal |
+| PATCH | `/api/estimates/:id` | tech | Update lines (add/remove unlocked items) |
+| POST | `/api/estimates/:id/send` | tech | Email portal link to customer; sets `sentAt`, `expiresAt = sentAt + 48h`, status → `sent` |
+| GET | `/api/estimates/token/:token` | public | Load estimate for customer portal (validates not expired, not already approved) |
+| POST | `/api/estimates/token/:token/approve` | public (token) | Record signature + tier; sets `approvedAt`, status → `approved`; if already approved returns 409 |
+| POST | `/api/estimates/token/:token/deposit` | public (token) | Create Stripe payment intent for deposit amount |
+| PATCH | `/api/organizations/me` | admin | Existing endpoint — accepts `estimateDepositThreshold` and `estimateDepositPercent` |
 
 ---
 
@@ -228,6 +234,7 @@ frontend/src/
     pricebook/
       pricebook-table.tsx             ← new: admin catalog management table
       pricebook-item-dialog.tsx       ← new: add/edit item dialog
+      pricebook-settings.tsx          ← new: deposit threshold + percent inputs (rendered inside OfficeSettings Pricebook tab)
   api/
     types.ts                          ← add PricebookItem, Estimate, EstimateLine types
 ```
@@ -253,7 +260,8 @@ backend/src/
 ## Error Handling
 
 - **AI generation fails:** Show error toast, fall back to blank estimate builder with empty lines. Tech can build manually from catalog.
-- **Customer portal link expired:** Show "This estimate has expired — please contact us to request a new one."
+- **Customer portal link expired:** `GET /api/estimates/token/:token` returns 410; portal shows "This estimate has expired — please contact us to request a new one."
+- **Estimate already approved:** If customer opens portal link for an already-approved estimate, show "This estimate has been approved. No further action needed." (prevents duplicate approvals on 409 from approve endpoint).
 - **Deposit payment fails:** Customer can retry or skip deposit and approve without it.
 - **Pricebook empty on estimate generation:** AI generates estimate with generic HVAC line items and a warning: "Your pricebook is empty — prices below are AI-estimated. Update your pricebook in Settings for accurate quotes."
 
