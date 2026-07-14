@@ -34,7 +34,8 @@ import { dispatchRouter } from "./routes/dispatch.js";
 import { authRouter } from "./routes/auth.js";
 import { organizationsRouter } from "./routes/organizations.js";
 import { webhooksRouter } from "./routes/webhooks.js";
-import { billingRouter } from "./routes/billing.js";
+import { billingRouter } from "./routes/billing.js"
+import { onboardingRouter } from "./routes/onboarding.js";
 import { setupWebSocket } from "./services/notifications.js";
 import { startInvoiceScheduler } from "./services/invoice-scheduler.js";
 
@@ -90,6 +91,7 @@ app.use("/api/invoices", apiLimiter, requireAuth, requireSubscription, invoicesR
 app.use("/api/conversations", apiLimiter, requireAuth, requireSubscription, conversationsRouter);
 app.use("/api/dispatch", apiLimiter, requireAuth, requireSubscription, dispatchRouter);
 app.use("/api/organizations", apiLimiter, requireAuth, requireSubscription, organizationsRouter);
+app.use("/api/onboarding", apiLimiter, requireAuth, requireSubscription, onboardingRouter);
 
 // In production, serve the compiled frontend static build and handle SPA routing.
 // In development, Vite proxies /api requests — this block is never reached.
