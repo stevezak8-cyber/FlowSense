@@ -32,7 +32,8 @@ import CustomerLayout from "./pages/customer/CustomerLayout";
 import CustomerDashboard from "./pages/customer/CustomerDashboard";
 import CustomerBook from "./pages/customer/CustomerBook";
 import CustomerInvoices from "./pages/customer/CustomerInvoices";
-import CustomerMessages from "./pages/customer/CustomerMessages";
+import CustomerMessages from "./pages/customer/CustomerMessages"
+import CustomerEstimate from "./pages/customer/CustomerEstimate";
 
 function App() {
   useNotifications();
@@ -99,6 +100,9 @@ function App() {
         <Route path="invoices" element={<CustomerInvoices />} />
         <Route path="messages" element={<CustomerMessages />} />
       </Route>
+
+      {/* Customer estimate approval — public, no auth required */}
+      <Route path="/customer/estimates/:token" element={<CustomerEstimate />} />
 
       {/* Catch-all redirect */}
       <Route path="*" element={<Navigate to="/login" replace />} />
