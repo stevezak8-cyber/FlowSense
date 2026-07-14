@@ -165,9 +165,9 @@ export function ApiMessagePanel({ viewerRole = "dispatch", viewerName = "Dispatc
               <Plus className="h-3.5 w-3.5" />
             </Button>
           </div>
-          {/* Channel filter */}
+          {/* Channel filter — only internal messaging is live */}
           <div className="flex gap-1 overflow-x-auto">
-            {["all", "internal", "sms", "email", "phone"].map((ch) => (
+            {["all", "internal"].map((ch) => (
               <button
                 key={ch}
                 onClick={() => setChannelFilter(ch)}
@@ -394,9 +394,9 @@ function NewConversationDialog({
               <SelectTrigger className="h-9 bg-secondary border-border text-foreground text-xs"><SelectValue /></SelectTrigger>
               <SelectContent className="bg-card border-border">
                 <SelectItem value="internal" className="text-xs text-foreground">Internal</SelectItem>
-                <SelectItem value="sms" className="text-xs text-foreground">SMS</SelectItem>
-                <SelectItem value="email" className="text-xs text-foreground">Email</SelectItem>
-                <SelectItem value="phone" className="text-xs text-foreground">Phone</SelectItem>
+                <SelectItem value="sms" disabled className="text-xs text-muted-foreground">SMS (coming soon)</SelectItem>
+                <SelectItem value="email" disabled className="text-xs text-muted-foreground">Email (coming soon)</SelectItem>
+                <SelectItem value="phone" disabled className="text-xs text-muted-foreground">Phone log (coming soon)</SelectItem>
               </SelectContent>
             </Select>
           </div>

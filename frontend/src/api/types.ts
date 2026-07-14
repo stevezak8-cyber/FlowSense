@@ -185,3 +185,51 @@ export interface ApiOrganization {
   plan: "trial" | "entry" | "core" | "premium" | "cancelled"
   trialEndsAt: string | null
 }
+
+export interface PricebookItem {
+  id: string
+  organizationId: string
+  name: string
+  description?: string | null
+  category: "cooling" | "heating" | "parts" | "labor" | "maintenance"
+  unit?: string | null
+  unitPrice: number
+  locked: boolean
+  source: "admin" | "ai"
+  active: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface EstimateLine {
+  id: string
+  estimateId: string
+  pricebookItemId?: string | null
+  tier: "good" | "better" | "best"
+  name: string
+  quantity: number
+  unitPrice: number
+  locked: boolean
+  source: "ai" | "manual"
+}
+
+export interface Estimate {
+  id: string
+  organizationId: string
+  jobId: string
+  token: string
+  status: "draft" | "sent" | "approved" | "declined" | "expired"
+  selectedTier?: "good" | "better" | "best" | null
+  signatureData?: string | null
+  signedAt?: string | null
+  depositAmount?: number | null
+  depositPaidAt?: string | null
+  stripePaymentIntentId?: string | null
+  sentAt?: string | null
+  approvedAt?: string | null
+  expiresAt?: string | null
+  createdAt: string
+  updatedAt: string
+  lines: EstimateLine[]
+  job?: { title: string; address?: string | null } | null
+}

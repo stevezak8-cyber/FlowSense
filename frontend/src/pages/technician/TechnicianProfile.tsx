@@ -16,6 +16,7 @@ import {
   Truck,
   Loader2,
 } from "lucide-react"
+import { ChangePasswordCard } from "@/components/change-password-card"
 
 const statusLabels: Record<string, string> = {
   scheduled: "Scheduled",
@@ -297,6 +298,8 @@ export default function TechnicianProfile() {
           ))}
         </CardContent>
       </Card>
+
+      <ChangePasswordCard />
     </div>
   )
 }

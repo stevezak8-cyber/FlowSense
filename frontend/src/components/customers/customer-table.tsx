@@ -3,6 +3,9 @@
 import { useState } from "react"
 import type { ApiCustomer } from "@/api/types"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { InviteDialog } from "@/components/invite-dialog"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import {
   Search,
   Mail,
@@ -12,16 +15,20 @@ import {
   ChevronUp,
   Loader2,
   User,
+  Trash2,
 } from "lucide-react"
 
 interface CustomerTableProps {
   customers: ApiCustomer[]
   loading?: boolean
+  onDelete?: (id: string) => void
 }
 
-export function CustomerTable({ customers, loading }: CustomerTableProps) {
+export function CustomerTable({ customers, loading, onDelete }: CustomerTableProps) {
   const [search, setSearch] = useState("")
   const [expandedCustomer, setExpandedCustomer] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState<string | null>(null)
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
 
   const filtered = customers.filter((c) => {
     if (search === "") return true
@@ -121,6 +128,55 @@ export function CustomerTable({ customers, loading }: CustomerTableProps) {
                           <span className="font-mono text-[10px] uppercase tracking-wider">Notes:</span>{" "}
                           <span className="text-card-foreground">{customer.notes}</span>
                         </div>
+                      )}
+                    </div>
+                    <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
+                      <InviteDialog
+                        email={customer.email ?? ""}
+                        role="customer"
+                        customerId={customer.id}
+                        trigger={
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 gap-1.5 text-xs"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Mail className="h-3.5 w-3.5" />
+                            Send invite
+                          </Button>
+                        }
+                      />
+                      {onDelete && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 gap-1.5 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            disabled={deleting === customer.id}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setPendingDeleteId(customer.id)
+                            }}
+                          >
+                            {deleting === customer.id
+                              ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              : <Trash2 className="h-3.5 w-3.5" />}
+                            Delete
+                          </Button>
+                          <ConfirmDialog
+                            open={pendingDeleteId === customer.id}
+                            onOpenChange={(open) => { if (!open) setPendingDeleteId(null) }}
+                            title={`Delete ${customer.name}?`}
+                            description="This will permanently remove the customer and all associated data. This cannot be undone."
+                            confirmLabel="Delete"
+                            onConfirm={() => {
+                              setDeleting(customer.id)
+                              setPendingDeleteId(null)
+                              onDelete(customer.id)
+                            }}
+                          />
+                        </>
                       )}
                     </div>
                   </div>

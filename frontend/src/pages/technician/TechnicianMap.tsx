@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { api } from "@/api/client"
 import type { ApiJob } from "@/api/types"
 import { Card, CardContent } from "@/components/ui/card"
@@ -13,13 +13,11 @@ import "leaflet/dist/leaflet.css"
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
-/** Detect iOS (iPhone/iPad) for Apple Maps deep link */
 function isIOS(): boolean {
   if (typeof navigator === "undefined") return false
   return /iPhone|iPad|iPod/i.test(navigator.userAgent)
 }
 
-/** Open directions: Apple Maps on iOS, Google Maps elsewhere */
 function openDirections(address: string) {
   const encoded = encodeURIComponent(address)
   if (isIOS()) {
@@ -52,7 +50,7 @@ function createNumberedIcon(n: number, isSelected: boolean) {
   })
 }
 
-// ── Geocoding (Nominatim – free, no key) ─────────────────────────────
+// ── Geocoding ────────────────────────────────────────────────────────
 
 interface GeocodedJob {
   job: ApiJob
@@ -80,22 +78,24 @@ async function geocodeAddress(address: string): Promise<{ lat: number; lng: numb
 
 function MapBoundsController({ points, selectedIdx }: { points: GeocodedJob[]; selectedIdx: number }) {
   const map = useMap()
+  const prevCount = useRef(0)
 
   useEffect(() => {
     if (points.length === 0) return
     if (selectedIdx >= 0 && selectedIdx < points.length) {
-      const p = points[selectedIdx]
-      map.flyTo([p.lat, p.lng], 15, { duration: 0.8 })
-    } else if (points.length > 0) {
+      map.flyTo([points[selectedIdx].lat, points[selectedIdx].lng], 15, { duration: 0.8 })
+    } else if (points.length !== prevCount.current) {
+      // Fit bounds whenever new pins are added
       const bounds = L.latLngBounds(points.map((p) => [p.lat, p.lng] as [number, number]))
       map.fitBounds(bounds, { padding: [40, 40] })
     }
+    prevCount.current = points.length
   }, [map, points, selectedIdx])
 
   return null
 }
 
-// ── Status colors ────────────────────────────────────────────────────
+// ── Status styles ────────────────────────────────────────────────────
 
 const statusColors: Record<string, string> = {
   scheduled: "bg-primary",
@@ -113,45 +113,83 @@ const statusLabels: Record<string, string> = {
   cancelled: "Cancelled",
 }
 
+// ── Map overlay spinner (shows while tiles load and geocoding runs) ──
+
+function MapLoadingOverlay({ geocodedCount, totalCount }: { geocodedCount: number; totalCount: number }) {
+  const allDone = geocodedCount >= totalCount && totalCount > 0
+  if (allDone) return null
+
+  return (
+    <div
+      className="pointer-events-none absolute inset-0 z-[1000] flex flex-col items-center justify-center gap-2"
+      style={{ background: "rgba(13,17,23,0.55)", backdropFilter: "blur(2px)" }}
+    >
+      <Loader2 className="h-5 w-5 animate-spin text-white/80" />
+      <span className="text-xs font-mono text-white/70">
+        {geocodedCount === 0
+          ? "Finding locations…"
+          : `Located ${geocodedCount} of ${totalCount}`}
+      </span>
+    </div>
+  )
+}
+
 // ── Main Page ────────────────────────────────────────────────────────
 
 export default function TechMapPage() {
   const [jobs, setJobs] = useState<ApiJob[]>([])
   const [geocoded, setGeocoded] = useState<GeocodedJob[]>([])
+  const [geocodingTotal, setGeocodingTotal] = useState(0)
   const [selectedIdx, setSelectedIdx] = useState(-1)
+  // Start as true — we're always "loading" until jobs + geocoding resolve
   const [loading, setLoading] = useState(true)
-  const [geocoding, setGeocoding] = useState(false)
+  const cancelRef = useRef(false)
 
-  // Fetch jobs from API
   useEffect(() => {
+    cancelRef.current = false
     api.get<ApiJob[]>("/api/jobs")
       .then((all) => {
         const active = all.filter((j) => j.status !== "completed" && j.status !== "cancelled")
         setJobs(active)
+        setGeocodingTotal(active.length)
+        if (active.length === 0) setLoading(false)
       })
-      .catch((e) => console.error("Failed to fetch jobs:", e))
-      .finally(() => setLoading(false))
+      .catch((e) => {
+        console.error("Failed to fetch jobs:", e)
+        setLoading(false)
+      })
+    return () => { cancelRef.current = true }
   }, [])
 
-  // Geocode job addresses
+  // Geocode incrementally — stream pins onto map as each address resolves
   useEffect(() => {
     if (jobs.length === 0) return
-    setGeocoding(true)
+    setGeocoded([])
+
     const geocodeAll = async () => {
-      const results: GeocodedJob[] = []
+      let firstPin = true
       for (const job of jobs) {
-        const fullAddress = `${job.customer.address}`
-        const coords = await geocodeAddress(fullAddress)
+        if (cancelRef.current) break
+        const coords = await geocodeAddress(job.customer.address)
+        if (cancelRef.current) break
         if (coords) {
-          results.push({ job, ...coords })
+          setGeocoded((prev) => {
+            const next = [...prev, { job, ...coords }]
+            return next
+          })
+          if (firstPin) {
+            // As soon as the first pin arrives, hide the full-page spinner
+            setLoading(false)
+            firstPin = false
+          }
         }
-        // Small delay to respect Nominatim rate limits (1 req/sec)
+        // Respect Nominatim rate limit (1 req/sec)
         await new Promise((r) => setTimeout(r, 1100))
       }
-      setGeocoded(results)
-      if (results.length > 0) setSelectedIdx(0)
-      setGeocoding(false)
+      // If nothing geocoded, stop loading anyway
+      setLoading(false)
     }
+
     geocodeAll()
   }, [jobs])
 
@@ -160,14 +198,23 @@ export default function TechMapPage() {
     [geocoded]
   )
 
-  const defaultCenter: [number, number] = [39.8283, -98.5795] // US center
-  const selectedJob = selectedIdx >= 0 ? geocoded[selectedIdx] : null
+  const selectedJob = selectedIdx >= 0 && selectedIdx < geocoded.length ? geocoded[selectedIdx] : null
 
+  // ── Full-page loading (before any jobs or first pin) ──────────────
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-sm text-muted-foreground">Loading jobs...</span>
+      <div className="flex h-[60vh] flex-col items-center justify-center gap-3">
+        <Loader2 className="h-7 w-7 animate-spin text-muted-foreground" />
+        <div className="text-center">
+          <p className="text-sm font-medium text-foreground">
+            {jobs.length === 0 ? "Loading jobs…" : "Finding your stops…"}
+          </p>
+          {jobs.length > 0 && (
+            <p className="mt-1 text-xs text-muted-foreground font-mono">
+              Located {geocoded.length} of {geocodingTotal}
+            </p>
+          )}
+        </div>
       </div>
     )
   }
@@ -178,76 +225,74 @@ export default function TechMapPage() {
         <h1 className="text-lg font-semibold text-foreground">Route Map</h1>
         <p className="text-xs text-muted-foreground font-mono">
           {jobs.length} stop{jobs.length !== 1 ? "s" : ""} today
-          {geocoding && " · Mapping addresses..."}
+          {geocoded.length < geocodingTotal && geocodingTotal > 0 && (
+            <span className="ml-1 text-primary/70">
+              · locating {geocoded.length}/{geocodingTotal}
+            </span>
+          )}
         </p>
       </div>
 
       {/* Leaflet Map */}
       <div className="relative h-64 overflow-hidden rounded-xl border border-border">
         {geocoded.length > 0 ? (
-          <MapContainer
-            center={geocoded[0] ? [geocoded[0].lat, geocoded[0].lng] : defaultCenter}
-            zoom={12}
-            scrollWheelZoom={true}
-            style={{ height: "100%", width: "100%" }}
-            className="z-0"
-          >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-            />
-            <MapBoundsController points={geocoded} selectedIdx={selectedIdx} />
-
-            {/* Route polyline */}
-            {routePolyline.length > 1 && (
-              <Polyline
-                positions={routePolyline}
-                pathOptions={{
-                  color: "oklch(0.72 0.15 192)",
-                  weight: 3,
-                  dashArray: "8, 6",
-                  opacity: 0.7,
-                }}
+          <>
+            <MapContainer
+              center={[geocoded[0].lat, geocoded[0].lng]}
+              zoom={12}
+              scrollWheelZoom={true}
+              style={{ height: "100%", width: "100%" }}
+              className="z-0"
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
               />
-            )}
+              <MapBoundsController points={geocoded} selectedIdx={selectedIdx} />
 
-            {/* Job pins */}
-            {geocoded.map((g, i) => (
-              <Marker
-                key={g.job.id}
-                position={[g.lat, g.lng]}
-                icon={createNumberedIcon(i + 1, selectedIdx === i)}
-                eventHandlers={{ click: () => setSelectedIdx(i) }}
-              >
-                <Popup>
-                  <div style={{ color: "#0d1117", fontFamily: "system-ui", fontSize: 13 }}>
-                    <strong>
-                      {g.job.equipmentType
-                        ? g.job.equipmentType.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())
-                        : "Service"}
-                    </strong>
-                    <br />
-                    <span style={{ fontSize: 11, color: "#57606a" }}>{g.job.customer.name}</span>
-                    <br />
-                    <span style={{ fontSize: 11, color: "#57606a" }}>{g.job.customer.address}</span>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
-          </MapContainer>
+              {routePolyline.length > 1 && (
+                <Polyline
+                  positions={routePolyline}
+                  pathOptions={{
+                    color: "oklch(0.72 0.15 192)",
+                    weight: 3,
+                    dashArray: "8, 6",
+                    opacity: 0.7,
+                  }}
+                />
+              )}
+
+              {geocoded.map((g, i) => (
+                <Marker
+                  key={g.job.id}
+                  position={[g.lat, g.lng]}
+                  icon={createNumberedIcon(i + 1, selectedIdx === i)}
+                  eventHandlers={{ click: () => setSelectedIdx(i) }}
+                >
+                  <Popup>
+                    <div style={{ color: "#0d1117", fontFamily: "system-ui", fontSize: 13 }}>
+                      <strong>
+                        {g.job.equipmentType
+                          ? g.job.equipmentType.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())
+                          : "Service"}
+                      </strong>
+                      <br />
+                      <span style={{ fontSize: 11, color: "#57606a" }}>{g.job.customer.name}</span>
+                      <br />
+                      <span style={{ fontSize: 11, color: "#57606a" }}>{g.job.customer.address}</span>
+                    </div>
+                  </Popup>
+                </Marker>
+              ))}
+            </MapContainer>
+
+            {/* Overlay spinner while remaining addresses are still geocoding */}
+            <MapLoadingOverlay geocodedCount={geocoded.length} totalCount={geocodingTotal} />
+          </>
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-2 bg-secondary">
-            {geocoding ? (
-              <>
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                <span className="text-xs text-muted-foreground font-mono">Mapping addresses...</span>
-              </>
-            ) : (
-              <>
-                <MapPin className="h-6 w-6 text-muted-foreground/40" />
-                <span className="text-xs text-muted-foreground">No job locations to display</span>
-              </>
-            )}
+            <MapPin className="h-6 w-6 text-muted-foreground/40" />
+            <span className="text-xs text-muted-foreground">No job locations to display</span>
           </div>
         )}
       </div>
@@ -263,15 +308,17 @@ export default function TechMapPage() {
             <p className="mt-2 text-sm text-muted-foreground">No active jobs</p>
           </div>
         )}
-        {jobs.map((job, i) => {
+        {jobs.map((job) => {
           const geocodedIdx = geocoded.findIndex((g) => g.job.id === job.id)
           const isSelected = selectedIdx === geocodedIdx && geocodedIdx >= 0
           const scheduled = new Date(job.scheduledAt)
+          const isMapped = geocodedIdx >= 0
           return (
             <Card
               key={job.id}
               className={cn(
-                "border-border bg-card cursor-pointer transition-all",
+                "border-border bg-card transition-all",
+                isMapped ? "cursor-pointer hover:border-primary/30" : "opacity-60",
                 isSelected && "border-primary/50 ring-1 ring-primary/20"
               )}
               onClick={() => { if (geocodedIdx >= 0) setSelectedIdx(geocodedIdx) }}
@@ -280,11 +327,17 @@ export default function TechMapPage() {
                 <div className="flex items-center gap-3">
                   <div
                     className={cn(
-                      "flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-primary-foreground",
-                      statusColors[job.status] ?? "bg-secondary"
+                      "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                      isMapped
+                        ? cn(statusColors[job.status] ?? "bg-secondary", "text-primary-foreground")
+                        : "bg-secondary text-muted-foreground"
                     )}
                   >
-                    {geocodedIdx >= 0 ? geocodedIdx + 1 : i + 1}
+                    {isMapped ? (
+                      geocodedIdx + 1
+                    ) : (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -339,7 +392,6 @@ export default function TechMapPage() {
         })}
       </div>
 
-      {/* Full navigation button */}
       {selectedJob && (
         <Button
           className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90"

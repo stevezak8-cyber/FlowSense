@@ -15,7 +15,9 @@ export function useNotifications() {
 
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const host = window.location.host;
-    const ws = new WebSocket(`${protocol}//${host}/ws?token=${token}`);
+    // Pass token as a subprotocol instead of a URL query param — keeps the
+    // JWT out of server access logs while still authenticating the connection.
+    const ws = new WebSocket(`${protocol}//${host}/ws`, [token]);
 
     ws.onopen = () => {
       console.log("WebSocket connected");

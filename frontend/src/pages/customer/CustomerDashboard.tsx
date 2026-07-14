@@ -17,8 +17,11 @@ import {
   ArrowRight,
   CalendarPlus,
   Loader2,
+  X,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { ChangePasswordCard } from "@/components/change-password-card"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 
 const statusSteps = ["scheduled", "in_progress", "completed"]
 const statusLabels: Record<string, string> = {
@@ -33,6 +36,9 @@ export default function CustomerDashboard() {
   const [jobs, setJobs] = useState<ApiJob[]>([])
   const [invoices, setInvoices] = useState<ApiInvoice[]>([])
   const [loading, setLoading] = useState(true)
+  const [cancelling, setCancelling] = useState<string | null>(null)
+  const [cancelError, setCancelError] = useState<string | null>(null)
+  const [pendingCancelId, setPendingCancelId] = useState<string | null>(null)
 
   useEffect(() => {
     Promise.all([
@@ -46,6 +52,19 @@ export default function CustomerDashboard() {
       .catch((e) => console.error("Failed to load dashboard:", e))
       .finally(() => setLoading(false))
   }, [])
+
+  async function handleCancel(jobId: string) {
+    setCancelling(jobId)
+    setCancelError(null)
+    try {
+      await api.patch(`/api/jobs/${jobId}`, { status: "cancelled" })
+      setJobs((prev) => prev.map((j) => j.id === jobId ? { ...j, status: "cancelled" } : j))
+    } catch {
+      setCancelError("Could not cancel the booking. Please call us directly.")
+    } finally {
+      setCancelling(null)
+    }
+  }
 
   const activeJobs = jobs.filter(
     (j) => j.status !== "completed" && j.status !== "cancelled"
@@ -177,11 +196,42 @@ export default function CustomerDashboard() {
                     </div>
                   )}
 
-                  {/* Address */}
-                  <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-                    <MapPin className="h-3 w-3" />
-                    {job.customer.address}
+                  {/* Address + Cancel */}
+                  <div className="mt-3 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <MapPin className="h-3 w-3" />
+                      {job.customer.address}
+                    </div>
+                    {job.status === "scheduled" && (
+                      <button
+                        type="button"
+                        onClick={() => setPendingCancelId(job.id)}
+                        disabled={cancelling === job.id}
+                        className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
+                      >
+                        {cancelling === job.id
+                          ? <Loader2 className="h-3 w-3 animate-spin" />
+                          : <X className="h-3 w-3" />
+                        }
+                        Cancel booking
+                      </button>
+                    )}
                   </div>
+                  {cancelError && cancelling !== job.id && (
+                    <p className="mt-2 text-[11px] text-destructive">{cancelError}</p>
+                  )}
+                  <ConfirmDialog
+                    open={pendingCancelId === job.id}
+                    onOpenChange={(open) => { if (!open) setPendingCancelId(null) }}
+                    title="Cancel this booking?"
+                    description="Are you sure you want to cancel this service booking? You can always rebook through your dashboard."
+                    confirmLabel="Cancel Booking"
+                    cancelLabel="Keep Booking"
+                    onConfirm={() => {
+                      setPendingCancelId(null)
+                      handleCancel(job.id)
+                    }}
+                  />
                 </CardContent>
               </Card>
             )
@@ -228,6 +278,8 @@ export default function CustomerDashboard() {
           </Card>
         </Link>
       </div>
+
+      <ChangePasswordCard />
     </div>
   )
 }

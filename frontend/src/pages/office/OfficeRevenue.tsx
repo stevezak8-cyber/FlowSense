@@ -6,8 +6,8 @@ import type { ApiInvoice, RevenueDataPoint, ApiJob } from "@/api/types"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DollarSign, TrendingUp, FileText, AlertCircle, Loader2 } from "lucide-react"
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend, LineChart, Line,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend,
 } from "recharts"
 
 const COLORS = [
@@ -120,13 +120,19 @@ export default function RevenuePage() {
             <div className="h-72">
               {revenueData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={revenueData} barSize={32}>
+                  <AreaChart data={revenueData}>
+                    <defs>
+                      <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="oklch(0.55 0.18 260)" stopOpacity={0.28} />
+                        <stop offset="95%" stopColor="oklch(0.55 0.18 260)" stopOpacity={0.01} />
+                      </linearGradient>
+                    </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.90 0.005 250)" vertical={false} />
                     <XAxis dataKey="month" stroke="oklch(0.60 0.01 250)" fontSize={11} fontFamily="monospace" tickLine={false} axisLine={false} />
                     <YAxis stroke="oklch(0.60 0.01 250)" fontSize={11} fontFamily="monospace" tickLine={false} axisLine={false} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
                     <Tooltip contentStyle={{ backgroundColor: "oklch(1 0 0)", border: "1px solid oklch(0.90 0.005 250)", borderRadius: "8px", fontSize: "12px", fontFamily: "monospace", color: "oklch(0.20 0.02 250)", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }} formatter={(value: number | undefined) => [`$${(value ?? 0).toLocaleString()}`, "Revenue"]} />
-                    <Bar dataKey="revenue" fill="oklch(0.55 0.18 260)" radius={[4, 4, 0, 0]} />
-                  </BarChart>
+                    <Area type="monotone" dataKey="revenue" stroke="oklch(0.55 0.18 260)" strokeWidth={2.5} fill="url(#revenueGrad)" dot={false} activeDot={{ r: 5, strokeWidth: 0, fill: "oklch(0.55 0.18 260)" }} />
+                  </AreaChart>
                 </ResponsiveContainer>
               ) : (
                 <div className="flex items-center justify-center h-full text-sm text-muted-foreground">No revenue data yet</div>
@@ -163,13 +169,19 @@ export default function RevenuePage() {
           <div className="h-56">
             {revenueData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={revenueData}>
+                <AreaChart data={revenueData}>
+                  <defs>
+                    <linearGradient id="jobsGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="oklch(0.70 0.16 55)" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="oklch(0.70 0.16 55)" stopOpacity={0.01} />
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.90 0.005 250)" vertical={false} />
                   <XAxis dataKey="month" stroke="oklch(0.60 0.01 250)" fontSize={11} fontFamily="monospace" tickLine={false} axisLine={false} />
                   <YAxis stroke="oklch(0.60 0.01 250)" fontSize={11} fontFamily="monospace" tickLine={false} axisLine={false} />
                   <Tooltip contentStyle={{ backgroundColor: "oklch(1 0 0)", border: "1px solid oklch(0.90 0.005 250)", borderRadius: "8px", fontSize: "12px", fontFamily: "monospace", color: "oklch(0.20 0.02 250)", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }} />
-                  <Line type="monotone" dataKey="jobs" stroke="oklch(0.70 0.16 55)" strokeWidth={2} dot={{ fill: "oklch(0.70 0.16 55)", r: 4 }} activeDot={{ r: 6, fill: "oklch(0.70 0.16 55)" }} />
-                </LineChart>
+                  <Area type="monotone" dataKey="jobs" stroke="oklch(0.70 0.16 55)" strokeWidth={2.5} fill="url(#jobsGrad)" dot={false} activeDot={{ r: 5, strokeWidth: 0, fill: "oklch(0.70 0.16 55)" }} />
+                </AreaChart>
               </ResponsiveContainer>
             ) : (
               <div className="flex items-center justify-center h-full text-sm text-muted-foreground">No data yet</div>

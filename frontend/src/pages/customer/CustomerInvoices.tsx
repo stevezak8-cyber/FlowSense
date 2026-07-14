@@ -5,20 +5,38 @@ import { api } from "@/api/client"
 import type { ApiInvoice } from "@/api/types"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { DollarSign, FileText, CreditCard, CheckCircle2, Loader2 } from "lucide-react"
+import { PageError } from "@/components/page-error"
+import { DollarSign, FileText, Phone, CheckCircle2, Loader2, ExternalLink } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export default function CustomerInvoices() {
   const [invoices, setInvoices] = useState<ApiInvoice[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [payingId, setPayingId] = useState<string | null>(null)
 
-  useEffect(() => {
+  function fetchInvoices() {
+    setLoading(true)
+    setError(null)
     api.get<ApiInvoice[]>("/api/invoices")
       .then(setInvoices)
-      .catch((e) => console.error("Failed to load invoices:", e))
+      .catch((e: unknown) => setError((e as Error).message ?? "Failed to load invoices"))
       .finally(() => setLoading(false))
-  }, [])
+  }
+
+  useEffect(() => { fetchInvoices() }, [])
+
+  async function handlePayNow(invoiceId: string) {
+    setPayingId(invoiceId)
+    try {
+      const { url } = await api.post<{ url: string }>(`/api/invoices/${invoiceId}/payment-link`, {})
+      if (url) window.location.href = url
+    } catch {
+      // payment not configured — fall back silently, button will show call option
+    } finally {
+      setPayingId(null)
+    }
+  }
 
   const totalOwed = invoices
     .filter((i) => i.status === "pending" || i.status === "overdue")
@@ -27,14 +45,12 @@ export default function CustomerInvoices() {
     .filter((i) => i.status === "paid")
     .reduce((acc, i) => acc + i.amount, 0)
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-sm text-muted-foreground">Loading invoices...</span>
-      </div>
-    )
-  }
+  if (loading) return (
+    <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
+      <Loader2 className="h-5 w-5 animate-spin" /> Loading invoices…
+    </div>
+  )
+  if (error) return <PageError message={error} onRetry={fetchInvoices} />
 
   return (
     <div className="space-y-6">
@@ -125,11 +141,31 @@ export default function CustomerInvoices() {
                 </div>
               </div>
               {(inv.status === "pending" || inv.status === "overdue") && (
-                <div className="mt-3 flex justify-end">
-                  <Button size="sm" className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 text-xs">
-                    <CreditCard className="h-3.5 w-3.5" />
-                    Pay Now
-                  </Button>
+                <div className="mt-3 flex items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-3 py-2">
+                  <p className="text-xs text-muted-foreground">
+                    Pay securely online or call your service team.
+                  </p>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handlePayNow(inv.id)}
+                      disabled={payingId === inv.id}
+                      className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-60"
+                    >
+                      {payingId === inv.id
+                        ? <Loader2 className="h-3 w-3 animate-spin" />
+                        : <ExternalLink className="h-3 w-3" />
+                      }
+                      Pay Now
+                    </button>
+                    <a
+                      href="tel:+15550000000"
+                      className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+                    >
+                      <Phone className="h-3 w-3" />
+                      Call
+                    </a>
+                  </div>
                 </div>
               )}
             </CardContent>

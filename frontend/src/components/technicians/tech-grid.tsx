@@ -4,6 +4,9 @@ import { useState } from "react"
 import type { ApiTechnician } from "@/api/types"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { InviteDialog } from "@/components/invite-dialog"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import { cn } from "@/lib/utils"
 import {
   Mail,
@@ -12,15 +15,19 @@ import {
   Briefcase,
   Loader2,
   Truck,
+  Trash2,
 } from "lucide-react"
 
 interface TechGridProps {
   technicians: ApiTechnician[]
   loading?: boolean
+  onDelete?: (id: string) => void
 }
 
-export function TechGrid({ technicians, loading }: TechGridProps) {
+export function TechGrid({ technicians, loading, onDelete }: TechGridProps) {
   const [selectedTech, setSelectedTech] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState<string | null>(null)
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
 
   if (loading) {
     return (
@@ -117,6 +124,55 @@ export function TechGrid({ technicians, loading }: TechGridProps) {
                     </Badge>
                   </div>
                 )}
+                <div className="flex items-center justify-between border-t border-border pt-3">
+                  <InviteDialog
+                    email={tech.email ?? ""}
+                    role="technician"
+                    technicianId={tech.id}
+                    trigger={
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 gap-1.5 text-xs"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Mail className="h-3.5 w-3.5" />
+                        Send invite
+                      </Button>
+                    }
+                  />
+                  {onDelete && (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 gap-1.5 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        disabled={deleting === tech.id}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setPendingDeleteId(tech.id)
+                        }}
+                      >
+                        {deleting === tech.id
+                          ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          : <Trash2 className="h-3.5 w-3.5" />}
+                        Delete
+                      </Button>
+                      <ConfirmDialog
+                        open={pendingDeleteId === tech.id}
+                        onOpenChange={(open) => { if (!open) setPendingDeleteId(null) }}
+                        title={`Delete ${tech.name}?`}
+                        description="This will permanently remove the technician from your roster. This cannot be undone."
+                        confirmLabel="Delete"
+                        onConfirm={() => {
+                          setDeleting(tech.id)
+                          setPendingDeleteId(null)
+                          onDelete(tech.id)
+                        }}
+                      />
+                    </>
+                  )}
+                </div>
               </div>
             )}
           </div>

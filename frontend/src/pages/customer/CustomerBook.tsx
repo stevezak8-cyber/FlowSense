@@ -115,7 +115,12 @@ export default function CustomerBook() {
       setJobId(job.id);
       setSubmitted(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to book service");
+      const msg = e instanceof Error ? e.message : "Failed to book service";
+      setError(
+        msg.includes("already scheduled")
+          ? "You already have a service booked at this time. Please choose a different date or time slot."
+          : msg
+      );
     } finally {
       setSubmitting(false);
     }

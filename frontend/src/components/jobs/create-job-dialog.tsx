@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { api } from "@/api/client"
 import type { ApiCustomer, ApiTechnician } from "@/api/types"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -106,6 +107,7 @@ export function CreateJobDialog({
 
     try {
       await api.post("/api/jobs", payload)
+      toast.success("Job created successfully")
       resetForm()
       onCreated()
     } catch (err) {
