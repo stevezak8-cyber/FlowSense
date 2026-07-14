@@ -1,5 +1,13 @@
 // FlowSense - HVAC business operating system
 // MVP: Technician co-pilot, job docs, pre-arrival intel, compliance
+//
+// DATABASE WORKFLOW:
+//   Development:  npm run db:migrate      (creates migration files + applies)
+//   Production:   npm run db:migrate:deploy (applies existing migrations, no prompts)
+//   Prototyping:  npm run db:push         (schema push, no migration files — DEV ONLY)
+//
+// IMPORTANT: Always use db:migrate in dev to generate tracked migration files.
+// Never use db:push against a production database — it can cause data loss.
 
 generator client {
   provider = "prisma-client-js"
@@ -15,8 +23,17 @@ model Organization {
   id        String   @id @default(cuid())
   name      String
   slug      String   @unique
+  phone     String?
+  email     String?
+  address   String?
+  notificationPreferences Json? // { booking: bool, statusChange: bool, completion: bool, urgent: bool }
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  stripeCustomerId      String?
+  stripeSubscriptionId  String?
+  plan                  String    @default("trial")
+  trialEndsAt           DateTime?
 
   users         User[]
   technicians   Technician[]
@@ -55,6 +72,7 @@ model Technician {
   phone          String?
   epa608Level    String?      // EPA 608 compliance level
   skills         String[]     @default([])  // e.g. ["furnace", "ac", "heat-pump"]
+  isOnDuty       Boolean      @default(true)  // live availability toggle
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
