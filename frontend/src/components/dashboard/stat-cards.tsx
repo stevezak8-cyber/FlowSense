@@ -88,7 +88,7 @@ export function StatCards({ stats, loading }: StatCardsProps) {
     {
       label: "Customers",
       value: stats.totalCustomers,
-      icon: Clock,
+      icon: Users,
       change: "In database",
       color: "text-primary",
       bg: "bg-primary/8",

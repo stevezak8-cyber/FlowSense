@@ -38,15 +38,20 @@ const priorityConfig: Record<string, { label: string; className: string }> = {
 export default function TechnicianJobsPage() {
   const [jobs, setJobs] = useState<ApiJob[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [completingJob, setCompletingJob] = useState<ApiJob | null>(null)
 
-  useEffect(() => {
+  function fetchJobs() {
+    setLoading(true)
+    setError(null)
     api.get<ApiJob[]>("/api/jobs")
       .then(setJobs)
-      .catch((e) => console.error("Failed to load jobs:", e))
+      .catch(() => setError("Could not load your jobs. Check your connection and try again."))
       .finally(() => setLoading(false))
-  }, [])
+  }
+
+  useEffect(() => { fetchJobs() }, [])
 
   const activeJobs = jobs.filter((j) => j.status !== "completed" && j.status !== "cancelled")
   const completedJobs = jobs.filter((j) => j.status === "completed")
@@ -265,6 +270,18 @@ export default function TechnicianJobsPage() {
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         <span className="ml-2 text-sm text-muted-foreground">Loading jobs...</span>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
+        <AlertTriangle className="h-8 w-8 text-destructive" />
+        <p className="text-sm text-muted-foreground">{error}</p>
+        <Button size="sm" variant="outline" onClick={fetchJobs}>
+          <RefreshCw className="h-4 w-4 mr-2" /> Try again
+        </Button>
       </div>
     )
   }

@@ -5,6 +5,7 @@ import type { ApiJob } from "@/api/types"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import { cn } from "@/lib/utils"
 import {
   Search,
@@ -17,6 +18,7 @@ import {
   ChevronDown,
   ChevronUp,
   Loader2,
+  Trash2,
 } from "lucide-react"
 
 const statusStyles: Record<string, string> = {
@@ -61,12 +63,15 @@ const filters: { label: string; value: StatusFilter }[] = [
 interface JobsTableProps {
   jobs: ApiJob[]
   loading?: boolean
+  onDelete?: (id: string) => void
 }
 
-export function JobsTable({ jobs, loading }: JobsTableProps) {
+export function JobsTable({ jobs, loading, onDelete }: JobsTableProps) {
   const [activeFilter, setActiveFilter] = useState<StatusFilter>("all")
   const [search, setSearch] = useState("")
   const [expandedJob, setExpandedJob] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState<string | null>(null)
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
 
   const filtered = jobs.filter((job) => {
     const matchesFilter =
@@ -75,6 +80,7 @@ export function JobsTable({ jobs, loading }: JobsTableProps) {
       search === "" ||
       (job.symptomSummary ?? "").toLowerCase().includes(search.toLowerCase()) ||
       job.customer.name.toLowerCase().includes(search.toLowerCase()) ||
+      (job.technician?.name ?? "").toLowerCase().includes(search.toLowerCase()) ||
       job.id.toLowerCase().includes(search.toLowerCase())
     return matchesFilter && matchesSearch
   })
@@ -217,6 +223,37 @@ export function JobsTable({ jobs, loading }: JobsTableProps) {
                         </p>
                       </div>
                     </div>
+                    {onDelete && (job.status === "cancelled" || job.status === "completed") && (
+                      <div className="mt-4 flex justify-end border-t border-border pt-4">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 gap-1.5 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          disabled={deleting === job.id}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setPendingDeleteId(job.id)
+                          }}
+                        >
+                          {deleting === job.id
+                            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            : <Trash2 className="h-3.5 w-3.5" />}
+                          Delete Job
+                        </Button>
+                        <ConfirmDialog
+                          open={pendingDeleteId === job.id}
+                          onOpenChange={(open) => { if (!open) setPendingDeleteId(null) }}
+                          title="Delete this job?"
+                          description="This will permanently remove the job record. This cannot be undone."
+                          confirmLabel="Delete Job"
+                          onConfirm={() => {
+                            setDeleting(job.id)
+                            setPendingDeleteId(null)
+                            onDelete(job.id)
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
