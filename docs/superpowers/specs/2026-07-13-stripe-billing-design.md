@@ -78,7 +78,7 @@ Extend the existing `POST /webhooks/stripe` handler to process:
 | Event | Action |
 |-------|--------|
 | `customer.subscription.created` | Set `plan: "trial"`, `trialEndsAt`, `stripeSubscriptionId` |
-| `customer.subscription.updated` | Update `plan` based on current price ID |
+| `customer.subscription.updated` | Compare `subscription.items.data[0].price.id` against `STRIPE_PRICE_ID_ENTRY/CORE/PREMIUM` env vars; update `plan` to matching tier |
 | `invoice.payment_succeeded` | If subscription invoice, set `plan` to active tier |
 | `invoice.payment_failed` | Log warning (Stripe handles retries) |
 | `customer.subscription.deleted` | Set `plan: "cancelled"` |
@@ -130,7 +130,7 @@ Maps `plan` → Stripe price ID via env vars, calls `stripe.subscriptions.update
 
 ### `requireSubscription`
 
-Applied to all `/api/*` routes except `/api/auth/*`, `/webhooks/*`, and `/api/billing/portal`.
+Applied to all `/api/*` routes except `/api/auth/*`, `/webhooks/*`, `/api/billing/portal`, and `/api/admin/billing/upgrade` (admin must be able to reactivate a cancelled org).
 
 Checks `organization.plan !== "cancelled"`. If cancelled, returns:
 ```json
@@ -145,6 +145,10 @@ Applied to `/api/admin/*`. Checks `user.role === "admin"`. Returns 403 if not.
 ---
 
 ## Frontend Changes
+
+### Org/plan data for the frontend
+
+Extend the existing `GET /api/auth/me` response to include `organization: { plan, trialEndsAt }`. The frontend reads this on login and stores it in auth context — used by the trial banner and cancelled-account screen.
 
 ### Registration page (`/register`)
 
@@ -178,9 +182,10 @@ STRIPE_PRICE_ID_PREMIUM=price_...
 
 ## Error Handling
 
-- Stripe API errors during checkout session creation → return 503, log error, do not create org (atomic rollback)
+- Stripe API errors during checkout session creation → rollback in reverse order: delete Stripe Customer if created, rollback DB transaction, return 503. Sequence is: (1) create Stripe Customer, (2) create DB org+user in transaction, (3) create Checkout Session — if step 3 fails, delete Stripe Customer and rollback DB.
 - Webhook handler always returns 200 to Stripe to prevent retries, except on DB write failures (return 500 so Stripe retries)
 - Portal session errors → return 503 with message "Billing portal temporarily unavailable"
+- Webhook idempotency: before writing plan updates, check current org plan — skip the write if already in the target state to handle Stripe's at-least-once delivery
 
 ---
 
