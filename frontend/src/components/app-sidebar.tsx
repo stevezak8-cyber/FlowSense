@@ -24,7 +24,7 @@ const navItems = [
   { label: "Technicians", href: "/office/technicians", icon: UserCog },
   { label: "Customers", href: "/office/customers", icon: Users },
   { label: "Messages", href: "/office/messages", icon: MessageSquare },
-  { label: "Reports", href: "/office/reports", icon: BarChart3 },
+  { label: "Revenue", href: "/office/reports", icon: BarChart3 },
 ]
 
 const bottomItems = [
