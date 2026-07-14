@@ -39,12 +39,28 @@ onboardingDismissed Boolean @default(false)
 ```
 
 - Derived step completion from live data (technician/customer/job counts).
-- `onboardingDismissed` is set to `true` when the user explicitly dismisses the checklist OR when all 4 steps complete and the user has seen the completion state.
+- `onboardingDismissed` is set to `true` when the user explicitly dismisses the checklist OR when all 4 steps complete and the 2-second completion display finishes.
 - Once `onboardingDismissed: true`, the checklist never reappears — even if records are later deleted.
 
 ---
 
 ## Data Flow
+
+### TypeScript type
+
+Add to `frontend/src/api/types.ts`:
+
+```typescript
+export interface OnboardingStatus {
+  dismissed: boolean;
+  steps: {
+    companyProfile: boolean;
+    technician: boolean;
+    customer: boolean;
+    job: boolean;
+  };
+}
+```
 
 ### New API endpoint: `GET /api/onboarding/status`
 
@@ -64,9 +80,13 @@ Authenticated (office role). Returns:
 
 Implementation: single DB query selecting `phone`, `address`, `onboardingDismissed`, plus counts of technicians, customers, and jobs for the org.
 
+**Error handling:** If the fetch fails (network error, 5xx), the checklist hides entirely — fail silently, do not block the sidebar from rendering.
+
 ### New API endpoint: `POST /api/onboarding/dismiss`
 
 Authenticated (office role). Sets `onboardingDismissed: true` on the org. Returns `{ ok: true }`.
+
+**Error handling:** Both the auto-dismiss (after completion) and the manual Dismiss button use optimistic hide — hide the checklist in local state immediately regardless of whether the API call succeeds. If the call fails, the checklist reappears on the next page load (since `dismissed` will still be `false`), which is acceptable. The button does not show a loading or error state.
 
 ---
 
@@ -88,15 +108,16 @@ Getting Started  2/4
                            [Dismiss]
 ```
 
-- Collapsible (chevron toggle) — collapsed state persists in `localStorage`.
-- Each incomplete step row is clickable:
-  - "Set up your company" → navigate to `/office/settings`
-  - "Add your first technician" → navigate to `/office/technicians` and open the Add Technician dialog
-  - "Add your first customer" → navigate to `/office/customers` and open the Add Customer dialog
-  - "Create your first job" → navigate to `/office/jobs` and open the Create Job dialog
+- Collapsible (chevron toggle) — collapsed state persists in `localStorage` under the key `onboarding_checklist_collapsed` (not org-scoped; acceptable since the checklist auto-dismisses permanently).
+- On mobile (sidebar collapsed/hidden), the checklist is not shown. No mobile-specific affordance required for this milestone.
+- Each incomplete step row is clickable. Dialog opening uses a URL query param: navigate to the target route with `?open=add-dialog`, and the target page reads this param on mount to call `setDialogOpen(true)`, then clears the param from the URL:
+  - "Set up your company" → `navigate("/office/settings")`
+  - "Add your first technician" → `navigate("/office/technicians?open=add-technician")`
+  - "Add your first customer" → `navigate("/office/customers?open=add-customer")`
+  - "Create your first job" → `navigate("/office/jobs?open=create-job")`
 - Completed steps show a green checkmark and are not clickable.
-- **Completion state:** when all 4 steps are checked, show "You're all set! FlowSense is ready." for 2 seconds, then call `POST /api/onboarding/dismiss` and hide the card.
-- **Dismiss button:** visible at all times. Calls `POST /api/onboarding/dismiss` immediately.
+- **Completion state:** when all 4 steps are checked, show "You're all set! FlowSense is ready." for 2 seconds (timed via `setTimeout`). When the 2-second display completes, call `POST /api/onboarding/dismiss` and hide the card optimistically.
+- **Dismiss button:** visible at all times. Hides the card in local state immediately (optimistic), then calls `POST /api/onboarding/dismiss` fire-and-forget.
 
 The checklist is hidden entirely when `dismissed: true`.
 
@@ -156,20 +177,29 @@ No modal, no redirect interruption. Implemented in `OfficeLayout.tsx` by reading
 frontend/src/
   components/
     office/
-      onboarding-checklist.tsx   ← new: the sidebar checklist card
+      onboarding-checklist.tsx        ← new: the sidebar checklist card
   pages/
     office/
-      OfficeTechnicians.tsx      ← modify: add empty state
-      OfficeCustomers.tsx        ← modify: add empty state
-      OfficeJobs.tsx             ← modify: add empty state
-      OfficeLayout.tsx           ← modify: welcome toast on ?checkout=success
+      OfficeTechnicians.tsx           ← modify: add empty state + read ?open=add-technician param
+      OfficeCustomers.tsx             ← modify: add empty state + read ?open=add-customer param
+      OfficeJobs.tsx                  ← modify: add empty state + read ?open=create-job param
+      OfficeLayout.tsx                ← modify: welcome toast on ?checkout=success
   api/
-    types.ts                     ← modify: add OnboardingStatus type
+    types.ts                          ← modify: add OnboardingStatus type
+  components/
+    app-sidebar.tsx                   ← modify: render <OnboardingChecklist refreshKey={onboardingRefreshKey} />
 ```
 
-`app-sidebar.tsx` — modify: render `<OnboardingChecklist />` when `dismissed: false`.
+### Refresh wiring
 
-The checklist fetches from `GET /api/onboarding/status` on mount and re-fetches whenever the user completes an action (technician added, customer added, job created) — achieved by accepting a `refreshKey` prop that increments on relevant mutations, similar to the pattern used in `ScheduleCalendar`.
+Add a new `OnboardingContext` (`frontend/src/components/office/onboarding-context.tsx`):
+
+```typescript
+// Provides refreshKey (number) and triggerRefresh() to any descendant
+const OnboardingContext = createContext<{ refreshKey: number; triggerRefresh: () => void }>
+```
+
+`OfficeLayout.tsx` wraps its children in `<OnboardingProvider>`. Each dialog (AddTechnicianDialog, AddCustomerDialog, CreateJobDialog) calls `triggerRefresh()` on successful submission. `app-sidebar.tsx` reads `refreshKey` from the context and passes it to `<OnboardingChecklist refreshKey={refreshKey} />`, which uses it as a `useEffect` dependency to re-fetch status.
 
 ---
 
