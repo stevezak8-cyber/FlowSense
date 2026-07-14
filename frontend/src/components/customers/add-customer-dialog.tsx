@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { api } from "@/api/client"
 import type { ApiCustomer } from "@/api/types"
+import { toast } from "sonner"
 import {
   Dialog,
   DialogContent,
@@ -16,10 +17,15 @@ import { Plus } from "lucide-react"
 
 interface Props {
   onCreated: (customer: ApiCustomer) => void
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export function AddCustomerDialog({ onCreated }: Props) {
-  const [open, setOpen] = useState(false)
+export function AddCustomerDialog(props: Props) {
+  const { onCreated } = props
+  const [internalOpen, setInternalOpen] = useState(false)
+  const isOpen = props.open !== undefined ? props.open : internalOpen
+  const setIsOpen = props.onOpenChange ?? setInternalOpen
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
 
@@ -69,8 +75,9 @@ export function AddCustomerDialog({ onCreated }: Props) {
       if (notes.trim()) payload.notes = notes.trim()
 
       const customer = await api.post<ApiCustomer>("/api/customers", payload)
+      toast.success(`${customer.name} added to customers`)
       onCreated(customer)
-      setOpen(false)
+      setIsOpen(false)
       reset()
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create customer")
@@ -80,7 +87,7 @@ export function AddCustomerDialog({ onCreated }: Props) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) reset() }}>
+    <Dialog open={isOpen} onOpenChange={(v) => { setIsOpen(v); if (!v) reset() }}>
       <DialogTrigger asChild>
         <Button size="sm">
           <Plus className="h-4 w-4" />
@@ -182,7 +189,7 @@ export function AddCustomerDialog({ onCreated }: Props) {
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={saving}>

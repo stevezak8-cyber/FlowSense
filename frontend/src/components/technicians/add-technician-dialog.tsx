@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { api } from "@/api/client"
 import type { ApiTechnician } from "@/api/types"
+import { toast } from "sonner"
 import {
   Dialog,
   DialogContent,
@@ -26,10 +27,15 @@ const SKILL_OPTIONS = ["furnace", "ac", "heat-pump"] as const
 
 interface Props {
   onCreated: (tech: ApiTechnician) => void
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export function AddTechnicianDialog({ onCreated }: Props) {
-  const [open, setOpen] = useState(false)
+export function AddTechnicianDialog(props: Props) {
+  const { onCreated } = props
+  const [internalOpen, setInternalOpen] = useState(false)
+  const isOpen = props.open !== undefined ? props.open : internalOpen
+  const setIsOpen = props.onOpenChange ?? setInternalOpen
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
 
@@ -71,8 +77,9 @@ export function AddTechnicianDialog({ onCreated }: Props) {
       if (skills.length > 0) payload.skills = skills
 
       const tech = await api.post<ApiTechnician>("/api/technicians", payload)
+      toast.success(`${tech.name} added to your roster`)
       onCreated(tech)
-      setOpen(false)
+      setIsOpen(false)
       reset()
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create technician")
@@ -82,7 +89,7 @@ export function AddTechnicianDialog({ onCreated }: Props) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) reset() }}>
+    <Dialog open={isOpen} onOpenChange={(v) => { setIsOpen(v); if (!v) reset() }}>
       <DialogTrigger asChild>
         <Button size="sm">
           <Plus className="h-4 w-4" />
@@ -157,7 +164,7 @@ export function AddTechnicianDialog({ onCreated }: Props) {
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={saving}>

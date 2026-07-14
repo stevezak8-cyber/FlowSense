@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react"
+import { useSearchParams } from "react-router-dom"
 import { api } from "@/api/client"
 import type { ApiJob } from "@/api/types"
 import { JobsTable } from "@/components/jobs/jobs-table"
@@ -7,8 +8,9 @@ import { ScheduleCalendar } from "@/components/schedule/ScheduleCalendar"
 import { PageError } from "@/components/page-error"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Wrench, Clock, CheckCircle2, AlertTriangle, Plus, UserX } from "lucide-react"
+import { Wrench, Clock, CheckCircle2, AlertTriangle, Plus, UserX, ClipboardList } from "lucide-react"
 import { toast } from "sonner"
+import { useOnboarding } from "@/components/office/onboarding-context"
 
 export default function OfficeJobsPage() {
   const [jobs, setJobs] = useState<ApiJob[]>([])
@@ -16,6 +18,8 @@ export default function OfficeJobsPage() {
   const [error, setError] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [view, setView] = useState<"list" | "calendar">("list")
+  const [searchParams, setSearchParams] = useSearchParams()
+  const { triggerRefresh } = useOnboarding()
 
   const fetchJobs = useCallback(async () => {
     setLoading(true)
@@ -31,6 +35,13 @@ export default function OfficeJobsPage() {
   }, [])
 
   useEffect(() => { fetchJobs() }, [fetchJobs])
+
+  useEffect(() => {
+    if (searchParams.get("open") === "create-job") {
+      setDialogOpen(true)
+      setSearchParams((prev) => { prev.delete("open"); return prev })
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleDelete(id: string) {
     try {
@@ -171,6 +182,22 @@ export default function OfficeJobsPage() {
         </Card>
       )}
 
+      {!loading && jobs.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <ClipboardList className="mb-4 h-12 w-12 text-muted-foreground/40" />
+          <h3 className="text-lg font-medium text-foreground">No jobs yet</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Create your first job to see it here.
+          </p>
+          <button
+            onClick={() => setDialogOpen(true)}
+            className="mt-6 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700"
+          >
+            Create Job
+          </button>
+        </div>
+      )}
+
       {view === "list" ? (
         <JobsTable jobs={jobs} loading={loading} onDelete={handleDelete} />
       ) : (
@@ -180,7 +207,7 @@ export default function OfficeJobsPage() {
       <CreateJobDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        onCreated={() => { setDialogOpen(false); fetchJobs() }}
+        onCreated={() => { setDialogOpen(false); fetchJobs(); triggerRefresh() }}
       />
     </div>
   )
