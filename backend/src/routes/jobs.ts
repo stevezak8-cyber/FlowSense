@@ -9,6 +9,11 @@ import { statusUpdateHtml } from "../templates/status-update.js";
 import { jobCompletedHtml } from "../templates/job-completed.js";
 import { generatePreArrival } from "../services/pre-arrival.js";
 import { generateCompletionSummary } from "../services/job-completion-ai.js";
+import {
+  notifyOrgNewBooking,
+  notifyOrgStatusChange,
+  notifyOrgJobCompleted,
+} from "../services/org-notifications.js";
 
 export const jobsRouter = Router();
 
@@ -112,6 +117,8 @@ const updateJobSchema = createJobSchema.partial().extend({
   suggestedTools: z.array(z.string()).optional(),
   riskFlags: z.array(z.string()).optional(),
   completedAt: z.string().datetime().optional(),
+  laborHours: z.number().positive().optional(),
+  photos: z.array(z.string()).optional(),
 });
 
 const completionSummarySchema = z.object({
@@ -120,6 +127,26 @@ const completionSummarySchema = z.object({
   notes: z.string().optional(),
 });
 
+// HVAC rate card — base service call fee by type + hourly labor rate
+const SERVICE_BASE_FEE: Record<string, number> = {
+  repair: 95,
+  maintenance: 79,
+  inspection: 65,
+  installation: 175,
+};
+const DEFAULT_BASE_FEE = 95;
+const LABOR_RATE_PER_HOUR = 95; // $/hr after the first hour
+
+function calculateInvoiceAmount(
+  serviceType: string | null | undefined,
+  laborHours: number
+): number {
+  const base = SERVICE_BASE_FEE[serviceType ?? ""] ?? DEFAULT_BASE_FEE;
+  // First hour is included in base fee; additional hours billed at LABOR_RATE_PER_HOUR
+  const additionalHours = Math.max(0, laborHours - 1);
+  return parseFloat((base + additionalHours * LABOR_RATE_PER_HOUR).toFixed(2));
+}
+
 jobsRouter.get("/", async (req, res) => {
   try {
     const status = req.query.status as string | undefined;
@@ -127,11 +154,21 @@ jobsRouter.get("/", async (req, res) => {
     const from = req.query.from as string | undefined;
     const to = req.query.to as string | undefined;
 
+    // Scope results to the requesting user's role
+    const { role, technicianId: myTechId, customerId: myCustomerId } = req.user!;
+    const roleFilter =
+      role === "technician" && myTechId
+        ? { technicianId: myTechId }
+        : role === "customer" && myCustomerId
+          ? { customerId: myCustomerId }
+          : {};
+
     const jobs = await prisma.job.findMany({
       where: {
         organizationId: req.user!.organizationId,
+        ...roleFilter,
         ...(status && { status }),
-        ...(technicianId && { technicianId }),
+        ...(technicianId && role !== "technician" && { technicianId }),
         ...(from && to && {
           scheduledAt: {
             gte: new Date(from),
@@ -194,12 +231,33 @@ jobsRouter.post("/", async (req, res) => {
       customerId = bodyCustomerId;
     }
 
+    // Duplicate check: reject if an active job already exists for this
+    // customer within ±30 minutes of the requested scheduled time.
+    const scheduledAt = new Date(parsed.data.scheduledAt);
+    const windowStart = new Date(scheduledAt.getTime() - 30 * 60 * 1000);
+    const windowEnd = new Date(scheduledAt.getTime() + 30 * 60 * 1000);
+    const existingJob = await prisma.job.findFirst({
+      where: {
+        organizationId: req.user!.organizationId,
+        customerId,
+        status: { notIn: ["completed", "cancelled"] },
+        scheduledAt: { gte: windowStart, lte: windowEnd },
+      },
+      select: { id: true },
+    });
+    if (existingJob) {
+      return res.status(409).json({
+        error: "A job is already scheduled for this customer at this time",
+        existingJobId: existingJob.id,
+      });
+    }
+
     const job = await prisma.job.create({
       data: {
         organizationId: req.user!.organizationId,
         customerId,
         technicianId: parsed.data.technicianId,
-        scheduledAt: new Date(parsed.data.scheduledAt),
+        scheduledAt,
         priority: parsed.data.priority,
         symptomSummary: parsed.data.symptomSummary,
         equipmentType: parsed.data.equipmentType,
@@ -222,7 +280,7 @@ jobsRouter.post("/", async (req, res) => {
       timestamp: new Date().toISOString(),
     });
 
-    // Send booking confirmation email
+    // Send booking confirmation email to customer
     const customer = await prisma.customer.findUnique({
       where: { id: job.customerId },
       select: { email: true, name: true },
@@ -241,6 +299,14 @@ jobsRouter.post("/", async (req, res) => {
         }),
       });
     }
+
+    // Notify org dispatch email
+    notifyOrgNewBooking(req.user!.organizationId, {
+      ...job,
+      priority: parsed.data.priority,
+      serviceType: parsed.data.serviceType ?? null,
+      symptomSummary: parsed.data.symptomSummary ?? null,
+    });
   } catch (e) {
     res.status(500).json({ error: e instanceof Error ? e.message : "Failed to create job" });
   }
@@ -295,13 +361,22 @@ jobsRouter.patch("/:id", async (req, res) => {
         const dueDate = new Date();
         dueDate.setDate(dueDate.getDate() + 30);
 
+        const laborHours = parsed.data.laborHours ?? 1;
+        const invoiceAmount = calculateInvoiceAmount(updatedJob.serviceType, laborHours);
+        const partsCount = (parsed.data.partsUsed ?? []).length;
+        const descriptionParts = [
+          `${updatedJob.serviceType ?? "HVAC"} service — ${updatedJob.equipmentType ?? "equipment"}`,
+          `${laborHours} hr${laborHours !== 1 ? "s" : ""} labor`,
+          ...(partsCount > 0 ? [`${partsCount} part${partsCount !== 1 ? "s" : ""} used`] : []),
+        ];
+
         await tx.invoice.create({
           data: {
             organizationId: req.user!.organizationId,
             jobId: updatedJob.id,
             customerId: updatedJob.customerId,
-            description: `Service completed — ${updatedJob.equipmentType ?? "HVAC service"}`,
-            amount: 0,
+            description: descriptionParts.join(" · "),
+            amount: invoiceAmount,
             status: "pending",
             dueDate,
           },
@@ -312,6 +387,7 @@ jobsRouter.patch("/:id", async (req, res) => {
       res.json(result);
       sendStatusNotifications(result, req.user!.organizationId);
       sendStatusEmails(result);
+      notifyOrgJobCompleted(req.user!.organizationId, result);
       return;
     }
 
@@ -326,6 +402,7 @@ jobsRouter.patch("/:id", async (req, res) => {
     res.json(job);
     sendStatusNotifications(job, req.user!.organizationId);
     sendStatusEmails(job);
+    notifyOrgStatusChange(req.user!.organizationId, job);
     if (previousStatus === "pending" && job.status === "scheduled") {
       generatePreArrival(req.params.id);
     }
@@ -406,5 +483,40 @@ jobsRouter.post("/:id/generate-completion-summary", async (req, res) => {
       error:
         e instanceof Error ? e.message : "Failed to generate completion summary",
     });
+  }
+});
+
+
+// GET /api/jobs/:jobId/estimates
+jobsRouter.get("/:jobId/estimates", async (req, res) => {
+  try {
+    const estimates = await prisma.estimate.findMany({
+      where: { jobId: req.params.jobId, organizationId: req.user!.organizationId },
+      include: { lines: true },
+      orderBy: { createdAt: "desc" },
+    });
+    res.json(estimates);
+  } catch {
+    res.status(500).json({ error: "Failed to fetch estimates" });
+  }
+});
+
+jobsRouter.delete("/:id", async (req, res) => {
+  if (req.user!.role !== "office") {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  try {
+    await prisma.job.delete({
+      where: { id: req.params.id, organizationId: req.user!.organizationId },
+    });
+    res.status(204).send();
+  } catch (e) {
+    if ((e as { code?: string })?.code === "P2025") {
+      return res.status(404).json({ error: "Job not found" });
+    }
+    if ((e as { code?: string })?.code === "P2003") {
+      return res.status(409).json({ error: "Cannot delete job with linked invoices" });
+    }
+    res.status(500).json({ error: e instanceof Error ? e.message : "Failed to delete job" });
   }
 });

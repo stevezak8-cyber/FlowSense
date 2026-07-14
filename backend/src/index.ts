@@ -37,6 +37,7 @@ import { webhooksRouter } from "./routes/webhooks.js";
 import { billingRouter } from "./routes/billing.js"
 import { onboardingRouter } from "./routes/onboarding.js";
 import { pricebookRouter } from "./routes/pricebook.js";
+import { estimatesRouter, publicEstimatesRouter } from "./routes/estimates.js";
 import { setupWebSocket } from "./services/notifications.js";
 import { startInvoiceScheduler } from "./services/invoice-scheduler.js";
 
@@ -94,6 +95,12 @@ app.use("/api/dispatch", apiLimiter, requireAuth, requireSubscription, dispatchR
 app.use("/api/organizations", apiLimiter, requireAuth, requireSubscription, organizationsRouter);
 app.use("/api/onboarding", apiLimiter, requireAuth, requireSubscription, onboardingRouter);
 app.use("/api/pricebook", apiLimiter, requireAuth, requireSubscription, pricebookRouter);
+
+// Public — no auth required (token is authorization)
+app.use("/api/estimates/token", apiLimiter, publicEstimatesRouter);
+
+// Auth-protected estimates
+app.use("/api/estimates", apiLimiter, requireAuth, requireSubscription, estimatesRouter);
 
 // In production, serve the compiled frontend static build and handle SPA routing.
 // In development, Vite proxies /api requests — this block is never reached.
