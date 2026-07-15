@@ -34,7 +34,7 @@ import { dispatchRouter } from "./routes/dispatch.js";
 import { authRouter } from "./routes/auth.js";
 import { organizationsRouter } from "./routes/organizations.js";
 import { webhooksRouter } from "./routes/webhooks.js";
-import { billingRouter } from "./routes/billing.js"
+import { billingRouter, billingConnectCallbackHandler } from "./routes/billing.js"
 import { onboardingRouter } from "./routes/onboarding.js";
 import { pricebookRouter } from "./routes/pricebook.js";
 import { estimatesRouter, publicEstimatesRouter } from "./routes/estimates.js";
@@ -78,6 +78,9 @@ const apiLimiter = rateLimit({
 // Public routes (no auth required)
 app.use("/health", healthRouter);
 app.use("/api/auth", authLimiter, authRouter);
+
+// Public Stripe Connect callback — no auth (Stripe browser redirect from OAuth)
+app.use("/api/billing/connect/callback", apiLimiter, billingConnectCallbackHandler)
 
 // Billing routes (auth required, no subscription check — these manage the subscription itself)
 app.use("/api/billing", apiLimiter, requireAuth, billingRouter);

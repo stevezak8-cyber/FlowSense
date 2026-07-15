@@ -1,4 +1,6 @@
 import { Router } from "express";
+import type { RequestHandler } from "express";
+import crypto from "crypto";
 import { prisma } from "../lib/prisma.js";
 import { stripe, getPriceId } from "../services/stripe.js";
 import type { AuthRequest } from "../middleware/types.js";
@@ -67,3 +69,101 @@ billingRouter.post("/upgrade", async (req, res) => {
 
   return res.json({ success: true, plan });
 });
+
+// GET /billing/connect — start Stripe Connect OAuth
+billingRouter.get("/connect", async (req, res) => {
+  if (!stripe) return res.status(503).json({ error: "Stripe not configured" })
+
+  const clientId = process.env.STRIPE_CONNECT_CLIENT_ID
+  const stateSecret = process.env.STRIPE_STATE_SECRET
+  const apiUrl = process.env.API_URL
+
+  if (!clientId || !stateSecret || !apiUrl) {
+    return res.status(503).json({ error: "Stripe Connect not configured" })
+  }
+
+  const organizationId = (req as AuthRequest).user!.organizationId
+  const hmac = crypto.createHmac("sha256", stateSecret).update(organizationId).digest("hex")
+  const state = `${organizationId}.${hmac}`
+
+  const url = stripe.oauth.authorizeUrl({
+    response_type: "code",
+    client_id: clientId,
+    scope: "read_write",
+    state,
+    redirect_uri: `${apiUrl}/api/billing/connect/callback`,
+  })
+
+  return res.json({ url })
+})
+
+// Exported for public mounting in index.ts (callback has no user session)
+export const billingConnectCallbackHandler: RequestHandler = async (req, res) => {
+  const frontendUrl = process.env.FRONTEND_URL ?? ""
+  const errorRedirect = `${frontendUrl}/office/settings?connect=error`
+  const stateSecret = process.env.STRIPE_STATE_SECRET
+
+  const { code, state, error } = req.query as Record<string, string>
+
+  if (error) {
+    console.error("[Connect callback] Stripe OAuth error:", error)
+    return res.redirect(errorRedirect)
+  }
+
+  if (!stateSecret || !state) {
+    console.error("[Connect callback] Missing state or secret")
+    return res.redirect(errorRedirect)
+  }
+
+  const dotIndex = state.lastIndexOf(".")
+  if (dotIndex === -1) {
+    console.error("[Connect callback] Malformed state token")
+    return res.redirect(errorRedirect)
+  }
+  const organizationId = state.slice(0, dotIndex)
+  const receivedHmac = state.slice(dotIndex + 1)
+  const expectedHmac = crypto.createHmac("sha256", stateSecret).update(organizationId).digest("hex")
+
+  let valid: boolean
+  try {
+    valid = crypto.timingSafeEqual(Buffer.from(receivedHmac, "hex"), Buffer.from(expectedHmac, "hex"))
+  } catch {
+    valid = false
+  }
+  if (!valid) {
+    console.error("[Connect callback] Invalid state HMAC")
+    return res.redirect(errorRedirect)
+  }
+
+  const org = await prisma.organization.findUnique({ where: { id: organizationId } })
+  if (!org) {
+    console.error("[Connect callback] Org not found:", organizationId)
+    return res.redirect(errorRedirect)
+  }
+
+  if (!stripe) {
+    console.error("[Connect callback] Stripe not configured")
+    return res.redirect(errorRedirect)
+  }
+
+  let response: { stripe_user_id: string }
+  try {
+    response = await stripe.oauth.token({ grant_type: "authorization_code", code }) as { stripe_user_id: string }
+  } catch (err) {
+    console.error("[Connect callback] Token exchange failed:", err)
+    return res.redirect(errorRedirect)
+  }
+
+  await prisma.organization.update({
+    where: { id: organizationId },
+    data: {
+      stripeConnectAccountId: response.stripe_user_id,
+      stripeConnectOnboarded: true,
+    },
+  })
+
+  return res.redirect(`${frontendUrl}/office/settings?connect=success`)
+}
+
+// Also register in router (for tests that drive the router directly)
+billingRouter.get("/connect/callback", billingConnectCallbackHandler)
