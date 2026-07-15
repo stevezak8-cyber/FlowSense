@@ -400,6 +400,16 @@ jobsRouter.patch("/:id", async (req, res) => {
       return;
     }
 
+    // Capture previous technicianId before update so we can detect assignment changes
+    let prevTechnicianId: string | null | undefined
+    if (parsed.data.technicianId !== undefined) {
+      const prev = await prisma.job.findFirst({
+        where: { id: req.params.id, organizationId: req.user!.organizationId },
+        select: { technicianId: true },
+      })
+      prevTechnicianId = prev?.technicianId
+    }
+
     const job = await prisma.job.update({
       where: { id: req.params.id, organizationId: req.user!.organizationId },
       data,
@@ -410,7 +420,7 @@ jobsRouter.patch("/:id", async (req, res) => {
     });
     res.json(job);
 
-    if (parsed.data.technicianId && parsed.data.technicianId !== job.technicianId) {
+    if (parsed.data.technicianId && parsed.data.technicianId !== prevTechnicianId) {
       prisma.technician.findUnique({
         where: { id: parsed.data.technicianId as string },
         select: { user: { select: { id: true } } },
