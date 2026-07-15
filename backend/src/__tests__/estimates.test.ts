@@ -35,6 +35,10 @@ vi.mock("../services/email.js", () => ({
   sendEmail: vi.fn(),
 }));
 
+vi.mock("../services/sms.js", () => ({
+  sendEstimateReadySms: vi.fn().mockResolvedValue(undefined),
+}));
+
 import { prisma } from "../lib/prisma.js";
 import { generateEstimate } from "../services/estimate-ai.js";
 import { estimatesRouter, publicEstimatesRouter } from "../routes/estimates.js";

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { generateEstimate } from "../services/estimate-ai.js";
 import { sendEmail } from "../services/email.js";
+import { sendEstimateReadySms } from "../services/sms.js";
 import { stripe } from "../services/stripe.js";
 import { z } from "zod";
 
@@ -111,6 +112,8 @@ estimatesRouter.post("/:id/send", async (req, res) => {
   } catch {
     console.error("[Estimates] Failed to send estimate email");
   }
+
+  sendEstimateReadySms(req.params.id).catch(console.error)
 
   res.json(updated);
 });
