@@ -5,7 +5,6 @@ import {
   DollarSign,
   Users,
   AlertTriangle,
-  Clock,
   Zap,
 } from "lucide-react"
 import type { DashboardStats } from "@/api/types"
