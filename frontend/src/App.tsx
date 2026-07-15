@@ -1,6 +1,10 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+import { useEffect } from "react";
 import { RequireAuth } from "./auth/require-auth";
 import { useNotifications } from "@/lib/websocket";
+import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
+import { OfflineIndicator } from "@/components/pwa/OfflineIndicator";
+import { initSyncManager } from "@/lib/sync-manager";
 
 // Pages
 import LoginPage from "./pages/LoginPage";
@@ -38,8 +42,15 @@ import CustomerEstimate from "./pages/customer/CustomerEstimate";
 function App() {
   useNotifications();
 
+  useEffect(() => {
+    initSyncManager()
+  }, [])
+
   return (
-    <Routes>
+    <>
+      <UpdatePrompt />
+      <OfflineIndicator />
+      <Routes>
       {/* Auth — public */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
@@ -107,6 +118,7 @@ function App() {
       {/* Catch-all redirect */}
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
+    </>
   );
 }
 

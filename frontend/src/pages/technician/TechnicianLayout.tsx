@@ -6,6 +6,7 @@ import { FlowSenseLogo } from "@/components/brand"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useAuth } from "@/auth/auth-context"
 import { api } from "@/api/client"
+import { usePushNotifications } from "@/hooks/usePushNotifications"
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>
@@ -30,6 +31,21 @@ export default function TechnicianLayout() {
   const [installDismissed, setInstallDismissed] = useState(() =>
     localStorage.getItem("pwa-install-dismissed") === "true"
   )
+  const { permission, supported, subscribe, isSubscribed } = usePushNotifications()
+  const [notifDismissed, setNotifDismissed] = useState(() =>
+    localStorage.getItem("push-prompt-dismissed") === "true"
+  )
+
+  const showNotifPrompt =
+    supported &&
+    permission === "default" &&
+    !isSubscribed &&
+    !notifDismissed
+
+  function handleDismissNotif() {
+    localStorage.setItem("push-prompt-dismissed", "true")
+    setNotifDismissed(true)
+  }
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -149,6 +165,30 @@ export default function TechnicianLayout() {
               className="text-xs text-muted-foreground hover:text-foreground"
             >
               ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showNotifPrompt && (
+        <div className="flex items-center justify-between gap-3 bg-primary/10 border-b border-primary/20 px-4 py-2.5">
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-foreground font-medium">Get notified about new jobs instantly.</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={subscribe}
+              className="rounded-md bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground"
+            >
+              Enable
+            </button>
+            <button
+              type="button"
+              onClick={handleDismissNotif}
+              className="text-xs text-muted-foreground hover:text-foreground"
+            >
+              Not now
             </button>
           </div>
         </div>
