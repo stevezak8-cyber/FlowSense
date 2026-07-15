@@ -19,6 +19,25 @@ The existing infrastructure (`vite.config.ts` VitePWA config, `icon-192.png`, `i
 
 ---
 
+## Prerequisites
+
+Install required packages before implementing:
+
+**Frontend:**
+```bash
+cd frontend
+npm install idb
+```
+
+**Backend:**
+```bash
+cd backend
+npm install web-push
+npm install --save-dev @types/web-push
+```
+
+---
+
 ## Subsystem 1: SW Update Notification
 
 ### Approach
@@ -93,6 +112,15 @@ model PushSubscription {
 }
 ```
 
+Also add back-relations to `User` and `Organization` models:
+```prisma
+// In User model:
+pushSubscriptions PushSubscription[]
+
+// In Organization model:
+pushSubscriptions PushSubscription[]
+```
+
 #### New service: `backend/src/services/push.ts`
 
 ```typescript
@@ -102,7 +130,7 @@ import webpush from "web-push"
 - Silent-skip pattern: if `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, or `VAPID_SUBJECT` are absent, all send functions are no-ops
 - Configures `webpush.setVapidDetails(subject, publicKey, privateKey)` on module load
 - Exports:
-  - `sendPushToUser(userId, payload)` — loads all subscriptions for userId, sends to each, removes stale subscriptions on 410 (Gone) errors
+  - `sendPushToUser(userId, payload)` — loads all subscriptions for userId, sends to each, removes stale subscriptions on 404 (Not Found) or 410 (Gone) errors
   - `payload` shape: `{ title: string, body: string, url?: string }`
 
 #### New routes: `backend/src/routes/push.ts`
@@ -129,6 +157,19 @@ All fire-and-forget (`.catch(console.error)`), alongside existing WebSocket `not
 | Job assigned to tech | `PATCH /api/jobs/:id` when `technicianId` changes | The assigned technician's userId |
 | Job updated (reschedule/notes) | `PATCH /api/jobs/:id` when `scheduledAt` or `symptomSummary` changes | Assigned technician |
 | New conversation message | `POST /api/conversations/:id/messages` | Participants other than sender |
+
+**Participant-to-userId resolution for conversation push:**
+
+`Conversation.participants` is a `String[]` containing technicianIds. To resolve to userIds for `sendPushToUser`:
+
+```typescript
+const technicians = await prisma.technician.findMany({
+  where: { id: { in: participantIds.filter(id => id !== senderTechId) } },
+  select: { user: { select: { id: true } } },
+})
+const userIds = technicians.flatMap(t => t.user ? [t.user.id] : [])
+await Promise.all(userIds.map(uid => sendPushToUser(uid, payload).catch(console.error)))
+```
 
 Push payload examples:
 - Job assigned: `{ title: "New Job Assigned", body: "AC repair at 123 Main St — Mon Jul 20 at 2pm", url: "/technician" }`
@@ -240,7 +281,7 @@ The existing `api.patch()` function catches network errors (fetch throws on DNS 
   2. Replays each in order (sequential, not parallel)
   3. On success: removes from queue, dispatches `flowsense:queue-changed`
   4. On failure (network error again): increments `retryCount`; if `retryCount >= 3`, removes and shows toast error: *"Failed to sync update — please refresh and try again"*
-  5. On 4xx: removes from queue and shows toast error (the server rejected it — don't retry)
+  5. On 4xx: removes from queue and shows toast error (the server rejected it — don't retry); **processing continues to the next item in the queue** — a single rejected item does not abort the replay loop
 - Initialize in `frontend/src/App.tsx` via `useEffect(() => { initSyncManager() }, [])`
 
 ---
@@ -251,12 +292,26 @@ Currently `vite.config.ts` uses `strategies: "generateSW"` (default — Workbox 
 
 ### `frontend/src/sw.ts` (custom service worker)
 
+Under `injectManifest` strategy, `workbox.runtimeCaching` in `vite.config.ts` is **silently ignored** — it only works under `generateSW`. Runtime caching must be expressed as explicit `registerRoute` calls inside `sw.ts`:
+
 ```typescript
 import { precacheAndRoute } from "workbox-precaching"
+import { registerRoute } from "workbox-routing"
+import { NetworkFirst } from "workbox-strategies"
 
 // Injected by vite-plugin-pwa — do not remove
 declare const self: ServiceWorkerGlobalScope
 precacheAndRoute(self.__WB_MANIFEST)
+
+// Runtime caching (previously in vite.config.ts workbox.runtimeCaching — must live here under injectManifest)
+registerRoute(
+  ({ url }) => url.pathname.startsWith("/api/jobs"),
+  new NetworkFirst({ cacheName: "jobs-cache" })
+)
+registerRoute(
+  ({ url }) => url.pathname.startsWith("/api/technicians"),
+  new NetworkFirst({ cacheName: "technicians-cache" })
+)
 
 // Push notification handler
 self.addEventListener("push", (event) => {
@@ -282,16 +337,15 @@ self.addEventListener("notificationclick", (event) => {
 
 ### Updated `vite.config.ts` (VitePWA section)
 
-Change `strategies` to `"injectManifest"` and add:
+Change `strategies` to `"injectManifest"` and add `srcDir`/`filename`. Remove the existing `workbox.runtimeCaching` block (it is now in `sw.ts`):
+
 ```typescript
 strategies: "injectManifest",
 srcDir: "src",
 filename: "sw.ts",
 ```
 
-The `workbox` runtime caching config moves into `injectManifest.globPatterns` — the existing caching patterns remain unchanged, just expressed differently. The `workbox-precaching` import in `sw.ts` replaces the auto-generation.
-
-Actually — to keep things simpler, the workbox runtime caching config can stay in `vite.config.ts` under `injectManifest` instead of in `sw.ts`. The `sw.ts` file only needs the push/notificationclick handlers and the `precacheAndRoute` call.
+The manifest, icons, and other VitePWA options remain unchanged. Only the strategy and the runtime caching location change.
 
 ---
 
