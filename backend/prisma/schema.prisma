@@ -35,6 +35,8 @@ model Organization {
   plan                  String    @default("trial")
   trialEndsAt           DateTime?
   onboardingDismissed   Boolean   @default(false)
+  stripeConnectAccountId  String?
+  stripeConnectOnboarded  Boolean @default(false)
 
   users         User[]
   technicians   Technician[]
