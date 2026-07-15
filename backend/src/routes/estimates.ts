@@ -2,6 +2,7 @@ import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { generateEstimate } from "../services/estimate-ai.js";
 import { sendEmail } from "../services/email.js";
+import { stripe } from "../services/stripe.js";
 import { z } from "zod";
 
 export const estimatesRouter = Router();
@@ -185,12 +186,53 @@ publicEstimatesRouter.post("/:token/approve", async (req, res) => {
 });
 
 publicEstimatesRouter.post("/:token/deposit", async (req, res) => {
-  const estimate = await prisma.estimate.findFirst({
-    where: { token: req.params.token },
+  const { token } = req.params;
+
+  const estimate = await prisma.estimate.findUnique({
+    where: { token },
+    include: {
+      job: { select: { title: true } },
+      organization: { select: { stripeConnectAccountId: true, stripeConnectOnboarded: true } },
+    },
   });
 
   if (!estimate) return res.status(404).json({ error: "Estimate not found" });
-  if (!estimate.depositAmount) return res.status(400).json({ error: "No deposit required for this estimate" });
+  if (estimate.status !== "approved") return res.status(400).json({ error: "Estimate has not been approved" });
+  if ((estimate as any).depositPaidAt) return res.status(409).json({ error: "Deposit already paid" });
+  if (!estimate.depositAmount) return res.status(400).json({ error: "No deposit required" });
+  if (!(estimate as any).organization.stripeConnectOnboarded || !(estimate as any).organization.stripeConnectAccountId) {
+    return res.status(503).json({ error: "Payments not configured for this business" });
+  }
+  if (!stripe) return res.status(503).json({ error: "Stripe not configured" });
 
-  res.json({ depositAmountCents: Math.round(estimate.depositAmount * 100) });
+  const frontendUrl = process.env.FRONTEND_URL ?? "";
+  const session = await stripe.checkout.sessions.create(
+    {
+      payment_method_types: ["card"],
+      mode: "payment",
+      line_items: [{
+        price_data: {
+          currency: "usd",
+          product_data: { name: `Deposit — ${(estimate as any).job.title}` },
+          unit_amount: Math.round(estimate.depositAmount * 100),
+        },
+        quantity: 1,
+      }],
+      metadata: {
+        estimateId: estimate.id,
+        jobId: estimate.jobId,
+        organizationId: estimate.organizationId,
+      },
+      success_url: `${frontendUrl}/customer/estimates/${token}?deposit=paid`,
+      cancel_url: `${frontendUrl}/customer/estimates/${token}?deposit=cancelled`,
+    },
+    { stripeAccount: (estimate as any).organization.stripeConnectAccountId }
+  );
+
+  await prisma.estimate.update({
+    where: { id: estimate.id },
+    data: { stripePaymentIntentId: session.id },
+  });
+
+  return res.json({ url: session.url });
 });

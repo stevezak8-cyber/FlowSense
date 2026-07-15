@@ -1,10 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
+vi.mock("../services/stripe.js", () => ({
+  stripe: { checkout: { sessions: { create: vi.fn() } } },
+}));
+
 vi.mock("../lib/prisma.js", () => ({
   prisma: {
     estimate: {
       findMany: vi.fn(),
       findFirst: vi.fn(),
+      findUnique: vi.fn(),
       update: vi.fn(),
       create: vi.fn(),
     },
@@ -33,6 +38,7 @@ vi.mock("../services/email.js", () => ({
 import { prisma } from "../lib/prisma.js";
 import { generateEstimate } from "../services/estimate-ai.js";
 import { estimatesRouter, publicEstimatesRouter } from "../routes/estimates.js";
+import * as stripeModule from "../services/stripe.js";
 import express from "express";
 import request from "supertest";
 
@@ -145,5 +151,108 @@ describe("POST /:token/approve (public router)", () => {
       signatureData: "Jane Doe",
     });
     expect(res.status).toBe(409);
+  });
+});
+
+describe("POST /token/:token/deposit", () => {
+  const publicApp = makePublicApp();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.unstubAllEnvs();
+    // restore a working stripe mock after tests that null it out
+    ;(stripeModule as any).stripe = { checkout: { sessions: { create: vi.fn() } } };
+  });
+
+  it("returns 404 when estimate not found", async () => {
+    ;(prisma.estimate.findUnique as any).mockResolvedValue(null);
+    const res = await request(publicApp).post("/bad-token/deposit");
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 400 when estimate is not approved", async () => {
+    ;(prisma.estimate.findUnique as any).mockResolvedValue({
+      id: "est-1", status: "sent", depositPaidAt: null, depositAmount: 500,
+      jobId: "job-1", organizationId: "org-1",
+      job: { title: "AC Repair" },
+      organization: { stripeConnectAccountId: "acct_test", stripeConnectOnboarded: true },
+    });
+    const res = await request(publicApp).post("/tok-1/deposit");
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/not.*approved/i);
+  });
+
+  it("returns 409 when deposit already paid", async () => {
+    ;(prisma.estimate.findUnique as any).mockResolvedValue({
+      id: "est-1", status: "approved", depositPaidAt: new Date(),
+      depositAmount: 500, jobId: "job-1", organizationId: "org-1",
+      job: { title: "AC Repair" },
+      organization: { stripeConnectAccountId: "acct_test", stripeConnectOnboarded: true },
+    });
+    const res = await request(publicApp).post("/tok-1/deposit");
+    expect(res.status).toBe(409);
+    expect(res.body.error).toMatch(/already paid/i);
+  });
+
+  it("returns 400 when no deposit amount", async () => {
+    ;(prisma.estimate.findUnique as any).mockResolvedValue({
+      id: "est-1", status: "approved", depositPaidAt: null,
+      depositAmount: null, jobId: "job-1", organizationId: "org-1",
+      job: { title: "AC Repair" },
+      organization: { stripeConnectAccountId: "acct_test", stripeConnectOnboarded: true },
+    });
+    const res = await request(publicApp).post("/tok-1/deposit");
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/no deposit required/i);
+  });
+
+  it("returns 503 when org not connected to Stripe", async () => {
+    ;(prisma.estimate.findUnique as any).mockResolvedValue({
+      id: "est-1", status: "approved", depositPaidAt: null,
+      depositAmount: 500, jobId: "job-1", organizationId: "org-1",
+      job: { title: "AC Repair" },
+      organization: { stripeConnectAccountId: null, stripeConnectOnboarded: false },
+    });
+    const res = await request(publicApp).post("/tok-1/deposit");
+    expect(res.status).toBe(503);
+    expect(res.body.error).toMatch(/not configured/i);
+  });
+
+  it("returns 503 when stripe singleton is null", async () => {
+    ;(stripeModule as any).stripe = null;
+    ;(prisma.estimate.findUnique as any).mockResolvedValue({
+      id: "est-1", status: "approved", depositPaidAt: null,
+      depositAmount: 500, jobId: "job-1", organizationId: "org-1",
+      job: { title: "AC Repair" },
+      organization: { stripeConnectAccountId: "acct_test", stripeConnectOnboarded: true },
+    });
+    const res = await request(publicApp).post("/tok-1/deposit");
+    expect(res.status).toBe(503);
+  });
+
+  it("returns url on success", async () => {
+    vi.stubEnv("FRONTEND_URL", "http://app.test");
+    ;(prisma.estimate.findUnique as any).mockResolvedValue({
+      id: "est-1", status: "approved", depositPaidAt: null,
+      depositAmount: 150, jobId: "job-1", organizationId: "org-1",
+      job: { title: "AC Repair" },
+      organization: { stripeConnectAccountId: "acct_test", stripeConnectOnboarded: true },
+    });
+    const mockCreate = vi.fn().mockResolvedValue({ id: "cs_test", url: "https://checkout.stripe.com/pay/cs_test" });
+    ;(stripeModule as any).stripe = { checkout: { sessions: { create: mockCreate } } };
+    ;(prisma.estimate.update as any).mockResolvedValue({});
+    const res = await request(publicApp).post("/tok-1/deposit");
+    expect(res.status).toBe(200);
+    expect(res.body.url).toBe("https://checkout.stripe.com/pay/cs_test");
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mode: "payment",
+        line_items: expect.arrayContaining([
+          expect.objectContaining({ quantity: 1 }),
+        ]),
+        metadata: expect.objectContaining({ estimateId: "est-1" }),
+      }),
+      { stripeAccount: "acct_test" }
+    );
   });
 });
