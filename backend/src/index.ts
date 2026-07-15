@@ -35,6 +35,7 @@ import { authRouter } from "./routes/auth.js";
 import { organizationsRouter } from "./routes/organizations.js";
 import { webhooksRouter } from "./routes/webhooks.js";
 import { billingRouter, billingConnectCallbackHandler } from "./routes/billing.js"
+import { twilioWebhookRouter } from "./routes/twilio-webhook.js"
 import { onboardingRouter } from "./routes/onboarding.js";
 import { pricebookRouter } from "./routes/pricebook.js";
 import { estimatesRouter, publicEstimatesRouter } from "./routes/estimates.js";
@@ -81,6 +82,9 @@ app.use("/api/auth", authLimiter, authRouter);
 
 // Public Stripe Connect callback — no auth (Stripe browser redirect from OAuth)
 app.use("/api/billing/connect/callback", apiLimiter, billingConnectCallbackHandler)
+
+// Public Twilio webhook — no auth (Twilio server-to-server callback)
+app.use("/api/webhooks/twilio", apiLimiter, express.urlencoded({ extended: false }), twilioWebhookRouter)
 
 // Billing routes (auth required, no subscription check — these manage the subscription itself)
 app.use("/api/billing", apiLimiter, requireAuth, billingRouter);
