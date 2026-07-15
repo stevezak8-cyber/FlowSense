@@ -9,6 +9,7 @@ import { statusUpdateHtml } from "../templates/status-update.js";
 import { jobCompletedHtml } from "../templates/job-completed.js";
 import { generatePreArrival } from "../services/pre-arrival.js";
 import { generateCompletionSummary } from "../services/job-completion-ai.js";
+import { sendPushToUser } from "../services/push.js";
 import {
   notifyOrgNewBooking,
   notifyOrgStatusChange,
@@ -408,6 +409,38 @@ jobsRouter.patch("/:id", async (req, res) => {
       },
     });
     res.json(job);
+
+    if (parsed.data.technicianId && parsed.data.technicianId !== job.technicianId) {
+      prisma.technician.findUnique({
+        where: { id: parsed.data.technicianId as string },
+        select: { user: { select: { id: true } } },
+      }).then((tech) => {
+        if (tech?.user?.id) {
+          return sendPushToUser(tech.user.id, {
+            title: "New Job Assigned",
+            body: `${job.equipmentType ?? "New job"} — ${job.customer?.address ?? ""}`.trim(),
+            url: "/technician",
+          })
+        }
+      }).catch(console.error)
+    }
+
+    const jobUpdated = "scheduledAt" in parsed.data || "symptomSummary" in parsed.data
+    if (jobUpdated && job.technicianId) {
+      prisma.technician.findUnique({
+        where: { id: job.technicianId },
+        select: { user: { select: { id: true } } },
+      }).then((tech) => {
+        if (tech?.user?.id) {
+          return sendPushToUser(tech.user.id, {
+            title: "Job Updated",
+            body: "One of your appointments has been updated.",
+            url: "/technician",
+          })
+        }
+      }).catch(console.error)
+    }
+
     sendStatusNotifications(job, req.user!.organizationId);
     sendStatusEmails(job);
     notifyOrgStatusChange(req.user!.organizationId, job);
