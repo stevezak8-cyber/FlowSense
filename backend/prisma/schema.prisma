@@ -51,6 +51,7 @@ model Organization {
   estimateDepositPercent   Int    @default(25)
   pricebookItems           PricebookItem[]
   estimates                Estimate[]
+  pushSubscriptions        PushSubscription[]
 }
 
 model User {
@@ -67,6 +68,8 @@ model User {
   technician     Technician?  @relation(fields: [technicianId], references: [id])
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
+
+  pushSubscriptions PushSubscription[]
 
   @@index([organizationId])
 }
@@ -127,6 +130,21 @@ model Customer {
   invoices Invoice[]
   user     User?
 
+  @@index([organizationId])
+}
+
+model PushSubscription {
+  id             String       @id @default(cuid())
+  userId         String
+  organizationId String
+  endpoint       String       @unique
+  p256dh         String
+  auth           String
+  createdAt      DateTime     @default(now())
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
   @@index([organizationId])
 }
 
