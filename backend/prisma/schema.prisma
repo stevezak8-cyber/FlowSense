@@ -37,6 +37,7 @@ model Organization {
   onboardingDismissed   Boolean   @default(false)
   stripeConnectAccountId  String?
   stripeConnectOnboarded  Boolean @default(false)
+  smsEnabled              Boolean @default(false)
 
   users         User[]
   technicians   Technician[]
@@ -113,6 +114,7 @@ model Customer {
   email          String?
   phone          String
   address        String
+  smsOptOut      Boolean  @default(false)
   addressLine2   String?
   city           String
   state          String
