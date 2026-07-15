@@ -1,12 +1,13 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { z } from "zod";
+import Stripe from "stripe";
 
 export const invoicesRouter = Router();
 
 const createInvoiceSchema = z.object({
-  jobId: z.string().cuid(),
-  customerId: z.string().cuid(),
+  jobId: z.string().min(1),
+  customerId: z.string().min(1),
   description: z.string().min(1),
   amount: z.number().positive(),
   status: z.enum(["pending", "paid", "overdue"]).default("pending"),
@@ -18,8 +19,14 @@ const updateInvoiceSchema = createInvoiceSchema.partial();
 // GET /api/invoices
 invoicesRouter.get("/", async (req, res) => {
   try {
+    const { role, customerId: myCustomerId } = req.user!;
+    // Customers only see their own invoices; technicians/office see all
+    const roleFilter = role === "customer" && myCustomerId
+      ? { customerId: myCustomerId }
+      : {};
+
     const invoices = await prisma.invoice.findMany({
-      where: { organizationId: req.user!.organizationId },
+      where: { organizationId: req.user!.organizationId, ...roleFilter },
       include: {
         customer: { select: { id: true, name: true } },
         job: { select: { id: true, equipmentType: true, symptomSummary: true } },
@@ -99,6 +106,54 @@ invoicesRouter.post("/", async (req, res) => {
     res.status(201).json(invoice);
   } catch (e) {
     res.status(500).json({ error: e instanceof Error ? e.message : "Failed to create invoice" });
+  }
+});
+
+// POST /api/invoices/:id/payment-link — create a Stripe Checkout session for a pending invoice
+invoicesRouter.post("/:id/payment-link", async (req, res) => {
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  if (!stripeKey) {
+    return res.status(503).json({ error: "Payment processing is not configured" });
+  }
+
+  try {
+    const invoice = await prisma.invoice.findFirst({
+      where: { id: req.params.id, organizationId: req.user!.organizationId },
+      include: { customer: { select: { name: true, email: true } } },
+    });
+
+    if (!invoice) return res.status(404).json({ error: "Invoice not found" });
+    if (invoice.status === "paid") return res.status(400).json({ error: "Invoice is already paid" });
+
+    const stripe = new Stripe(stripeKey, { apiVersion: "2026-04-22.dahlia" });
+
+    const appUrl = process.env.APP_URL ?? "http://localhost:5173";
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            unit_amount: Math.round(invoice.amount * 100),
+            product_data: {
+              name: invoice.description,
+              metadata: { invoiceId: invoice.id },
+            },
+          },
+          quantity: 1,
+        },
+      ],
+      mode: "payment",
+      customer_email: req.user!.role === "customer" ? invoice.customer.email ?? undefined : undefined,
+      metadata: { invoiceId: invoice.id, organizationId: req.user!.organizationId },
+      success_url: `${appUrl}/customer?payment=success&invoice=${invoice.id}`,
+      cancel_url: `${appUrl}/customer/invoices`,
+    });
+
+    res.json({ url: session.url });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : "Failed to create payment link" });
   }
 });
 
