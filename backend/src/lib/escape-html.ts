@@ -1,0 +1,13 @@
+/**
+ * Escapes HTML special characters in a string before inserting it into
+ * an HTML email template. Prevents HTML injection from user-supplied data.
+ */
+export function escapeHtml(str: string | null | undefined): string {
+  if (!str) return "";
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
