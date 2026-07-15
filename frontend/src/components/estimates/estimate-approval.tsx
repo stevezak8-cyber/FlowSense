@@ -3,6 +3,7 @@ import { Estimate } from "@/api/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
+import { Loader2 } from "lucide-react"
 
 type Tier = "good" | "better" | "best"
 
@@ -17,6 +18,8 @@ export function EstimateApproval({ estimate, tier, token, onApproved }: Props) {
   const [signature, setSignature] = useState("")
   const [approving, setApproving] = useState(false)
   const [depositSkipped, setDepositSkipped] = useState(false)
+  const [payingDeposit, setPayingDeposit] = useState(false)
+  const [depositError, setDepositError] = useState<string | null>(null)
 
   const tierLines = estimate.lines.filter((l) => l.tier === tier)
   const total = tierLines.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0)
@@ -51,6 +54,23 @@ export function EstimateApproval({ estimate, tier, token, onApproved }: Props) {
       }
     } finally {
       setApproving(false)
+    }
+  }
+
+  async function handlePayDeposit() {
+    setPayingDeposit(true)
+    setDepositError(null)
+    try {
+      const res = await fetch(`/api/estimates/token/${token}/deposit`, { method: "POST" })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        setDepositError((body as { error?: string }).error ?? "Payment setup failed. Please try again.")
+        return
+      }
+      const { url } = await res.json() as { url: string }
+      window.location.href = url
+    } finally {
+      setPayingDeposit(false)
     }
   }
 
@@ -100,7 +120,10 @@ export function EstimateApproval({ estimate, tier, token, onApproved }: Props) {
             <Button
               size="sm"
               className="flex-1 bg-amber-500 hover:bg-amber-600 text-white"
+              onClick={handlePayDeposit}
+              disabled={payingDeposit}
             >
+              {payingDeposit ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
               Pay Deposit
             </Button>
             <Button
@@ -112,6 +135,9 @@ export function EstimateApproval({ estimate, tier, token, onApproved }: Props) {
               Skip for now
             </Button>
           </div>
+          {depositError && (
+            <p className="text-xs text-destructive">{depositError}</p>
+          )}
         </div>
       )}
 

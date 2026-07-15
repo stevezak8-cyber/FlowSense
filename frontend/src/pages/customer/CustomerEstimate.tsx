@@ -15,6 +15,14 @@ export default function CustomerEstimate() {
   const [error, setError] = useState<string | null>(null)
   const [step, setStep] = useState<Step>("tiers")
   const [selectedTier, setSelectedTier] = useState<Tier>("better")
+  const [depositResult, setDepositResult] = useState<"paid" | "cancelled" | null>(null)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const d = params.get("deposit")
+    if (d === "paid") setDepositResult("paid")
+    else if (d === "cancelled") setDepositResult("cancelled")
+  }, [])
 
   useEffect(() => {
     if (!token) return
@@ -63,9 +71,13 @@ export default function CustomerEstimate() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-3 px-4 text-center">
         <CheckCircle className="h-10 w-10 text-green-500" />
-        <h2 className="font-bold text-lg">Estimate Approved</h2>
+        <h2 className="font-bold text-lg">
+          {depositResult === "paid" ? "Deposit Received!" : "Estimate Approved"}
+        </h2>
         <p className="text-sm text-muted-foreground">
-          {estimate.selectedTier
+          {depositResult === "paid"
+            ? "Your deposit has been received and your appointment is confirmed. Your technician will be in touch soon."
+            : estimate?.selectedTier
             ? `You selected the ${estimate.selectedTier} plan. Our team will be in touch soon.`
             : "Your approval has been recorded. Our team will be in touch soon."}
         </p>
@@ -83,6 +95,11 @@ export default function CustomerEstimate() {
             setStep("approval")
           }}
         />
+      )}
+      {step === "approval" && depositResult === "cancelled" && (
+        <div className="max-w-sm mx-auto mb-3 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 px-3 py-2 text-sm text-amber-800 dark:text-amber-300">
+          Payment was cancelled. You can try again below.
+        </div>
       )}
       {step === "approval" && token && (
         <EstimateApproval
