@@ -17,12 +17,14 @@ function isValidPhone(phone: string | null | undefined): phone is string {
 
 async function send(to: string, fromNum: string, orgName: string, message: string, client: ReturnType<typeof twilio>): Promise<void> {
   const body = `[${orgName}] ${message} Reply STOP to opt out.`
+  const callbackBase = process.env.API_URL
+  if (!callbackBase) console.warn("[SMS] API_URL not set — statusCallback omitted, delivery opt-outs will not be tracked")
   try {
     await client.messages.create({
       to,
       from: fromNum,
       body,
-      statusCallback: `${process.env.API_URL ?? ""}/api/webhooks/twilio`,
+      ...(callbackBase ? { statusCallback: `${callbackBase}/api/webhooks/twilio` } : {}),
     })
     console.log(`[SMS] Sent to ${to}: ${body.slice(0, 60)}…`)
   } catch (err) {

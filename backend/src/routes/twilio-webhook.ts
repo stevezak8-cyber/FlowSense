@@ -8,20 +8,23 @@ twilioWebhookRouter.post("/", async (req: Request, res: Response) => {
   const authToken = process.env.TWILIO_AUTH_TOKEN
   const apiUrl = process.env.API_URL
 
-  if (authToken) {
-    const signature = (req.headers["x-twilio-signature"] as string) ?? ""
-    const webhookUrl = apiUrl
-      ? `${apiUrl}/api/webhooks/twilio`
-      : `${req.protocol}://${req.get("host")}${req.originalUrl}`
-    const valid = twilio.validateRequest(
-      authToken,
-      signature,
-      webhookUrl,
-      req.body as Record<string, string>
-    )
-    if (!valid) {
-      return res.status(403).send("Forbidden")
-    }
+  if (!authToken) {
+    console.error("[SMS] TWILIO_AUTH_TOKEN not configured — rejecting webhook")
+    return res.status(403).send("Forbidden")
+  }
+
+  const signature = (req.headers["x-twilio-signature"] as string) ?? ""
+  const webhookUrl = apiUrl
+    ? `${apiUrl}/api/webhooks/twilio`
+    : `${req.protocol}://${req.get("host")}${req.originalUrl}`
+  const valid = twilio.validateRequest(
+    authToken,
+    signature,
+    webhookUrl,
+    req.body as Record<string, string>
+  )
+  if (!valid) {
+    return res.status(403).send("Forbidden")
   }
 
   const { SmsStatus, ErrorCode, To, From, Body } = req.body as Record<string, string>

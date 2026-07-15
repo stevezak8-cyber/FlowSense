@@ -40,6 +40,15 @@ describe("POST /webhooks/twilio", () => {
     ;(prisma.customer.update as any).mockResolvedValue({})
   })
 
+  it("returns 403 when TWILIO_AUTH_TOKEN is not configured", async () => {
+    vi.unstubAllEnvs()
+    const res = await request(app)
+      .post("/")
+      .type("form")
+      .send({ SmsStatus: "failed", ErrorCode: "21610", To: "+15551234567" })
+    expect(res.status).toBe(403)
+  })
+
   it("returns 403 when signature is invalid", async () => {
     ;(twilio.validateRequest as any).mockReturnValue(false)
     const res = await request(app)
