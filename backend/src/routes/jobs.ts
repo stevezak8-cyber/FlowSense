@@ -13,7 +13,12 @@ import {
   notifyOrgNewBooking,
   notifyOrgStatusChange,
   notifyOrgJobCompleted,
-} from "../services/org-notifications.js";
+} from "../services/org-notifications.js"
+import {
+  sendBookingConfirmedSms,
+  sendEnRouteSms,
+  sendJobCompletedSms,
+} from "../services/sms.js";
 
 export const jobsRouter = Router();
 
@@ -300,6 +305,8 @@ jobsRouter.post("/", async (req, res) => {
       });
     }
 
+    sendBookingConfirmedSms(job.id).catch(console.error)
+
     // Notify org dispatch email
     notifyOrgNewBooking(req.user!.organizationId, {
       ...job,
@@ -388,6 +395,7 @@ jobsRouter.patch("/:id", async (req, res) => {
       sendStatusNotifications(result, req.user!.organizationId);
       sendStatusEmails(result);
       notifyOrgJobCompleted(req.user!.organizationId, result);
+      sendJobCompletedSms(result.id).catch(console.error)
       return;
     }
 
@@ -403,6 +411,7 @@ jobsRouter.patch("/:id", async (req, res) => {
     sendStatusNotifications(job, req.user!.organizationId);
     sendStatusEmails(job);
     notifyOrgStatusChange(req.user!.organizationId, job);
+    if (job.status === "en_route") sendEnRouteSms(job.id).catch(console.error)
     if (previousStatus === "pending" && job.status === "scheduled") {
       generatePreArrival(req.params.id);
     }
