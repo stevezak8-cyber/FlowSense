@@ -39,6 +39,13 @@ describe("GET /billing/connect", () => {
     vi.unstubAllEnvs()
   })
 
+  it("returns 403 when called by a technician", async () => {
+    ;(stripeModule as any).stripe = { oauth: { authorizeUrl: vi.fn() } }
+    const res = await request(buildApp("technician")).get("/billing/connect")
+    expect(res.status).toBe(403)
+    expect(res.body.error).toMatch(/office/i)
+  })
+
   it("returns 503 when stripe is not configured", async () => {
     ;(stripeModule as any).stripe = null
     const res = await request(buildApp()).get("/billing/connect")

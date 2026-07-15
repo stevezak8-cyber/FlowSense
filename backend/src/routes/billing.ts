@@ -72,6 +72,11 @@ billingRouter.post("/upgrade", async (req, res) => {
 
 // GET /billing/connect — start Stripe Connect OAuth
 billingRouter.get("/connect", async (req, res) => {
+  const user = (req as AuthRequest).user
+  if (!["office", "admin"].includes(user.role)) {
+    return res.status(403).json({ error: "Office access required" })
+  }
+
   if (!stripe) return res.status(503).json({ error: "Stripe not configured" })
 
   const clientId = process.env.STRIPE_CONNECT_CLIENT_ID
