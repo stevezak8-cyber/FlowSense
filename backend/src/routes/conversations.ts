@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { z } from "zod";
+import { sendPushToUser } from "../services/push.js";
 
 export const conversationsRouter = Router();
 
@@ -123,6 +124,29 @@ conversationsRouter.post("/:id/messages", async (req, res) => {
     });
 
     res.status(201).json(message);
+
+    // Fire push to participants (other than sender)
+    const participantIds: string[] = (conversation.participants as string[]) ?? []
+    if (participantIds.length > 0) {
+      prisma.technician.findMany({
+        where: { id: { in: participantIds } },
+        select: { user: { select: { id: true } } },
+      }).then((techs) => {
+        const userIds = techs.flatMap((t) => (t.user ? [t.user.id] : []))
+        const senderId = req.user!.id
+        return Promise.all(
+          userIds
+            .filter((uid) => uid !== senderId)
+            .map((uid) =>
+              sendPushToUser(uid, {
+                title: "New Message",
+                body: `${parsed.data.sender}: ${parsed.data.content.slice(0, 80)}`,
+                url: "/technician/messages",
+              }).catch(console.error)
+            )
+        )
+      }).catch(console.error)
+    }
   } catch (e) {
     res.status(500).json({ error: e instanceof Error ? e.message : "Failed to send message" });
   }
