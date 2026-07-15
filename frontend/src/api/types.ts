@@ -184,6 +184,10 @@ export interface ApiOrganization {
   createdAt: string
   plan: "trial" | "entry" | "core" | "premium" | "cancelled"
   trialEndsAt: string | null
+  estimateDepositThreshold: number
+  estimateDepositPercent: number
+  stripeConnectOnboarded: boolean
+  stripeConnectAccountId: string | null
 }
 
 export interface PricebookItem {

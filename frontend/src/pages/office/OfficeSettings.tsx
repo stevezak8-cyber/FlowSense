@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Building2, User, Bell, Mail, Phone, Loader2, AlertCircle, BookOpen } from "lucide-react"
+import { Building2, User, Bell, Mail, Phone, Loader2, AlertCircle, BookOpen, CreditCard, CheckCircle } from "lucide-react"
 import { PricebookSettings } from "@/components/pricebook/pricebook-settings"
 import { toast } from "sonner"
 
@@ -40,10 +40,22 @@ export default function OfficeSettings() {
   const [accountSaving, setAccountSaving] = useState(false)
   const [accountError, setAccountError] = useState<string | null>(null)
 
+  // Stripe Connect state
+  const [connectLoading, setConnectLoading] = useState(false)
+  const [connectStatus, setConnectStatus] = useState<"success" | "error" | null>(null)
+
   // Notification state
   const [prefs, setPrefs] = useState<NotificationPreferences>(DEFAULT_PREFS)
   const [prefsSaving, setPrefsSaving] = useState(false)
   const [prefsError, setPrefsError] = useState<string | null>(null)
+
+  // Read connect URL param
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const connect = params.get("connect")
+    if (connect === "success") setConnectStatus("success")
+    else if (connect === "error") setConnectStatus("error")
+  }, [])
 
   // Load org on mount
   useEffect(() => {
@@ -59,6 +71,17 @@ export default function OfficeSettings() {
       .catch(() => setOrgError("Could not load organization settings"))
       .finally(() => setOrgLoading(false))
   }, [])
+
+  async function handleConnectStripe() {
+    setConnectLoading(true)
+    try {
+      const data = await api.get<{ url: string }>("/api/billing/connect")
+      window.location.href = data.url
+    } catch {
+      toast.error("Could not start Stripe Connect. Please try again.")
+      setConnectLoading(false)
+    }
+  }
 
   async function handleSaveOrg(e: React.FormEvent) {
     e.preventDefault()
@@ -339,6 +362,44 @@ export default function OfficeSettings() {
         </CardHeader>
         <CardContent>
           <PricebookSettings />
+        </CardContent>
+      </Card>
+
+      {/* Payment Collection */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CreditCard className="h-5 w-5" />
+            Payment Collection
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {connectStatus === "success" && (
+            <div className="text-sm text-green-600 dark:text-green-400 font-medium">
+              Stripe connected successfully.
+            </div>
+          )}
+          {connectStatus === "error" && (
+            <div className="text-sm text-destructive">
+              Stripe connection failed. Please try again.
+            </div>
+          )}
+          {org?.stripeConnectOnboarded ? (
+            <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-400 font-medium">
+              <CheckCircle className="h-4 w-4" />
+              Stripe Connected — deposits are enabled
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Connect your Stripe account to collect deposit payments from customers.
+              </p>
+              <Button onClick={handleConnectStripe} disabled={connectLoading} variant="outline">
+                {connectLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Connect Stripe
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
