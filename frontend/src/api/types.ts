@@ -8,6 +8,7 @@ export interface OnboardingStatus {
     customer: boolean
     job: boolean
     stripeConnect: boolean
+    smsEnabled: boolean
   }
 }
 
@@ -189,6 +190,7 @@ export interface ApiOrganization {
   estimateDepositPercent: number
   stripeConnectOnboarded: boolean
   stripeConnectAccountId: string | null
+  smsEnabled: boolean
 }
 
 export interface PricebookItem {

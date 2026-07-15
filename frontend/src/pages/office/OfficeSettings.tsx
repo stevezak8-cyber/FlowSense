@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Building2, User, Bell, Mail, Phone, Loader2, AlertCircle, BookOpen, CreditCard, CheckCircle } from "lucide-react"
+import { Building2, User, Bell, Mail, Phone, Loader2, AlertCircle, BookOpen, CreditCard, CheckCircle, MessageSquare } from "lucide-react"
 import { PricebookSettings } from "@/components/pricebook/pricebook-settings"
 import { toast } from "sonner"
 
@@ -44,6 +44,10 @@ export default function OfficeSettings() {
   const [connectLoading, setConnectLoading] = useState(false)
   const [connectStatus, setConnectStatus] = useState<"success" | "error" | null>(null)
 
+  // SMS state
+  const [smsEnabled, setSmsEnabled] = useState(false)
+  const [smsLoading, setSmsLoading] = useState(false)
+
   // Notification state
   const [prefs, setPrefs] = useState<NotificationPreferences>(DEFAULT_PREFS)
   const [prefsSaving, setPrefsSaving] = useState(false)
@@ -67,10 +71,23 @@ export default function OfficeSettings() {
         setOrgEmail(data.email ?? "")
         setOrgAddress(data.address ?? "")
         setPrefs(data.notificationPreferences ?? DEFAULT_PREFS)
+        setSmsEnabled(data.smsEnabled ?? false)
       })
       .catch(() => setOrgError("Could not load organization settings"))
       .finally(() => setOrgLoading(false))
   }, [])
+
+  async function handleSmsToggle(enabled: boolean) {
+    setSmsLoading(true)
+    try {
+      await api.patch<ApiOrganization>("/api/organizations/me", { smsEnabled: enabled })
+      setSmsEnabled(enabled)
+    } catch {
+      // leave toggle in current state on error
+    } finally {
+      setSmsLoading(false)
+    }
+  }
 
   async function handleConnectStripe() {
     setConnectLoading(true)
@@ -402,6 +419,39 @@ export default function OfficeSettings() {
           )}
         </CardContent>
       </Card>
+
+      {/* SMS Notifications */}
+      <div className="rounded-xl border bg-card p-5 space-y-4">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="h-5 w-5 text-muted-foreground" />
+          <h3 className="font-semibold">SMS Notifications</h3>
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <p className="text-sm font-medium">Enable SMS notifications</p>
+            <p className="text-xs text-muted-foreground">
+              {smsEnabled
+                ? "Customers will receive texts from our shared FlowSense number. Messages include your business name."
+                : "Enable to send automated texts to customers at key job milestones."}
+            </p>
+          </div>
+          <button
+            role="switch"
+            aria-checked={smsEnabled}
+            onClick={() => !smsLoading && handleSmsToggle(!smsEnabled)}
+            disabled={smsLoading}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+              smsEnabled ? "bg-primary" : "bg-input"
+            } ${smsLoading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                smsEnabled ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
+        </div>
+      </div>
 
       <ChangePasswordCard />
 
