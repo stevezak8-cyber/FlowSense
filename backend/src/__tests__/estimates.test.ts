@@ -194,10 +194,22 @@ describe("POST /token/:token/deposit", () => {
     expect(res.body.error).toMatch(/already paid/i);
   });
 
+  it("returns 409 when payment already initiated (session exists but not yet paid)", async () => {
+    ;(prisma.estimate.findUnique as any).mockResolvedValue({
+      id: "est-1", status: "approved", depositPaidAt: null,
+      depositAmount: 500, stripePaymentIntentId: "cs_existing", jobId: "job-1", organizationId: "org-1",
+      job: { title: "AC Repair" },
+      organization: { stripeConnectAccountId: "acct_test", stripeConnectOnboarded: true },
+    });
+    const res = await request(publicApp).post("/tok-1/deposit");
+    expect(res.status).toBe(409);
+    expect(res.body.error).toMatch(/already initiated/i);
+  });
+
   it("returns 400 when no deposit amount", async () => {
     ;(prisma.estimate.findUnique as any).mockResolvedValue({
       id: "est-1", status: "approved", depositPaidAt: null,
-      depositAmount: null, jobId: "job-1", organizationId: "org-1",
+      depositAmount: null, stripePaymentIntentId: null, jobId: "job-1", organizationId: "org-1",
       job: { title: "AC Repair" },
       organization: { stripeConnectAccountId: "acct_test", stripeConnectOnboarded: true },
     });
@@ -209,7 +221,7 @@ describe("POST /token/:token/deposit", () => {
   it("returns 503 when org not connected to Stripe", async () => {
     ;(prisma.estimate.findUnique as any).mockResolvedValue({
       id: "est-1", status: "approved", depositPaidAt: null,
-      depositAmount: 500, jobId: "job-1", organizationId: "org-1",
+      depositAmount: 500, stripePaymentIntentId: null, jobId: "job-1", organizationId: "org-1",
       job: { title: "AC Repair" },
       organization: { stripeConnectAccountId: null, stripeConnectOnboarded: false },
     });
@@ -222,7 +234,7 @@ describe("POST /token/:token/deposit", () => {
     ;(stripeModule as any).stripe = null;
     ;(prisma.estimate.findUnique as any).mockResolvedValue({
       id: "est-1", status: "approved", depositPaidAt: null,
-      depositAmount: 500, jobId: "job-1", organizationId: "org-1",
+      depositAmount: 500, stripePaymentIntentId: null, jobId: "job-1", organizationId: "org-1",
       job: { title: "AC Repair" },
       organization: { stripeConnectAccountId: "acct_test", stripeConnectOnboarded: true },
     });
@@ -234,7 +246,7 @@ describe("POST /token/:token/deposit", () => {
     vi.stubEnv("FRONTEND_URL", "http://app.test");
     ;(prisma.estimate.findUnique as any).mockResolvedValue({
       id: "est-1", status: "approved", depositPaidAt: null,
-      depositAmount: 150, jobId: "job-1", organizationId: "org-1",
+      depositAmount: 150, stripePaymentIntentId: null, jobId: "job-1", organizationId: "org-1",
       job: { title: "AC Repair" },
       organization: { stripeConnectAccountId: "acct_test", stripeConnectOnboarded: true },
     });

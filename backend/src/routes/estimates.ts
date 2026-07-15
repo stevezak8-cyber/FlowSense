@@ -205,6 +205,7 @@ publicEstimatesRouter.post("/:token/deposit", async (req, res) => {
   if (estimate.status !== "approved") return res.status(400).json({ error: "Estimate has not been approved" });
   if (estimate.depositPaidAt) return res.status(409).json({ error: "Deposit already paid" });
   if (!estimate.depositAmount) return res.status(400).json({ error: "No deposit required" });
+  if (estimate.stripePaymentIntentId) return res.status(409).json({ error: "Payment already initiated" });
   if (!estimate.organization.stripeConnectOnboarded || !estimate.organization.stripeConnectAccountId) {
     return res.status(503).json({ error: "Payments not configured for this business" });
   }
