@@ -13,6 +13,7 @@ onboardingRouter.get("/status", async (req, res) => {
       onboardingDismissed: true,
       phone: true,
       address: true,
+      stripeConnectOnboarded: true,
       _count: { select: { technicians: true, customers: true, jobs: true } },
     },
   })
@@ -26,6 +27,7 @@ onboardingRouter.get("/status", async (req, res) => {
       technician: org._count.technicians > 0,
       customer: org._count.customers > 0,
       job: org._count.jobs > 0,
+      stripeConnect: org.stripeConnectOnboarded === true,
     },
   })
 })

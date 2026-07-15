@@ -55,6 +55,7 @@ export function OnboardingChecklist({ refreshKey }: Props) {
     { key: "technician" as const, label: "Add your first technician", href: "/office/technicians?open=add-technician" },
     { key: "customer" as const, label: "Add your first customer", href: "/office/customers?open=add-customer" },
     { key: "job" as const, label: "Create your first job", href: "/office/jobs?open=create-job" },
+    { key: "stripeConnect" as const, label: "Connect Stripe to accept deposits", href: "/office/settings" },
   ]
 
   const completedCount = steps.filter((s) => status.steps[s.key]).length

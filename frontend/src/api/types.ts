@@ -7,6 +7,7 @@ export interface OnboardingStatus {
     technician: boolean
     customer: boolean
     job: boolean
+    stripeConnect: boolean
   }
 }
 

@@ -58,6 +58,7 @@ describe("GET /api/onboarding/status", () => {
         technician: true,
         customer: false,
         job: false,
+        stripeConnect: false,
       },
     })
   })
