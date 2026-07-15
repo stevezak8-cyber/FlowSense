@@ -1,3 +1,6 @@
+import { enqueue } from "@/lib/sync-queue"
+import toast from "react-hot-toast"
+
 const BASE = "";
 const TOKEN_KEY = "flowsense_token";
 
@@ -50,12 +53,34 @@ async function request<T>(
   return res.json() as Promise<T>;
 }
 
+async function patchWithQueue<T>(path: string, body: unknown): Promise<T> {
+  try {
+    return await request<T>(path, { method: "PATCH", body: JSON.stringify(body) })
+  } catch (err) {
+    if (
+      err instanceof TypeError &&
+      err.message.toLowerCase().includes("fetch") &&
+      path.includes("/api/jobs/")
+    ) {
+      await enqueue({
+        method: "PATCH",
+        url: path,
+        body: body as object,
+        timestamp: Date.now(),
+        retryCount: 0,
+      })
+      toast("You're offline — update queued", { icon: "📶" })
+      return null as unknown as T
+    }
+    throw err
+  }
+}
+
 export const api = {
   get: <T>(path: string) => request<T>(path),
   post: <T>(path: string, body: unknown) =>
     request<T>(path, { method: "POST", body: JSON.stringify(body) }),
-  patch: <T>(path: string, body: unknown) =>
-    request<T>(path, { method: "PATCH", body: JSON.stringify(body) }),
+  patch: <T>(path: string, body: unknown) => patchWithQueue<T>(path, body),
   delete: <T = void>(path: string) =>
     request<T>(path, { method: "DELETE" }),
 };
