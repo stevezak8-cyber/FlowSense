@@ -12,6 +12,13 @@ vi.mock("../lib/prisma.js", () => ({
     invoice: {
       update: vi.fn(),
     },
+    estimate: {
+      findUnique: vi.fn(),
+      update: vi.fn(),
+    },
+    job: {
+      update: vi.fn(),
+    },
   },
 }))
 
@@ -23,7 +30,20 @@ vi.mock("stripe", () => {
   return { default: MockStripe }
 })
 
+vi.mock("../services/email.js", () => ({
+  sendEmail: vi.fn(),
+  sendDepositReceiptEmail: vi.fn().mockResolvedValue(undefined),
+}))
+
+vi.mock("../services/org-notifications.js", () => ({
+  notifyOrgNewBooking: vi.fn(),
+  notifyOrgStatusChange: vi.fn(),
+  notifyOrgJobCompleted: vi.fn(),
+  notifyOfficeDepositReceived: vi.fn().mockResolvedValue(undefined),
+}))
+
 import { prisma } from "../lib/prisma.js"
+import * as stripeModule from "stripe"
 import { webhooksRouter } from "../routes/webhooks.js"
 
 function makeApp() {
@@ -32,6 +52,14 @@ function makeApp() {
   app.use("/webhooks", webhooksRouter)
   return app
 }
+
+// Top-level app for deposit tests (mounts router at /, so POST /stripe works)
+const app = (() => {
+  const a = express()
+  a.use(express.raw({ type: "application/json" }))
+  a.use(webhooksRouter)
+  return a
+})()
 
 function makeEvent(type: string, object: object) {
   return { type, data: { object } }
@@ -105,5 +133,110 @@ describe("Stripe webhook — subscription events", () => {
     expect(prisma.organization.update).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ plan: "entry" }) })
     )
+  })
+})
+
+describe("checkout.session.completed — estimate deposit", () => {
+  function buildDepositEvent(metadata: Record<string, string>) {
+    return {
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          metadata,
+          payment_status: "paid",
+        },
+      },
+    }
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    process.env.STRIPE_SECRET_KEY = "sk_test_dummy"
+    delete process.env.STRIPE_WEBHOOK_SECRET
+  })
+
+  it("skips estimate path when estimateId is absent from metadata", async () => {
+    const event = {
+      type: "checkout.session.completed",
+      data: { object: { metadata: {}, payment_status: "paid" } },
+    }
+    ;(stripeModule as any).stripe = { webhooks: { constructEvent: vi.fn().mockReturnValue(event) } }
+    ;(prisma.estimate.findUnique as any).mockResolvedValue(null)
+    const res = await request(app)
+      .post("/stripe")
+      .set("stripe-signature", "sig")
+      .set("content-type", "application/json")
+      .send(JSON.stringify(event))
+    expect(res.status).toBe(200)
+    expect(prisma.estimate.findUnique).not.toHaveBeenCalled()
+  })
+
+  it("skips when estimate not found", async () => {
+    const event = buildDepositEvent({ estimateId: "est-1", jobId: "job-1", organizationId: "org-1" })
+    ;(stripeModule as any).stripe = { webhooks: { constructEvent: vi.fn().mockReturnValue(event) } }
+    ;(prisma.estimate.findUnique as any).mockResolvedValue(null)
+    const res = await request(app)
+      .post("/stripe")
+      .set("stripe-signature", "sig")
+      .set("content-type", "application/json")
+      .send(JSON.stringify(event))
+    expect(res.status).toBe(200)
+    expect(prisma.estimate.update).not.toHaveBeenCalled()
+  })
+
+  it("skips when deposit already paid (idempotent)", async () => {
+    const event = buildDepositEvent({ estimateId: "est-1", jobId: "job-1", organizationId: "org-1" })
+    ;(stripeModule as any).stripe = { webhooks: { constructEvent: vi.fn().mockReturnValue(event) } }
+    ;(prisma.estimate.findUnique as any).mockResolvedValue({
+      id: "est-1", depositPaidAt: new Date(), organizationId: "org-1",
+    })
+    const res = await request(app)
+      .post("/stripe")
+      .set("stripe-signature", "sig")
+      .set("content-type", "application/json")
+      .send(JSON.stringify(event))
+    expect(res.status).toBe(200)
+    expect(prisma.estimate.update).not.toHaveBeenCalled()
+  })
+
+  it("marks deposit paid and updates job to confirmed", async () => {
+    const event = buildDepositEvent({ estimateId: "est-1", jobId: "job-1", organizationId: "org-1" })
+    ;(stripeModule as any).stripe = { webhooks: { constructEvent: vi.fn().mockReturnValue(event) } }
+    ;(prisma.estimate.findUnique as any).mockResolvedValue({
+      id: "est-1", depositPaidAt: null, organizationId: "org-1",
+    })
+    ;(prisma.estimate.update as any).mockResolvedValue({})
+    ;(prisma.job.update as any).mockResolvedValue({})
+    const res = await request(app)
+      .post("/stripe")
+      .set("stripe-signature", "sig")
+      .set("content-type", "application/json")
+      .send(JSON.stringify(event))
+    expect(res.status).toBe(200)
+    expect(prisma.estimate.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "est-1" },
+        data: expect.objectContaining({ depositPaidAt: expect.any(Date) }),
+      })
+    )
+    expect(prisma.job.update).toHaveBeenCalledWith({
+      where: { id: "job-1" },
+      data: { status: "confirmed" },
+    })
+  })
+
+  it("skips and logs when org ID mismatches (cross-tenant)", async () => {
+    const event = buildDepositEvent({ estimateId: "est-1", jobId: "job-1", organizationId: "org-ATTACKER" })
+    ;(stripeModule as any).stripe = { webhooks: { constructEvent: vi.fn().mockReturnValue(event) } }
+    ;(prisma.estimate.findUnique as any).mockResolvedValue({
+      id: "est-1", depositPaidAt: null, organizationId: "org-VICTIM",
+    })
+    const res = await request(app)
+      .post("/stripe")
+      .set("stripe-signature", "sig")
+      .set("content-type", "application/json")
+      .send(JSON.stringify(event))
+    expect(res.status).toBe(200)
+    expect(prisma.estimate.update).not.toHaveBeenCalled()
   })
 })

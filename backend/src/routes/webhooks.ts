@@ -1,6 +1,8 @@
 import { Router, type Request, type Response } from "express";
 import Stripe from "stripe";
 import { prisma } from "../lib/prisma.js";
+import { sendDepositReceiptEmail } from "../services/email.js";
+import { notifyOfficeDepositReceived } from "../services/org-notifications.js";
 
 export const webhooksRouter = Router();
 
@@ -46,8 +48,9 @@ webhooksRouter.post("/stripe", async (req: Request, res: Response) => {
   switch (event.type) {
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session;
-      const invoiceId = session.metadata?.invoiceId;
+      const { invoiceId, estimateId, jobId, organizationId } = session.metadata ?? {};
 
+      // Handle invoice payment (existing path)
       if (invoiceId) {
         try {
           await prisma.invoice.update({
@@ -57,10 +60,38 @@ webhooksRouter.post("/stripe", async (req: Request, res: Response) => {
           console.log(`Invoice ${invoiceId} marked as paid via Stripe`);
         } catch (err) {
           console.error(`Failed to mark invoice ${invoiceId} as paid:`, err);
-          // Return 500 so Stripe retries
           return res.status(500).json({ error: "Failed to update invoice" });
         }
       }
+
+      // Handle estimate deposit (new path)
+      if (estimateId && jobId) {
+        const estimate = await prisma.estimate.findUnique({
+          where: { id: estimateId },
+          select: { id: true, depositPaidAt: true, organizationId: true },
+        });
+        if (estimate && !estimate.depositPaidAt) {
+          if (estimate.organizationId !== organizationId) {
+            console.error("[Webhook] Org mismatch on estimate deposit", estimateId);
+          } else {
+            await prisma.estimate.update({
+              where: { id: estimateId },
+              data: { depositPaidAt: new Date() },
+            });
+            await prisma.job.update({
+              where: { id: jobId },
+              data: { status: "confirmed" },
+            });
+            sendDepositReceiptEmail(estimateId).catch((err: unknown) =>
+              console.error("[Webhook] Receipt email failed:", err)
+            );
+            notifyOfficeDepositReceived(estimateId).catch((err: unknown) =>
+              console.error("[Webhook] Office notification failed:", err)
+            );
+          }
+        }
+      }
+
       break;
     }
 
