@@ -37,6 +37,8 @@ organizationsRouter.get("/me", async (req, res) => {
         createdAt: true,
         estimateDepositThreshold: true,
         estimateDepositPercent: true,
+        stripeConnectAccountId: true,
+        stripeConnectOnboarded: true,
       },
     });
 
@@ -73,6 +75,8 @@ organizationsRouter.patch("/me", async (req, res) => {
         createdAt: true,
         estimateDepositThreshold: true,
         estimateDepositPercent: true,
+        stripeConnectAccountId: true,
+        stripeConnectOnboarded: true,
       },
     });
     res.json(updated);
