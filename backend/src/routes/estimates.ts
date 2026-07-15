@@ -188,19 +188,24 @@ publicEstimatesRouter.post("/:token/approve", async (req, res) => {
 publicEstimatesRouter.post("/:token/deposit", async (req, res) => {
   const { token } = req.params;
 
+  type EstimateWithRelations = Awaited<ReturnType<typeof prisma.estimate.findUnique>> & {
+    job: { title: string };
+    organization: { stripeConnectAccountId: string | null; stripeConnectOnboarded: boolean };
+  };
+
   const estimate = await prisma.estimate.findUnique({
     where: { token },
     include: {
       job: { select: { title: true } },
       organization: { select: { stripeConnectAccountId: true, stripeConnectOnboarded: true } },
     },
-  });
+  }) as EstimateWithRelations | null;
 
   if (!estimate) return res.status(404).json({ error: "Estimate not found" });
   if (estimate.status !== "approved") return res.status(400).json({ error: "Estimate has not been approved" });
-  if ((estimate as any).depositPaidAt) return res.status(409).json({ error: "Deposit already paid" });
+  if (estimate.depositPaidAt) return res.status(409).json({ error: "Deposit already paid" });
   if (!estimate.depositAmount) return res.status(400).json({ error: "No deposit required" });
-  if (!(estimate as any).organization.stripeConnectOnboarded || !(estimate as any).organization.stripeConnectAccountId) {
+  if (!estimate.organization.stripeConnectOnboarded || !estimate.organization.stripeConnectAccountId) {
     return res.status(503).json({ error: "Payments not configured for this business" });
   }
   if (!stripe) return res.status(503).json({ error: "Stripe not configured" });
@@ -213,7 +218,7 @@ publicEstimatesRouter.post("/:token/deposit", async (req, res) => {
       line_items: [{
         price_data: {
           currency: "usd",
-          product_data: { name: `Deposit — ${(estimate as any).job.title}` },
+          product_data: { name: `Deposit — ${estimate.job.title}` },
           unit_amount: Math.round(estimate.depositAmount * 100),
         },
         quantity: 1,
@@ -226,7 +231,7 @@ publicEstimatesRouter.post("/:token/deposit", async (req, res) => {
       success_url: `${frontendUrl}/customer/estimates/${token}?deposit=paid`,
       cancel_url: `${frontendUrl}/customer/estimates/${token}?deposit=cancelled`,
     },
-    { stripeAccount: (estimate as any).organization.stripeConnectAccountId }
+    { stripeAccount: estimate.organization.stripeConnectAccountId }
   );
 
   await prisma.estimate.update({

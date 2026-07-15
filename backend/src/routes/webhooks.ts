@@ -74,20 +74,25 @@ webhooksRouter.post("/stripe", async (req: Request, res: Response) => {
           if (estimate.organizationId !== organizationId) {
             console.error("[Webhook] Org mismatch on estimate deposit", estimateId);
           } else {
-            await prisma.estimate.update({
-              where: { id: estimateId },
-              data: { depositPaidAt: new Date() },
-            });
-            await prisma.job.update({
-              where: { id: jobId },
-              data: { status: "confirmed" },
-            });
-            sendDepositReceiptEmail(estimateId).catch((err: unknown) =>
-              console.error("[Webhook] Receipt email failed:", err)
-            );
-            notifyOfficeDepositReceived(estimateId).catch((err: unknown) =>
-              console.error("[Webhook] Office notification failed:", err)
-            );
+            try {
+              await prisma.estimate.update({
+                where: { id: estimateId },
+                data: { depositPaidAt: new Date() },
+              });
+              await prisma.job.update({
+                where: { id: jobId },
+                data: { status: "confirmed" },
+              });
+              sendDepositReceiptEmail(estimateId).catch((err: unknown) =>
+                console.error("[Webhook] Receipt email failed:", err)
+              );
+              notifyOfficeDepositReceived(estimateId).catch((err: unknown) =>
+                console.error("[Webhook] Office notification failed:", err)
+              );
+            } catch (err) {
+              console.error("[Webhook] Failed to process deposit for estimate", estimateId, err);
+              // Return 200 so Stripe doesn't retry — idempotency guard handles any partial state
+            }
           }
         }
       }
