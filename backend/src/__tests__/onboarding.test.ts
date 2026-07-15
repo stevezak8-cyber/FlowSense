@@ -46,6 +46,8 @@ describe("GET /api/onboarding/status", () => {
       onboardingDismissed: false,
       phone: "555-1234",
       address: "123 Main St",
+      stripeConnectOnboarded: false,
+      smsEnabled: false,
       _count: { technicians: 1, customers: 0, jobs: 0 },
     } as never)
 
@@ -59,6 +61,7 @@ describe("GET /api/onboarding/status", () => {
         customer: false,
         job: false,
         stripeConnect: false,
+        smsEnabled: false,
       },
     })
   })

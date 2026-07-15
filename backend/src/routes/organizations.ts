@@ -19,6 +19,7 @@ const updateOrgSchema = z.object({
     .optional(),
   estimateDepositThreshold: z.number().positive().optional(),
   estimateDepositPercent: z.number().int().min(1).max(100).optional(),
+  smsEnabled: z.boolean().optional(),
 });
 
 // GET /api/organizations/me — return the current user's org
@@ -39,6 +40,7 @@ organizationsRouter.get("/me", async (req, res) => {
         estimateDepositPercent: true,
         stripeConnectAccountId: true,
         stripeConnectOnboarded: true,
+        smsEnabled: true,
       },
     });
 
@@ -77,6 +79,7 @@ organizationsRouter.patch("/me", async (req, res) => {
         estimateDepositPercent: true,
         stripeConnectAccountId: true,
         stripeConnectOnboarded: true,
+        smsEnabled: true,
       },
     });
     res.json(updated);
