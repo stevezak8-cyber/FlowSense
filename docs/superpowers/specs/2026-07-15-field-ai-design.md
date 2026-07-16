@@ -98,7 +98,7 @@ export async function streamFieldAiResponse(
 ```
 
 - Loads job (verifies it belongs to `organizationId`)
-- Loads tech via `prisma.technician.findFirst({ where: { user: { some: { id: userId } } } })`
+- Loads tech via `prisma.technician.findFirst({ where: { user: { id: userId } } })` — if no technician found, proceeds without tech context (graceful degrade)
 - Assembles context + loads prior `AiMessage` history for this job
 - Calls `anthropic.messages.stream()` with `max_tokens: 1024`
 - Calls `onToken` for each text delta
@@ -113,21 +113,21 @@ Mounted at `/api/ai` under `requireAuth`.
 
 Body: `{ jobId: string, message: string }`
 
-1. Validates body with Zod
-2. Saves user message: `prisma.aiMessage.create({ data: { jobId, role: "user", content: message } })`
-3. Sets SSE headers:
+1. If `ANTHROPIC_API_KEY` absent: return `503 { error: "not_configured" }` immediately — before any DB writes or SSE headers
+2. Validates body with Zod
+3. Saves user message: `prisma.aiMessage.create({ data: { jobId, role: "user", content: message } })`
+4. Sets SSE headers:
    ```
    Content-Type: text/event-stream
    Cache-Control: no-cache
    Connection: keep-alive
    ```
-4. Calls `streamFieldAiResponse(...)`:
+5. Calls `streamFieldAiResponse(...)`:
    - `onToken`: writes `data: ${JSON.stringify({ token })}\n\n` and flushes
    - `onDone(fullText)`: saves assistant message to DB, writes `data: [DONE]\n\n`, ends response
    - `onError`: writes `data: ${JSON.stringify({ error: "stream_failed" })}\n\n`, ends response
-5. If `ANTHROPIC_API_KEY` absent: returns `503 { error: "not_configured" }` immediately (before setting SSE headers)
 
-**JWT auth note:** `EventSource` does not support custom headers. The token is passed as a query parameter (`?token=...`) and validated manually at the start of the handler using the same JWT verification logic as `requireAuth` middleware.
+**Auth:** The route is mounted under `requireAuth` middleware. The frontend uses `fetch` + `ReadableStream` with an `Authorization: Bearer` header — not `EventSource` — so no query-param token workaround is needed.
 
 #### `GET /api/ai/chat/:jobId`
 
