@@ -10,6 +10,7 @@ import { JobChart } from "@/components/dashboard/job-chart"
 import { CreateJobDialog } from "@/components/jobs/create-job-dialog"
 import { AddTechnicianDialog } from "@/components/technicians/add-technician-dialog"
 import { AddCustomerDialog } from "@/components/customers/add-customer-dialog"
+import { MaintenanceDueWidget } from "@/components/equipment/MaintenanceDueWidget"
 import { PageError } from "@/components/page-error"
 import { Button } from "@/components/ui/button"
 import { Link } from "react-router-dom"
@@ -74,6 +75,8 @@ export default function OfficeDashboardPage() {
       </div>
 
       <StatCards stats={stats} loading={loading} />
+
+      <MaintenanceDueWidget />
 
       {/* Unassigned jobs alert */}
       {(() => {
