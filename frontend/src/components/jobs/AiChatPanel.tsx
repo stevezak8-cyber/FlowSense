@@ -262,7 +262,7 @@ export function AiChatPanel({ jobId, jobContext, onClose }: Props) {
               </div>
             </div>
           ) : (
-            messages.map((msg, i) => <MessageBubble key={i} msg={msg} />)
+            messages.map((msg, i) => <MessageBubble key={msg.id ?? i} msg={msg} />)
           )}
           <div ref={messagesEndRef} />
         </div>

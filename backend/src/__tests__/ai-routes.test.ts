@@ -65,6 +65,27 @@ describe("POST /api/ai/chat/stream", () => {
       .send({ message: "help" })
     expect(res.status).toBe(400)
   })
+
+  it("streams tokens and saves assistant message on done", async () => {
+    vi.stubEnv("ANTHROPIC_API_KEY", "test-key")
+    vi.mocked(prisma.job.findFirst).mockResolvedValue({ id: "job-1" } as any)
+    vi.mocked(streamFieldAiResponse).mockImplementation(
+      async (_jobId, _userId, _orgId, onToken, onDone) => {
+        onToken("Hello")
+        onToken(" world")
+        await onDone("Hello world")
+      }
+    )
+    const app = buildApp()
+    const res = await request(app)
+      .post("/api/ai/chat/stream")
+      .send({ jobId: "job-1", message: "test" })
+    expect(res.status).toBe(200)
+    expect(res.text).toContain(JSON.stringify({ token: "Hello" }))
+    expect(res.text).toContain("[DONE]")
+    // user message + assistant message
+    expect(prisma.aiMessage.create).toHaveBeenCalledTimes(2)
+  })
 })
 
 describe("GET /api/ai/chat/:jobId", () => {

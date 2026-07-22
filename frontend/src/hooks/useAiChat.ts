@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { api } from "@/api/client"
 
 export interface AiMessage {
+  id?: string
   role: "user" | "assistant"
   content: string
   streaming?: boolean
@@ -24,7 +25,7 @@ export function useAiChat(jobId: string) {
   useEffect(() => {
     api.get<StoredAiMessage[]>(`/api/ai/chat/${jobId}`)
       .then((stored) => {
-        setMessages(stored.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })))
+        setMessages(stored.map((m) => ({ id: m.id, role: m.role as "user" | "assistant", content: m.content })))
       })
       .catch(() => {
         // Silently ignore — empty state is fine
@@ -46,10 +47,12 @@ export function useAiChat(jobId: string) {
     abortRef.current = new AbortController()
 
     // Optimistically append user message + empty streaming assistant message
+    const userMsgId = `msg-${Date.now()}-user`
+    const asstMsgId = `msg-${Date.now()}-asst`
     setMessages((prev) => [
       ...prev,
-      { role: "user", content: text },
-      { role: "assistant", content: "", streaming: true },
+      { id: userMsgId, role: "user", content: text },
+      { id: asstMsgId, role: "assistant", content: "", streaming: true },
     ])
     setStreaming(true)
 

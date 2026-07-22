@@ -7,7 +7,7 @@ export const aiRouter = Router()
 
 const chatSchema = z.object({
   jobId: z.string().min(1),
-  message: z.string().min(1),
+  message: z.string().min(1).max(4000),
 })
 
 aiRouter.post("/chat/stream", async (req, res) => {
@@ -24,6 +24,15 @@ aiRouter.post("/chat/stream", async (req, res) => {
   const { jobId, message } = parsed.data
   const userId = req.user!.id
   const organizationId = req.user!.organizationId
+
+  // Verify job exists and belongs to this org before writing anything
+  const job = await prisma.job.findFirst({
+    where: { id: jobId, organizationId },
+    select: { id: true },
+  })
+  if (!job) {
+    return res.status(404).json({ error: "job_not_found" })
+  }
 
   // Save user message to DB
   await prisma.aiMessage.create({
