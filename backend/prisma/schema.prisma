@@ -312,10 +312,10 @@ model Message {
 model AiMessage {
   id        String   @id @default(cuid())
   jobId     String
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
   role      String   // "user" | "assistant"
   content   String
   createdAt DateTime @default(now())
-  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
 
   @@index([jobId])
 }
