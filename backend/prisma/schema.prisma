@@ -185,6 +185,7 @@ model Job {
   complianceLogs ComplianceLog[]
   invoices       Invoice[]
   estimates      Estimate[]
+  aiMessages     AiMessage[]
 
   @@index([organizationId])
   @@index([technicianId])
@@ -306,6 +307,17 @@ model Message {
   createdAt      DateTime     @default(now())
 
   @@index([conversationId])
+}
+
+model AiMessage {
+  id        String   @id @default(cuid())
+  jobId     String
+  role      String   // "user" | "assistant"
+  content   String
+  createdAt DateTime @default(now())
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
 }
 
 // Compliance & audit trail (EPA 608, safety, timestamps)
