@@ -46,6 +46,7 @@ model Organization {
   vehicles      Vehicle[]
   invoices      Invoice[]
   conversations Conversation[]
+  equipment     Equipment[]
 
   estimateDepositThreshold Float  @default(500)
   estimateDepositPercent   Int    @default(25)
@@ -126,9 +127,10 @@ model Customer {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
-  jobs     Job[]
-  invoices Invoice[]
-  user     User?
+  jobs      Job[]
+  invoices  Invoice[]
+  user      User?
+  equipment Equipment[]
 
   @@index([organizationId])
 }
@@ -157,6 +159,8 @@ model Job {
   customer       Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
   technicianId   String?
   technician     Technician?  @relation(fields: [technicianId], references: [id], onDelete: SetNull)
+  equipmentId    String?
+  equipment      Equipment?   @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
 
   status         String       @default("pending") // pending | scheduled | en_route | in_progress | completed | cancelled
   priority       String       @default("normal")   // low | normal | high | urgent
@@ -190,6 +194,7 @@ model Job {
   @@index([organizationId])
   @@index([technicianId])
   @@index([customerId])
+  @@index([equipmentId])
   @@index([status])
   @@index([scheduledAt])
 }
@@ -318,6 +323,32 @@ model AiMessage {
   createdAt DateTime @default(now())
 
   @@index([jobId])
+}
+
+model Equipment {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customerId     String
+  customer       Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  equipmentType         String
+  make                  String?
+  model                 String?
+  serialNumber          String?
+  installDate           DateTime?
+  warrantyExpiry        DateTime?
+  serviceIntervalMonths Int?
+  lastServicedAt        DateTime?
+  notes                 String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  jobs Job[]
+
+  @@index([organizationId])
+  @@index([customerId])
 }
 
 // Compliance & audit trail (EPA 608, safety, timestamps)
