@@ -12,6 +12,7 @@ function makeJob(overrides: Partial<ApiJob> = {}): ApiJob {
     priority: "normal",
     scheduledAt: "2026-06-20T09:00:00.000Z",
     symptomSummary: null,
+    equipmentId: null,
     equipmentType: "furnace",
     equipmentNotes: null,
     serviceType: "repair",

@@ -21,6 +21,7 @@ export interface ApiJob {
   priority: "low" | "normal" | "high" | "urgent"
   scheduledAt: string
   symptomSummary: string | null
+  equipmentId: string | null
   equipmentType: string | null
   equipmentNotes: string | null
   serviceType: string | null
@@ -137,6 +138,24 @@ export interface AiMessage {
   role: "user" | "assistant"
   content: string
   createdAt: string
+}
+
+export interface Equipment {
+  id: string
+  organizationId: string
+  customerId: string
+  equipmentType: string
+  make: string | null
+  model: string | null
+  serialNumber: string | null
+  installDate: string | null
+  warrantyExpiry: string | null
+  serviceIntervalMonths: number | null
+  lastServicedAt: string | null
+  notes: string | null
+  nextDueAt: string | null
+  createdAt: string
+  updatedAt: string
 }
 
 export interface CreateJobPayload {
