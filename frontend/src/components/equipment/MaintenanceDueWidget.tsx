@@ -63,7 +63,7 @@ export function MaintenanceDueWidget() {
           <div key={eq.id} className="flex items-center justify-between text-sm">
             <div className="min-w-0">
               <span className="font-medium">{[eq.make, eq.model].filter(Boolean).join(" ") || eq.equipmentType}</span>
-              <span className="text-muted-foreground text-xs ml-2">· {eq.equipmentType}</span>
+              <span className="text-muted-foreground text-xs ml-2">· {eq.customer?.name ?? ""} · {eq.equipmentType}</span>
             </div>
             {eq.nextDueAt && (
               <Badge

@@ -24,7 +24,11 @@ equipmentRouter.get("/", async (req, res) => {
   const where: Record<string, unknown> = { organizationId }
   if (customerId) where.customerId = customerId as string
 
-  const equipment = await prisma.equipment.findMany({ where, orderBy: { createdAt: "desc" } })
+  const equipment = await prisma.equipment.findMany({
+    where,
+    orderBy: { createdAt: "desc" },
+    include: { customer: { select: { name: true } } },
+  })
 
   const now = new Date()
   const thirtyDaysOut = addMonths(now, 1)

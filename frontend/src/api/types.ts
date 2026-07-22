@@ -156,6 +156,7 @@ export interface Equipment {
   nextDueAt: string | null
   createdAt: string
   updatedAt: string
+  customer?: { name: string }
 }
 
 export interface CreateJobPayload {
