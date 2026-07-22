@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { api } from "@/api/client"
-import type { ApiCustomer, ApiTechnician } from "@/api/types"
+import type { ApiCustomer, ApiTechnician, Equipment } from "@/api/types"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -50,6 +50,8 @@ export function CreateJobDialog({
   const [symptomSummary, setSymptomSummary] = useState("")
   const [equipmentNotes, setEquipmentNotes] = useState("")
   const [showSuggestions, setShowSuggestions] = useState(true)
+  const [customerEquipment, setCustomerEquipment] = useState<Equipment[]>([])
+  const [equipmentId, setEquipmentId] = useState("")
 
   const selectedCustomer = customers.find((c) => c.id === customerId)
   const customerAddress = selectedCustomer
@@ -59,6 +61,14 @@ export function CreateJobDialog({
   useEffect(() => {
     setShowSuggestions(true)
   }, [equipmentType, customerId])
+
+  useEffect(() => {
+    if (!customerId) { setCustomerEquipment([]); setEquipmentId(""); return }
+    api
+      .get<Equipment[]>(`/api/equipment?customerId=${customerId}`)
+      .then(setCustomerEquipment)
+      .catch(() => setCustomerEquipment([]))
+  }, [customerId])
 
   useEffect(() => {
     if (!open) return
@@ -86,6 +96,8 @@ export function CreateJobDialog({
     setEquipmentNotes("")
     setError(null)
     setShowSuggestions(true)
+    setCustomerEquipment([])
+    setEquipmentId("")
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -103,6 +115,7 @@ export function CreateJobDialog({
       ...(equipmentType && { equipmentType }),
       ...(symptomSummary && { symptomSummary }),
       ...(equipmentNotes && { equipmentNotes }),
+      ...(equipmentId && { equipmentId }),
     }
 
     try {
@@ -155,6 +168,37 @@ export function CreateJobDialog({
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Equipment picker */}
+            {customerEquipment.length > 0 && (
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
+                  Equipment Unit
+                </label>
+                <Select
+                  value={equipmentId}
+                  onValueChange={(val) => {
+                    setEquipmentId(val)
+                    if (val) {
+                      const unit = customerEquipment.find((e) => e.id === val)
+                      if (unit) setEquipmentType(unit.equipmentType)
+                    }
+                  }}
+                >
+                  <SelectTrigger className="h-10 bg-secondary border-border text-foreground text-xs">
+                    <SelectValue placeholder="Select unit (optional)" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border-border">
+                    <SelectItem value="" className="text-xs text-foreground">None</SelectItem>
+                    {customerEquipment.map((eq) => (
+                      <SelectItem key={eq.id} value={eq.id} className="text-xs text-foreground">
+                        {eq.make && eq.model ? `${eq.make} ${eq.model} — ${eq.equipmentType}` : eq.equipmentType}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Technician */}
             {showSuggestions ? (

@@ -1,11 +1,14 @@
 "use client"
 
-import { useState } from "react"
-import type { ApiCustomer } from "@/api/types"
+import { useState, useEffect } from "react"
+import { api } from "@/api/client"
+import type { ApiCustomer, Equipment } from "@/api/types"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { InviteDialog } from "@/components/invite-dialog"
 import { ConfirmDialog } from "@/components/confirm-dialog"
+import { EquipmentCard } from "@/components/equipment/EquipmentCard"
+import { EquipmentFormDialog } from "@/components/equipment/EquipmentFormDialog"
 import {
   Search,
   Mail,
@@ -16,6 +19,7 @@ import {
   Loader2,
   User,
   Trash2,
+  Plus,
 } from "lucide-react"
 
 interface CustomerTableProps {
@@ -29,6 +33,19 @@ export function CustomerTable({ customers, loading, onDelete }: CustomerTablePro
   const [expandedCustomer, setExpandedCustomer] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
+  const [equipment, setEquipment] = useState<Equipment[]>([])
+  const [equipmentLoading, setEquipmentLoading] = useState(false)
+  const [addEquipmentOpen, setAddEquipmentOpen] = useState(false)
+
+  useEffect(() => {
+    if (!expandedCustomer) { setEquipment([]); return }
+    setEquipmentLoading(true)
+    api
+      .get<Equipment[]>(`/api/equipment?customerId=${expandedCustomer}`)
+      .then(setEquipment)
+      .catch(() => setEquipment([]))
+      .finally(() => setEquipmentLoading(false))
+  }, [expandedCustomer])
 
   const filtered = customers.filter((c) => {
     if (search === "") return true
@@ -130,6 +147,49 @@ export function CustomerTable({ customers, loading, onDelete }: CustomerTablePro
                         </div>
                       )}
                     </div>
+                    {/* Equipment section */}
+                    <div className="mt-4 border-t border-border pt-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Equipment</span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 gap-1 text-xs"
+                          onClick={(e) => { e.stopPropagation(); setAddEquipmentOpen(true) }}
+                        >
+                          <Plus className="h-3 w-3" />
+                          Add Equipment
+                        </Button>
+                      </div>
+                      {equipmentLoading ? (
+                        <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground">
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          Loading equipment...
+                        </div>
+                      ) : equipment.length === 0 ? (
+                        <p className="text-xs text-muted-foreground py-1">No equipment on file for this customer.</p>
+                      ) : (
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          {equipment.map((eq) => (
+                            <EquipmentCard
+                              key={eq.id}
+                              equipment={eq}
+                              onUpdated={(updated) => setEquipment((prev) => prev.map((e) => e.id === updated.id ? updated : e))}
+                              onDeleted={(id) => setEquipment((prev) => prev.filter((e) => e.id !== id))}
+                            />
+                          ))}
+                        </div>
+                      )}
+                      {expandedCustomer && (
+                        <EquipmentFormDialog
+                          open={addEquipmentOpen}
+                          onOpenChange={setAddEquipmentOpen}
+                          customerId={expandedCustomer}
+                          onSaved={(saved) => setEquipment((prev) => [...prev, saved])}
+                        />
+                      )}
+                    </div>
+
                     <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
                       <InviteDialog
                         email={customer.email ?? ""}
