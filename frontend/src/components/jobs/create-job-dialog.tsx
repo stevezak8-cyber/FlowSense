@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select"
 import { Loader2 } from "lucide-react"
 import { DispatchSuggestions } from "./dispatch-suggestions"
+import { EquipmentFormDialog } from "@/components/equipment/EquipmentFormDialog"
 
 interface CreateJobDialogProps {
   open: boolean
@@ -52,6 +53,7 @@ export function CreateJobDialog({
   const [showSuggestions, setShowSuggestions] = useState(true)
   const [customerEquipment, setCustomerEquipment] = useState<Equipment[]>([])
   const [equipmentId, setEquipmentId] = useState("")
+  const [addEquipmentOpen, setAddEquipmentOpen] = useState(false)
 
   const selectedCustomer = customers.find((c) => c.id === customerId)
   const customerAddress = selectedCustomer
@@ -170,7 +172,7 @@ export function CreateJobDialog({
             </div>
 
             {/* Equipment picker */}
-            {customerEquipment.length > 0 && (
+            {customerId && (
               <div className="space-y-1.5">
                 <label className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
                   Equipment Unit
@@ -178,11 +180,13 @@ export function CreateJobDialog({
                 <Select
                   value={equipmentId}
                   onValueChange={(val) => {
-                    setEquipmentId(val)
-                    if (val) {
-                      const unit = customerEquipment.find((e) => e.id === val)
-                      if (unit) setEquipmentType(unit.equipmentType)
+                    if (val === "add-new") {
+                      setAddEquipmentOpen(true)
+                      return
                     }
+                    setEquipmentId(val)
+                    const eq = customerEquipment.find((e) => e.id === val)
+                    if (eq) setEquipmentType(eq.equipmentType)
                   }}
                 >
                   <SelectTrigger className="h-10 bg-secondary border-border text-foreground text-xs">
@@ -195,9 +199,22 @@ export function CreateJobDialog({
                         {eq.make && eq.model ? `${eq.make} ${eq.model} — ${eq.equipmentType}` : eq.equipmentType}
                       </SelectItem>
                     ))}
+                    <SelectItem value="add-new" className="text-xs text-foreground">+ Add new unit</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+            )}
+            {customerId && (
+              <EquipmentFormDialog
+                open={addEquipmentOpen}
+                onOpenChange={setAddEquipmentOpen}
+                customerId={customerId}
+                onSaved={(saved) => {
+                  setCustomerEquipment((prev) => [...prev, saved])
+                  setEquipmentId(saved.id)
+                  setEquipmentType(saved.equipmentType)
+                }}
+              />
             )}
 
             {/* Technician */}
@@ -287,9 +304,12 @@ export function CreateJobDialog({
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent className="bg-card border-border">
-                    <SelectItem value="furnace" className="text-xs text-foreground">Furnace</SelectItem>
                     <SelectItem value="ac" className="text-xs text-foreground">AC</SelectItem>
+                    <SelectItem value="furnace" className="text-xs text-foreground">Furnace</SelectItem>
                     <SelectItem value="heat-pump" className="text-xs text-foreground">Heat Pump</SelectItem>
+                    <SelectItem value="boiler" className="text-xs text-foreground">Boiler</SelectItem>
+                    <SelectItem value="mini-split" className="text-xs text-foreground">Mini-Split</SelectItem>
+                    <SelectItem value="other" className="text-xs text-foreground">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
