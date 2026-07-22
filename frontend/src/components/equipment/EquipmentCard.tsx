@@ -14,6 +14,16 @@ interface Props {
   onDeleted: (id: string) => void
 }
 
+function timeAgo(iso: string | null) {
+  if (!iso) return null
+  const diffMs = Date.now() - new Date(iso).getTime()
+  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24))
+  if (diffDays < 30) return `${diffDays}d ago`
+  const diffMonths = Math.round(diffDays / 30)
+  if (diffMonths < 12) return `${diffMonths}mo ago`
+  return `${Math.round(diffMonths / 12)}yr ago`
+}
+
 function formatDate(iso: string | null) {
   if (!iso) return null
   return new Date(iso).toLocaleDateString("en-US", { month: "short", year: "numeric" })
@@ -94,9 +104,9 @@ export function EquipmentCard({ equipment: eq, onUpdated, onDeleted }: Props) {
               <div className="flex gap-3 flex-wrap">
                 {eq.installDate && <span>Installed {formatDate(eq.installDate)}</span>}
                 {eq.warrantyExpiry && (
-                  <span className={expired ? "text-destructive" : ""}>
-                    Warranty {expired ? "expired" : "exp."} {formatDate(eq.warrantyExpiry)}
-                  </span>
+                  expired
+                    ? <Badge variant="destructive" className="text-xs">Warranty expired {formatDate(eq.warrantyExpiry)}</Badge>
+                    : <span>Warranty exp. {formatDate(eq.warrantyExpiry)}</span>
                 )}
               </div>
             </div>
@@ -115,7 +125,7 @@ export function EquipmentCard({ equipment: eq, onUpdated, onDeleted }: Props) {
               )}
               {eq.lastServicedAt && (
                 <span className="text-xs text-muted-foreground">
-                  Last serviced {formatDate(eq.lastServicedAt)}
+                  Last serviced {timeAgo(eq.lastServicedAt)}
                 </span>
               )}
             </div>
