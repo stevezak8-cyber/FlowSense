@@ -39,7 +39,8 @@ import { twilioWebhookRouter } from "./routes/twilio-webhook.js"
 import { onboardingRouter } from "./routes/onboarding.js";
 import { pricebookRouter } from "./routes/pricebook.js";
 import { estimatesRouter, publicEstimatesRouter } from "./routes/estimates.js";
-import { pushRouter } from "./routes/push.js";
+import { pushRouter } from "./routes/push.js"
+import { aiRouter } from "./routes/ai.js";
 import { setupWebSocket } from "./services/notifications.js";
 import { startInvoiceScheduler } from "./services/invoice-scheduler.js";
 
@@ -111,6 +112,7 @@ app.use("/api/estimates/token", apiLimiter, publicEstimatesRouter);
 app.use("/api/estimates", apiLimiter, requireAuth, requireSubscription, estimatesRouter);
 
 app.use("/api/push", apiLimiter, requireAuth, pushRouter);
+app.use("/api/ai", apiLimiter, requireAuth, requireSubscription, aiRouter);
 
 // In production, serve the compiled frontend static build and handle SPA routing.
 // In development, Vite proxies /api requests — this block is never reached.
