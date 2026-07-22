@@ -13,6 +13,7 @@ import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { CompletionDialog } from "@/components/jobs/completion-dialog"
 import { EstimateBuilder } from "@/components/estimates/estimate-builder"
+import { AiChatPanel } from "@/components/jobs/AiChatPanel"
 
 type ApiStatus = ApiJob["status"]
 
@@ -44,6 +45,7 @@ export default function TechnicianJobsPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [completingJob, setCompletingJob] = useState<ApiJob | null>(null)
   const [estimateJob, setEstimateJob] = useState<ApiJob | null>(null)
+  const [askAiJob, setAskAiJob] = useState<ApiJob | null>(null)
   const [currentEstimate, setCurrentEstimate] = useState<Estimate | null>(null)
   const [generatingEstimate, setGeneratingEstimate] = useState(false)
 
@@ -268,6 +270,17 @@ export default function TechnicianJobsPage() {
 
             {(job.status === "scheduled" || job.status === "en_route" || job.status === "in_progress") && (
               <Button
+                size="sm"
+                variant="outline"
+                className="w-full gap-1 border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10"
+                onClick={() => setAskAiJob(job)}
+              >
+                <span className="text-xs">✦</span> Ask AI
+              </Button>
+            )}
+
+            {(job.status === "scheduled" || job.status === "en_route" || job.status === "in_progress") && (
+              <Button
                 variant="outline"
                 className="w-full gap-2"
                 onClick={() => handleCreateEstimate(job)}
@@ -375,6 +388,14 @@ export default function TechnicianJobsPage() {
           )}
         </SheetContent>
       </Sheet>
+
+      {askAiJob && (
+        <AiChatPanel
+          jobId={askAiJob.id}
+          jobContext={{ equipmentType: askAiJob.equipmentType }}
+          onClose={() => setAskAiJob(null)}
+        />
+      )}
     </div>
   )
 }

@@ -131,6 +131,14 @@ export interface ApiMessage {
   createdAt: string
 }
 
+export interface AiMessage {
+  id: string
+  jobId: string
+  role: "user" | "assistant"
+  content: string
+  createdAt: string
+}
+
 export interface CreateJobPayload {
   technicianId?: string
   scheduledAt: string
