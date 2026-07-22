@@ -41,6 +41,7 @@ import { pricebookRouter } from "./routes/pricebook.js";
 import { estimatesRouter, publicEstimatesRouter } from "./routes/estimates.js";
 import { pushRouter } from "./routes/push.js"
 import { aiRouter } from "./routes/ai.js";
+import { equipmentRouter } from "./routes/equipment.js";
 import { setupWebSocket } from "./services/notifications.js";
 import { startInvoiceScheduler } from "./services/invoice-scheduler.js";
 
@@ -113,6 +114,7 @@ app.use("/api/estimates", apiLimiter, requireAuth, requireSubscription, estimate
 
 app.use("/api/push", apiLimiter, requireAuth, pushRouter);
 app.use("/api/ai", apiLimiter, requireAuth, requireSubscription, aiRouter);
+app.use("/api/equipment", apiLimiter, requireAuth, requireSubscription, equipmentRouter);
 
 // In production, serve the compiled frontend static build and handle SPA routing.
 // In development, Vite proxies /api requests — this block is never reached.

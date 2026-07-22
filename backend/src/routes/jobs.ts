@@ -392,6 +392,12 @@ jobsRouter.patch("/:id", async (req, res) => {
 
         return updatedJob;
       });
+      if (result.equipmentId) {
+        prisma.equipment.update({
+          where: { id: result.equipmentId },
+          data: { lastServicedAt: new Date() },
+        }).catch(console.error)
+      }
       res.json(result);
       sendStatusNotifications(result, req.user!.organizationId);
       sendStatusEmails(result);
