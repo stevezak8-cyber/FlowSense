@@ -31,6 +31,13 @@ export function useAiChat(jobId: string) {
       })
   }, [jobId])
 
+  // Abort any in-flight stream on unmount
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort()
+    }
+  }, [])
+
   async function sendMessage(text: string) {
     if (streaming) return
 
