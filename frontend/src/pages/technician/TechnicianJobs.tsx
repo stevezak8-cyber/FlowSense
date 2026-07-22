@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { api } from "@/api/client"
-import type { ApiJob, Estimate } from "@/api/types"
+import type { ApiJob, Estimate, Equipment } from "@/api/types"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -48,6 +48,7 @@ export default function TechnicianJobsPage() {
   const [askAiJob, setAskAiJob] = useState<ApiJob | null>(null)
   const [currentEstimate, setCurrentEstimate] = useState<Estimate | null>(null)
   const [generatingEstimate, setGeneratingEstimate] = useState(false)
+  const [jobEquipment, setJobEquipment] = useState<Record<string, Equipment | null>>({})
 
   function fetchJobs() {
     setLoading(true)
@@ -59,6 +60,16 @@ export default function TechnicianJobsPage() {
   }
 
   useEffect(() => { fetchJobs() }, [])
+
+  useEffect(() => {
+    if (!expandedId) return
+    const job = jobs.find((j) => j.id === expandedId)
+    if (job?.equipmentId && !(job.id in jobEquipment)) {
+      api.get<Equipment>(`/api/equipment/${job.equipmentId}`)
+        .then((eq) => setJobEquipment((prev) => ({ ...prev, [job.id]: eq })))
+        .catch(() => setJobEquipment((prev) => ({ ...prev, [job.id]: null })))
+    }
+  }, [expandedId, jobs])
 
   const activeJobs = jobs.filter((j) => j.status !== "completed" && j.status !== "cancelled")
   const completedJobs = jobs.filter((j) => j.status === "completed")
@@ -197,6 +208,32 @@ export default function TechnicianJobsPage() {
                 </div>
               </div>
             )}
+
+            {/* Equipment context block */}
+            {job.equipmentId && jobEquipment[job.id] && (() => {
+              const eq = jobEquipment[job.id]!
+              const expired = eq.warrantyExpiry ? new Date(eq.warrantyExpiry) < new Date() : false
+              return (
+                <div className="mx-3 mb-3 rounded-lg border border-border bg-muted p-3 text-xs space-y-1">
+                  <div className="font-semibold text-foreground text-xs uppercase tracking-wide mb-1">Equipment</div>
+                  <div className="font-medium">{[eq.make, eq.model].filter(Boolean).join(" ") || eq.equipmentType} — {eq.equipmentType}</div>
+                  {eq.serialNumber && <div className="text-muted-foreground">S/N: {eq.serialNumber}</div>}
+                  <div className="flex gap-3 text-muted-foreground flex-wrap">
+                    {eq.installDate && <span>Installed {new Date(eq.installDate).toLocaleDateString("en-US", { month: "short", year: "numeric" })}</span>}
+                    {eq.warrantyExpiry && (
+                      <span className={expired ? "text-destructive font-medium" : ""}>
+                        Warranty {expired ? "EXPIRED" : `exp. ${new Date(eq.warrantyExpiry).toLocaleDateString("en-US", { month: "short", year: "numeric" })}`}
+                      </span>
+                    )}
+                  </div>
+                  {eq.lastServicedAt && (
+                    <div className="text-muted-foreground">
+                      Last serviced {new Date(eq.lastServicedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
 
             {/* AI Pre-Arrival Briefing */}
             {job.preArrivalNotes ? (
