@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ConfirmDialog } from "@/components/confirm-dialog"
+import { ComplianceTimeline } from "@/components/compliance/ComplianceTimeline"
 import { cn } from "@/lib/utils"
 import {
   Search,
@@ -223,6 +224,7 @@ export function JobsTable({ jobs, loading, onDelete }: JobsTableProps) {
                         </p>
                       </div>
                     </div>
+                    <ComplianceTimeline jobId={job.id} />
                     {onDelete && (job.status === "cancelled" || job.status === "completed") && (
                       <div className="mt-4 flex justify-end border-t border-border pt-4">
                         <Button
