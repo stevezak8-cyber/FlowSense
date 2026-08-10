@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils"
 import { CompletionDialog } from "@/components/jobs/completion-dialog"
 import { EstimateBuilder } from "@/components/estimates/estimate-builder"
 import { AiChatPanel } from "@/components/jobs/AiChatPanel"
+import { ComplianceForm } from "@/components/compliance/ComplianceForm"
 
 type ApiStatus = ApiJob["status"]
 
@@ -303,6 +304,14 @@ export default function TechnicianJobsPage() {
                   <p className="mt-1.5 text-xs text-muted-foreground">No notes available</p>
                 </div>
               )
+            )}
+
+            {(job.status === "in_progress" || job.status === "completed") && (
+              <ComplianceForm
+                jobId={job.id}
+                equipmentType={job.equipmentType ?? null}
+                onLogged={() => {/* no-op — ComplianceForm manages its own "logged" state */}}
+              />
             )}
 
             {(job.status === "scheduled" || job.status === "en_route" || job.status === "in_progress") && (
