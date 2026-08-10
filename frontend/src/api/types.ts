@@ -159,6 +159,21 @@ export interface Equipment {
   customer?: { name: string }
 }
 
+export interface ComplianceLog {
+  id: string
+  jobId: string
+  type: "epa608_prompt" | "safety_ack" | "code_reminder" | "photo_audit" | "ai_disclaimer"
+  payload: Record<string, unknown>
+  createdAt: string
+  job?: {
+    id: string
+    scheduledAt: string | null
+    equipmentType: string | null
+    customer: { name: string } | null
+    technician: { user: { name: string } | null } | null
+  }
+}
+
 export interface CreateJobPayload {
   technicianId?: string
   scheduledAt: string
