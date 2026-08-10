@@ -12,6 +12,7 @@ import {
   LogOut,
   Calendar,
   CreditCard,
+  ShieldCheck,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { FlowSenseLogo } from "@/components/brand"
@@ -25,6 +26,7 @@ const navItems = [
   { label: "Customers", href: "/office/customers", icon: Users },
   { label: "Messages", href: "/office/messages", icon: MessageSquare },
   { label: "Revenue", href: "/office/reports", icon: BarChart3 },
+  { label: "Compliance", href: "/office/compliance", icon: ShieldCheck },
 ]
 
 const bottomItems = [

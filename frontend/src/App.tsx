@@ -23,6 +23,7 @@ import OfficeMessages from "./pages/office/OfficeMessages";
 import OfficeRevenue from "./pages/office/OfficeRevenue"
 import OfficeSchedule from "./pages/office/OfficeSchedule"
 import OfficeSettings from "./pages/office/OfficeSettings";
+import OfficeCompliance from "./pages/office/OfficeCompliance"
 
 // Technician
 import TechnicianLayout from "./pages/technician/TechnicianLayout";
@@ -79,6 +80,7 @@ function App() {
         <Route path="customers" element={<OfficeCustomers />} />
         <Route path="messages" element={<OfficeMessages />} />
         <Route path="reports" element={<OfficeRevenue />} />
+        <Route path="compliance" element={<OfficeCompliance />} />
         <Route path="settings" element={<OfficeSettings />} />
       </Route>
 
