@@ -43,6 +43,8 @@ model ComplianceLog {
 - `GET /api/compliance/job/:jobId` — logs for a specific job
 - `POST /api/compliance` — create a log entry
 
+> **Known security debt:** The existing `GET /api/compliance/job/:jobId` and `POST /api/compliance` routes have no `requireAuth` middleware and no org-scoping. They were written as MVP placeholders. Fixing them is out of scope for this feature (to avoid breaking the existing technician flow) but should be addressed in a follow-up security hardening task.
+
 ### New route
 
 #### `GET /api/compliance`
@@ -107,7 +109,7 @@ complianceRouter.get("/", requireAuth, requireSubscription, async (req, res) => 
 })
 ```
 
-**Note:** The existing `GET /api/compliance/job/:jobId` handler does not use `requireAuth` — leave it as-is to avoid breaking changes, but the new org-wide `GET /api/compliance` must be auth-gated.
+**Registration order matters:** The new `GET /` handler MUST be registered AFTER the existing `GET /job/:jobId` handler in the router file. If registered first, Express will match `/compliance/job/xyz` against `/` and never reach the `:jobId` handler. The existing auth-free handlers remain unchanged (see known security debt note above).
 
 ---
 
@@ -148,10 +150,10 @@ interface Props {
 
 **Behaviour:**
 
-1. On mount, calls `GET /api/compliance/job/:jobId`. If any logs exist, renders a green "Compliance logged ✓" badge and returns — no form shown.
+1. On mount, calls `GET /api/compliance/job/:jobId`. If a `safety_ack` log exists (the always-required log), renders a green "Compliance logged ✓" badge and returns — no form shown. A `safety_ack` log is the completion signal; an `epa608_prompt` log alone (partial failure) does not trigger the badge.
 2. If no logs exist, renders the three-part form:
 
-**Part 1 — EPA 608** (only when `equipmentType` is `ac`, `heat-pump`, `mini-split`, or `boiler`):
+**Part 1 — EPA 608** (only when `equipmentType` is `ac`, `heat-pump`, or `mini-split` — these use refrigerants covered by EPA 608; `furnace`, `boiler`, and `other` skip this section):
 - `certLevel` select: Type I / Type II / Universal
 - `refrigerantType` select: R-22 / R-410A / R-32 / R-134a / Other
 - `lbsRecovered` number input (step 0.1, min 0)
@@ -165,7 +167,10 @@ Three checkboxes (all required):
 
 **Part 3 — Submit:**
 - "Submit compliance log" button — disabled until safety checkboxes are all checked (EPA 608 optional fields are not blocking)
-- On submit: POST one `epa608_prompt` log (if applicable) and one `safety_ack` log as sequential `Promise.all` calls
+- On submit:
+  - If EPA 608 section is shown AND all four EPA fields (`certLevel`, `refrigerantType`, `lbsRecovered`, `lbsCharged`) are filled, POST an `epa608_prompt` log. If any EPA field is empty, skip the `epa608_prompt` POST entirely — do not post with null values.
+  - Always POST a `safety_ack` log.
+  - Use `Promise.all([...])` to fire both posts concurrently (not sequentially). If either fails, `Promise.all` rejects and the error handler shows a toast — no partial-success state is persisted in the UI.
 - On success: call `onLogged()`, show green "Compliance logged ✓"
 - On error: show `toast.error`
 
@@ -212,7 +217,7 @@ Filters re-fetch on change.
 export interface ComplianceLog {
   id: string
   jobId: string
-  type: "epa608_prompt" | "safety_ack" | "code_reminder"
+  type: "epa608_prompt" | "safety_ack" | "code_reminder" | "photo_audit" | "ai_disclaimer"
   payload: Record<string, unknown>
   createdAt: string
   job?: {
