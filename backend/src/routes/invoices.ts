@@ -2,6 +2,8 @@ import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { z } from "zod";
 import Stripe from "stripe";
+import { generateInvoicePdf } from "../services/invoice-pdf.js";
+import { sendEmail } from "../services/email.js";
 
 export const invoicesRouter = Router();
 
@@ -156,6 +158,60 @@ invoicesRouter.post("/:id/payment-link", async (req, res) => {
     res.status(500).json({ error: e instanceof Error ? e.message : "Failed to create payment link" });
   }
 });
+
+// GET /:id/pdf — download PDF
+invoicesRouter.get("/:id/pdf", async (req, res) => {
+  try {
+    const invoice = await prisma.invoice.findFirst({
+      where: { id: req.params.id, organizationId: req.user!.organizationId },
+      include: {
+        organization: { select: { name: true } },
+        customer: { select: { name: true, address: true, city: true, state: true, postalCode: true } },
+        job: { select: { equipmentType: true, symptomSummary: true } },
+      },
+    })
+    if (!invoice) return res.status(404).json({ error: "Invoice not found" })
+
+    const buffer = await generateInvoicePdf(invoice)
+    const filename = `invoice-${invoice.id.slice(-8)}.pdf`
+    res.setHeader("Content-Type", "application/pdf")
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`)
+    res.send(buffer)
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : "Failed to generate PDF" })
+  }
+})
+
+// POST /:id/send — email PDF to customer (office only)
+invoicesRouter.post("/:id/send", async (req, res) => {
+  if (req.user!.role !== "office") return res.status(403).json({ error: "Forbidden" })
+  try {
+    const invoice = await prisma.invoice.findFirst({
+      where: { id: req.params.id, organizationId: req.user!.organizationId },
+      include: {
+        organization: { select: { name: true } },
+        customer: { select: { name: true, address: true, city: true, state: true, postalCode: true, email: true } },
+        job: { select: { equipmentType: true, symptomSummary: true } },
+      },
+    })
+    if (!invoice) return res.status(404).json({ error: "Invoice not found" })
+    if (!invoice.customer.email) return res.status(400).json({ error: "Customer has no email address" })
+
+    const buffer = await generateInvoicePdf(invoice)
+    const filename = `invoice-${invoice.id.slice(-8)}.pdf`
+
+    await sendEmail({
+      to: invoice.customer.email,
+      subject: `Invoice from ${invoice.organization.name}`,
+      html: `<p>Hi ${invoice.customer.name},</p><p>Please find your invoice attached. Thank you for your business.</p><p>— ${invoice.organization.name}</p>`,
+      attachments: [{ filename, content: buffer, contentType: "application/pdf" }],
+    })
+
+    res.json({ sent: true })
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : "Failed to send invoice" })
+  }
+})
 
 // PATCH /api/invoices/:id
 invoicesRouter.patch("/:id", async (req, res) => {
