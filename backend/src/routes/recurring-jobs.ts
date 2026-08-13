@@ -99,15 +99,15 @@ recurringJobsRouter.post("/", async (req, res) => {
 
   const { organizationId } = req.user!
 
-  // Verify customer belongs to this org (same pattern as equipment.ts)
-  const customerCheck = await prisma.customer.findFirst({
-    where: { id: parsed.data.customerId, organizationId },
-  })
-  if (!customerCheck) {
-    return res.status(403).json({ error: "Customer not in your organization" })
-  }
-
   try {
+    // Verify customer belongs to this org (same pattern as equipment.ts)
+    const customerCheck = await prisma.customer.findFirst({
+      where: { id: parsed.data.customerId, organizationId },
+    })
+    if (!customerCheck) {
+      return res.status(403).json({ error: "Customer not in your organization" })
+    }
+
     const record = await prisma.recurringJob.create({
       data: {
         organizationId,
@@ -136,18 +136,19 @@ recurringJobsRouter.patch("/:id", async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
 
   const { organizationId } = req.user!
-  const existing = await prisma.recurringJob.findFirst({
-    where: { id: req.params.id, organizationId },
-  })
-  if (!existing) return res.status(404).json({ error: "Recurring job not found" })
 
   try {
-    const data: Record<string, unknown> = { ...parsed.data }
-    if (data.nextDueAt) data.nextDueAt = new Date(data.nextDueAt as string)
+    const existing = await prisma.recurringJob.findFirst({
+      where: { id: req.params.id, organizationId },
+    })
+    if (!existing) return res.status(404).json({ error: "Recurring job not found" })
 
     const record = await prisma.recurringJob.update({
       where: { id: req.params.id },
-      data,
+      data: {
+        ...parsed.data,
+        nextDueAt: parsed.data.nextDueAt ? new Date(parsed.data.nextDueAt) : undefined,
+      },
       include: {
         customer: { select: { name: true } },
         equipment: { select: { make: true, model: true } },
@@ -161,12 +162,13 @@ recurringJobsRouter.patch("/:id", async (req, res) => {
 
 recurringJobsRouter.delete("/:id", async (req, res) => {
   const { organizationId } = req.user!
-  const existing = await prisma.recurringJob.findFirst({
-    where: { id: req.params.id, organizationId },
-  })
-  if (!existing) return res.status(404).json({ error: "Recurring job not found" })
 
   try {
+    const existing = await prisma.recurringJob.findFirst({
+      where: { id: req.params.id, organizationId },
+    })
+    if (!existing) return res.status(404).json({ error: "Recurring job not found" })
+
     await prisma.recurringJob.delete({ where: { id: req.params.id } })
     res.status(204).send()
   } catch (e) {
