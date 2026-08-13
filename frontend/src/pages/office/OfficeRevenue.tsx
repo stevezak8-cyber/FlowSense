@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import { api } from "@/api/client"
 import type { ApiInvoice, RevenueDataPoint, ApiJob } from "@/api/types"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { DollarSign, TrendingUp, FileText, AlertCircle, Loader2 } from "lucide-react"
+import { DollarSign, TrendingUp, FileText, AlertCircle, Loader2, FileDown, Send } from "lucide-react"
+import toast from "react-hot-toast"
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
@@ -22,6 +23,8 @@ export default function RevenuePage() {
   const [revenueData, setRevenueData] = useState<RevenueDataPoint[]>([])
   const [jobs, setJobs] = useState<ApiJob[]>([])
   const [loading, setLoading] = useState(true)
+  const [downloadingId, setDownloadingId] = useState<string | null>(null)
+  const [sendingId, setSendingId] = useState<string | null>(null)
 
   useEffect(() => {
     Promise.all([
@@ -53,6 +56,42 @@ export default function RevenuePage() {
     name: name.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
     value,
   }))
+
+  async function handleDownloadPdf(invoiceId: string) {
+    setDownloadingId(invoiceId)
+    try {
+      const res = await fetch(`/api/invoices/${invoiceId}/pdf`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("flowsense_token")}` },
+      })
+      if (!res.ok) { toast.error("Failed to generate PDF"); return }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `invoice-${invoiceId.slice(-8)}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      setTimeout(() => URL.revokeObjectURL(url), 100)
+    } catch {
+      toast.error("Failed to download PDF")
+    } finally {
+      setDownloadingId(null)
+    }
+  }
+
+  async function handleSendInvoice(invoiceId: string) {
+    setSendingId(invoiceId)
+    try {
+      await api.post(`/api/invoices/${invoiceId}/send`, {})
+      toast.success("Invoice sent to customer")
+    } catch (e) {
+      const msg = (e as { message?: string }).message ?? ""
+      toast.error(msg.includes("no email") ? "Customer has no email address" : "Failed to send invoice")
+    } finally {
+      setSendingId(null)
+    }
+  }
 
   if (loading) {
     return (
@@ -203,6 +242,7 @@ export default function RevenuePage() {
                     <th className="pb-3 text-left text-xs font-mono uppercase tracking-wider text-muted-foreground">Description</th>
                     <th className="pb-3 text-right text-xs font-mono uppercase tracking-wider text-muted-foreground">Amount</th>
                     <th className="pb-3 text-right text-xs font-mono uppercase tracking-wider text-muted-foreground">Status</th>
+                    <th className="pb-3 text-right text-xs font-mono uppercase tracking-wider text-muted-foreground">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -216,6 +256,32 @@ export default function RevenuePage() {
                         <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider ${inv.status === "paid" ? "bg-success/15 text-success" : inv.status === "pending" ? "bg-accent/15 text-accent" : "bg-destructive/15 text-destructive"}`}>
                           {inv.status}
                         </span>
+                      </td>
+                      <td className="py-3 text-right">
+                        <div className="inline-flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadPdf(inv.id)}
+                            disabled={downloadingId === inv.id || sendingId === inv.id}
+                            className="rounded p-1 text-muted-foreground hover:text-foreground disabled:opacity-50"
+                            title="Download PDF"
+                          >
+                            {downloadingId === inv.id
+                              ? <Loader2 className="h-4 w-4 animate-spin" />
+                              : <FileDown className="h-4 w-4" />}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleSendInvoice(inv.id)}
+                            disabled={sendingId === inv.id || downloadingId === inv.id}
+                            className="rounded p-1 text-muted-foreground hover:text-foreground disabled:opacity-50"
+                            title="Send to customer"
+                          >
+                            {sendingId === inv.id
+                              ? <Loader2 className="h-4 w-4 animate-spin" />
+                              : <Send className="h-4 w-4" />}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
