@@ -47,6 +47,7 @@ model Organization {
   invoices      Invoice[]
   conversations Conversation[]
   equipment     Equipment[]
+  recurringJobs RecurringJob[]
 
   estimateDepositThreshold Float  @default(500)
   estimateDepositPercent   Int    @default(25)
@@ -89,9 +90,10 @@ model Technician {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
-  jobs    Job[]
-  vehicle Vehicle?
-  user    User?
+  jobs          Job[]
+  vehicle       Vehicle?
+  user          User?
+  recurringJobs RecurringJob[]
 
   @@index([organizationId])
 }
@@ -127,10 +129,11 @@ model Customer {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
-  jobs      Job[]
-  invoices  Invoice[]
-  user      User?
-  equipment Equipment[]
+  jobs          Job[]
+  invoices      Invoice[]
+  user          User?
+  equipment     Equipment[]
+  recurringJobs RecurringJob[]
 
   @@index([organizationId])
 }
@@ -161,6 +164,8 @@ model Job {
   technician     Technician?  @relation(fields: [technicianId], references: [id], onDelete: SetNull)
   equipmentId    String?
   equipment      Equipment?   @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
+  recurringJobId String?
+  recurringJob   RecurringJob? @relation(fields: [recurringJobId], references: [id], onDelete: SetNull)
 
   status         String       @default("pending") // pending | scheduled | en_route | in_progress | completed | cancelled
   priority       String       @default("normal")   // low | normal | high | urgent
@@ -195,6 +200,7 @@ model Job {
   @@index([technicianId])
   @@index([customerId])
   @@index([equipmentId])
+  @@index([recurringJobId])
   @@index([status])
   @@index([scheduledAt])
 }
@@ -345,10 +351,40 @@ model Equipment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  jobs Job[]
+  jobs          Job[]
+  recurringJobs RecurringJob[]
 
   @@index([organizationId])
   @@index([customerId])
+}
+
+model RecurringJob {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customerId     String
+  customer       Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  technicianId   String?
+  technician     Technician?  @relation(fields: [technicianId], references: [id], onDelete: SetNull)
+  equipmentId    String?
+  equipment      Equipment?   @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
+
+  equipmentType  String?
+  serviceType    String?
+  intervalDays   Int
+  nextDueAt      DateTime
+  lastJobAt      DateTime?
+  notes          String?
+
+  isActive       Boolean   @default(true)
+  jobs           Job[]
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([organizationId])
+  @@index([customerId])
+  @@index([nextDueAt])
 }
 
 // Compliance & audit trail (EPA 608, safety, timestamps)
