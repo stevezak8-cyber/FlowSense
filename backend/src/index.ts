@@ -44,6 +44,7 @@ import { aiRouter } from "./routes/ai.js";
 import { equipmentRouter } from "./routes/equipment.js";
 import { recurringJobsRouter } from "./routes/recurring-jobs.js";
 import { voiceRouter } from "./routes/voice.js"
+import { conciergeRouter } from "./routes/concierge.js"
 import { setupWebSocket } from "./services/notifications.js";
 import { startInvoiceScheduler } from "./services/invoice-scheduler.js";
 import cron from "node-cron";
@@ -118,6 +119,7 @@ app.use("/api/estimates", apiLimiter, requireAuth, requireSubscription, estimate
 
 app.use("/api/push", apiLimiter, requireAuth, pushRouter);
 app.use("/api/ai", apiLimiter, requireAuth, requireSubscription, aiRouter);
+app.use("/api/concierge", apiLimiter, requireAuth, requireSubscription, conciergeRouter);
 app.use("/api/equipment", apiLimiter, requireAuth, requireSubscription, equipmentRouter);
 app.use("/api/recurring-jobs", apiLimiter, requireAuth, requireSubscription, recurringJobsRouter);
 app.use("/api/voice", apiLimiter, requireAuth, requireSubscription, voiceRouter)
