@@ -363,6 +363,7 @@ jobsRouter.patch("/:id", async (req, res) => {
           include: {
             customer: { select: { id: true, name: true, address: true, email: true } },
             technician: { select: { id: true, name: true } },
+            recurringJob: { select: { intervalDays: true } },
           },
         });
 
@@ -392,6 +393,15 @@ jobsRouter.patch("/:id", async (req, res) => {
 
         return updatedJob;
       });
+      if (result.recurringJobId && result.recurringJob) {
+        prisma.recurringJob.update({
+          where: { id: result.recurringJobId },
+          data: {
+            lastJobAt: new Date(),
+            nextDueAt: new Date(Date.now() + result.recurringJob.intervalDays * 86400000),
+          },
+        }).catch(console.error)
+      }
       if (result.equipmentId) {
         prisma.equipment.update({
           where: { id: result.equipmentId },

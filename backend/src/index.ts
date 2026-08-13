@@ -42,8 +42,11 @@ import { estimatesRouter, publicEstimatesRouter } from "./routes/estimates.js";
 import { pushRouter } from "./routes/push.js"
 import { aiRouter } from "./routes/ai.js";
 import { equipmentRouter } from "./routes/equipment.js";
+import { recurringJobsRouter } from "./routes/recurring-jobs.js";
 import { setupWebSocket } from "./services/notifications.js";
 import { startInvoiceScheduler } from "./services/invoice-scheduler.js";
+import cron from "node-cron";
+import { spawnDueJobs } from "./services/recurring-jobs.js";
 
 const app = express();
 const PORT = process.env.PORT ?? 4000;
@@ -115,6 +118,7 @@ app.use("/api/estimates", apiLimiter, requireAuth, requireSubscription, estimate
 app.use("/api/push", apiLimiter, requireAuth, pushRouter);
 app.use("/api/ai", apiLimiter, requireAuth, requireSubscription, aiRouter);
 app.use("/api/equipment", apiLimiter, requireAuth, requireSubscription, equipmentRouter);
+app.use("/api/recurring-jobs", apiLimiter, requireAuth, requireSubscription, recurringJobsRouter);
 
 // In production, serve the compiled frontend static build and handle SPA routing.
 // In development, Vite proxies /api requests — this block is never reached.
@@ -143,3 +147,7 @@ const server = app.listen(PORT, () => {
 
 setupWebSocket(server);
 startInvoiceScheduler();
+
+cron.schedule("0 0 * * *", () => {
+  spawnDueJobs().catch(console.error)
+});
