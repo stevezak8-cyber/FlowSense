@@ -326,3 +326,8 @@ export interface Estimate {
   lines: EstimateLine[]
   job?: { title: string; address?: string | null } | null
 }
+
+export interface ConciergeMessage {
+  role: "user" | "assistant"
+  content: string
+}
