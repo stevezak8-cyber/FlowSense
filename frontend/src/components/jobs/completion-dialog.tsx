@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { api } from "@/api/client"
-import type { ApiJob } from "@/api/types"
+import type { ApiJob, VoiceExtractedFields } from "@/api/types"
+import { VoiceRecorder } from "./VoiceRecorder"
 import {
   Dialog,
   DialogContent,
@@ -43,6 +44,17 @@ export function CompletionDialog({
   const [generating, setGenerating] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [hasGenerated, setHasGenerated] = useState(false)
+  const [voiceFilled, setVoiceFilled] = useState(false)
+
+  function handleVoiceExtracted(fields: VoiceExtractedFields) {
+    setActionsTaken(fields.actionsTaken)
+    setPartsUsed(fields.partsUsed)
+    setNotes(fields.notes)
+    setLaborHours(fields.laborHours)
+    setSummary(fields.summary)
+    setHasGenerated(true)
+    setVoiceFilled(true)
+  }
 
   function handlePhotoFiles(files: FileList | null) {
     if (!files) return
@@ -134,6 +146,21 @@ export function CompletionDialog({
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Voice recorder */}
+          <div className="flex items-center justify-between">
+            <VoiceRecorder
+              job={job}
+              onExtracted={handleVoiceExtracted}
+              onError={(msg) => toast.error(msg)}
+            />
+          </div>
+
+          {voiceFilled && (
+            <div className="rounded-md bg-blue-50 px-3 py-2 text-xs text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+              Fields filled by voice — review before submitting
+            </div>
+          )}
+
           {/* Actions Taken */}
           <div className="space-y-2">
             <Label htmlFor="actionsTaken">
