@@ -11,6 +11,7 @@ import { CreateJobDialog } from "@/components/jobs/create-job-dialog"
 import { AddTechnicianDialog } from "@/components/technicians/add-technician-dialog"
 import { AddCustomerDialog } from "@/components/customers/add-customer-dialog"
 import { MaintenanceDueWidget } from "@/components/equipment/MaintenanceDueWidget"
+import { RecurringDraftsWidget } from "@/components/recurring-jobs/RecurringDraftsWidget"
 import { PageError } from "@/components/page-error"
 import { Button } from "@/components/ui/button"
 import { Link } from "react-router-dom"
@@ -77,6 +78,8 @@ export default function OfficeDashboardPage() {
       <StatCards stats={stats} loading={loading} />
 
       <MaintenanceDueWidget />
+
+      <RecurringDraftsWidget />
 
       {/* Unassigned jobs alert */}
       {(() => {
