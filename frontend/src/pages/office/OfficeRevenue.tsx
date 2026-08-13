@@ -5,7 +5,7 @@ import { api } from "@/api/client"
 import type { ApiInvoice, RevenueDataPoint, ApiJob } from "@/api/types"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DollarSign, TrendingUp, FileText, AlertCircle, Loader2, FileDown, Send } from "lucide-react"
-import toast from "react-hot-toast"
+import { toast } from "sonner"
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
