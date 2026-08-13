@@ -7,10 +7,17 @@ const resend = process.env.RESEND_API_KEY
 
 const FROM_EMAIL = process.env.FROM_EMAIL ?? "FlowSense <onboarding@resend.dev>";
 
+export interface Attachment {
+  filename: string;
+  content: Buffer;
+  contentType: string;
+}
+
 interface SendEmailOptions {
   to: string;
   subject: string;
   html: string;
+  attachments?: Attachment[];
 }
 
 export async function sendEmail(options: SendEmailOptions): Promise<void> {
@@ -19,18 +26,22 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
     return;
   }
 
-  try {
-    await resend.emails.send({
-      from: FROM_EMAIL,
-      to: options.to,
-      subject: options.subject,
-      html: options.html,
-    });
-    console.log(`[Email] Sent: ${options.subject} → ${options.to}`);
-  } catch (error) {
-    console.error(`[Email] Failed: ${options.subject} → ${options.to}`, error);
-    // Fire-and-forget — don't throw
-  }
+  await resend.emails.send({
+    from: FROM_EMAIL,
+    to: options.to,
+    subject: options.subject,
+    html: options.html,
+    ...(options.attachments && options.attachments.length > 0
+      ? {
+          attachments: options.attachments.map((a) => ({
+            filename: a.filename,
+            content: a.content,
+            content_type: a.contentType,
+          })),
+        }
+      : {}),
+  });
+  console.log(`[Email] Sent: ${options.subject} → ${options.to}`);
 }
 
 export async function sendDepositReceiptEmail(estimateId: string): Promise<void> {

@@ -86,7 +86,7 @@ async function sendStatusEmails(
         equipmentType: job.equipmentType,
         status: job.status,
       }),
-    });
+    }).catch(console.error);
   }
 
   if (job.status === "completed" && job.technician) {
@@ -99,7 +99,7 @@ async function sendStatusEmails(
         technicianName: job.technician.name,
         completedAt: (job.completedAt ?? new Date()).toISOString(),
       }),
-    });
+    }).catch(console.error);
   }
 }
 
@@ -303,7 +303,7 @@ jobsRouter.post("/", async (req, res) => {
           symptomSummary: parsed.data.symptomSummary ?? null,
           jobId: job.id,
         }),
-      });
+      }).catch(console.error);
     }
 
     sendBookingConfirmedSms(job.id).catch(console.error)

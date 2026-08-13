@@ -116,7 +116,7 @@ export async function notifyOrgNewBooking(
          <p><strong>Scheduled:</strong> ${fmt(job.scheduledAt)}</p>
          ${jobCard(job)}`
       ),
-    });
+    }).catch(console.error);
   }
 
   // urgent alert (separate email, higher urgency)
@@ -130,7 +130,7 @@ export async function notifyOrgNewBooking(
         `<p>A high-priority job has been created and requires immediate attention.</p>
          ${jobCard(job)}`
       ),
-    });
+    }).catch(console.error);
   }
 }
 
@@ -157,7 +157,7 @@ export async function notifyOrgStatusChange(
       `<p>A job has moved to <strong>${statusLabel[job.status] ?? job.status}</strong>.</p>
        ${jobCard(job)}`
     ),
-  });
+  }).catch(console.error);
 }
 
 /** Call after a job is marked completed. */
@@ -177,7 +177,7 @@ export async function notifyOrgJobCompleted(
        <p><strong>Completed:</strong> ${fmt(job.completedAt)}</p>
        ${jobCard(job)}`
     ),
-  });
+  }).catch(console.error);
 }
 
 export async function notifyOfficeDepositReceived(estimateId: string): Promise<void> {
