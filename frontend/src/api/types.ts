@@ -298,6 +298,14 @@ export interface EstimateLine {
   source: "ai" | "manual"
 }
 
+export interface VoiceExtractedFields {
+  actionsTaken: string
+  partsUsed: string[]
+  notes: string
+  laborHours: number
+  summary: string
+}
+
 export interface Estimate {
   id: string
   organizationId: string
