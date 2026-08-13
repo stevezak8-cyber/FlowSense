@@ -43,6 +43,7 @@ import { pushRouter } from "./routes/push.js"
 import { aiRouter } from "./routes/ai.js";
 import { equipmentRouter } from "./routes/equipment.js";
 import { recurringJobsRouter } from "./routes/recurring-jobs.js";
+import { voiceRouter } from "./routes/voice.js"
 import { setupWebSocket } from "./services/notifications.js";
 import { startInvoiceScheduler } from "./services/invoice-scheduler.js";
 import cron from "node-cron";
@@ -119,6 +120,7 @@ app.use("/api/push", apiLimiter, requireAuth, pushRouter);
 app.use("/api/ai", apiLimiter, requireAuth, requireSubscription, aiRouter);
 app.use("/api/equipment", apiLimiter, requireAuth, requireSubscription, equipmentRouter);
 app.use("/api/recurring-jobs", apiLimiter, requireAuth, requireSubscription, recurringJobsRouter);
+app.use("/api/voice", apiLimiter, requireAuth, requireSubscription, voiceRouter)
 
 // In production, serve the compiled frontend static build and handle SPA routing.
 // In development, Vite proxies /api requests — this block is never reached.
