@@ -22,6 +22,7 @@ import {
 import { cn } from "@/lib/utils"
 import { ChangePasswordCard } from "@/components/change-password-card"
 import { ConfirmDialog } from "@/components/confirm-dialog"
+import { ConciergeChatWidget } from "@/components/customer/ConciergeChatWidget"
 
 const statusSteps = ["scheduled", "in_progress", "completed"]
 const statusLabels: Record<string, string> = {
@@ -280,6 +281,8 @@ export default function CustomerDashboard() {
       </div>
 
       <ChangePasswordCard />
+
+      <ConciergeChatWidget embedded />
     </div>
   )
 }

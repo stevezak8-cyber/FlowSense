@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils"
 import { FlowSenseLogo } from "@/components/brand"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useAuth } from "@/auth/auth-context"
+import { ConciergeChatWidget } from "@/components/customer/ConciergeChatWidget"
 
 const navItems = [
   { label: "Dashboard", to: "/customer", icon: LayoutDashboard },
@@ -22,6 +23,7 @@ export default function CustomerLayout() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const { user, logout } = useAuth()
+  const showFloating = pathname !== "/customer" && pathname !== "/customer/"
 
   function handleLogout() {
     logout()
@@ -82,6 +84,7 @@ export default function CustomerLayout() {
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
         <Outlet />
       </main>
+      {showFloating && <ConciergeChatWidget />}
     </div>
   )
 }
