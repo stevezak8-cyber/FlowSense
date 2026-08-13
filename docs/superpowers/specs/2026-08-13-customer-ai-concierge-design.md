@@ -279,8 +279,7 @@ async function handleSend() {
     setMessages([...nextMessages, { role: "assistant", content: data.reply }])
     if (data.jobCreated) setJobConfirmed(true)
   } catch (e) {
-    const status = (e as { status?: number }).status
-    const msg = status === 503
+    const msg = (e instanceof Error && e.message === "not_configured")
       ? "AI concierge is not available right now. Please contact us directly."
       : "Sorry, I'm having trouble connecting. Please try again or contact us directly."
     setMessages([...nextMessages, { role: "assistant", content: msg }])
