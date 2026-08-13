@@ -24,7 +24,7 @@ All analytics are computed on-demand from existing Job, Invoice, Equipment, and 
 
 Fast DB-only endpoint (AI is called for `aiReason` per customer, but failures are silent).
 
-**Auth:** `requireAuth + requireSubscription`. Office role enforced inline.
+**Auth:** `requireAuth + requireSubscription` middleware is applied at the `dashboardRouter` mount point in `index.ts` (already in place). Add an inline office role check at the top of each handler: `if (req.user!.role !== "office") return res.status(403).json({ error: "Forbidden" })`.
 
 **Response 200:**
 ```typescript
@@ -56,7 +56,7 @@ Each customer appears at most once in `atRisk` (deduplicated by `customerId`). A
 
 Calls Claude with the org's 6-month revenue trend, job trend, equipment type breakdown, and at-risk customer count.
 
-**Auth:** same as above.
+**Auth:** same inline role check as `/analytics/data`.
 
 **Response 200:**
 ```typescript
@@ -138,11 +138,11 @@ const ninetyDaysFromNow = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000)
 
 Month grouping: use `YYYY-MM` string format derived from JS Date in the route handler (not raw SQL). Ensures consistent formatting across environments.
 
-Forecast: compute 3-month average of `revenueTrend` (last 3 entries), project as next month. Month label derived from `new Date(now.getFullYear(), now.getMonth() + 1, 1)`.
+Forecast: compute 3-month average of `revenueTrend` (last 3 entries), project as next month. If fewer than 3 entries exist, average all available entries. If `revenueTrend` is empty, return `projectedRevenue: 0`. Month label derived from `new Date(now.getFullYear(), now.getMonth() + 1, 1)`.
 
 **`dashboardRouter.get("/analytics/insights", async (req, res) => { ... })`**
 
-Runs the same DB queries as `/analytics/data` to build `AnalyticsTrends`, then calls `getAnalyticsNarrative`. Always returns 200 with `{ narrative }`.
+Extracts a shared helper `getAnalyticsTrends(orgId: string): Promise<AnalyticsTrends>` from the `/analytics/data` handler. This helper runs only the trend-related DB queries (paid invoices last 6 months, completed jobs last 6 months) and returns `{ revenueTrend, jobTrend, equipmentBreakdown, atRiskCount }`. Both `/analytics/data` and `/analytics/insights` call this helper — `data` also runs the at-risk queries on top. This avoids duplicating query logic and prevents the insights endpoint from accidentally triggering `getAtRiskReasons`. Always returns 200 with `{ narrative }`.
 
 Both routes wrapped in try/catch returning `res.status(500).json({ error: ... })`.
 
@@ -157,10 +157,11 @@ All route tests use `vi.mock` at top level; service tests use `vi.doMock` + `vi.
 3. `GET /analytics/data` — `atRisk` includes customer with `warrantyExpiry` within 90 days
 4. `GET /analytics/data` — `atRisk` includes customer with completed job history but no job in 12+ months
 5. `GET /analytics/data` — customer appears once even when multiple flags apply
-6. `GET /analytics/insights` — returns 200 with `{ narrative: "..." }` when AI configured
-7. `GET /analytics/insights` — returns 200 with `{ narrative: null }` when `ANTHROPIC_API_KEY` not set
-8. `getAtRiskReasons` — returns empty map when `ANTHROPIC_API_KEY` not set
-9. `getAnalyticsNarrative` — returns null when `ANTHROPIC_API_KEY` not set
+6. `GET /analytics/data` — equipment with null `lastServicedAt` or null `serviceIntervalMonths` does NOT trigger `overdue_service`
+7. `GET /analytics/insights` — returns 200 with `{ narrative: "..." }` when AI configured
+8. `GET /analytics/insights` — returns 200 with `{ narrative: null }` when `ANTHROPIC_API_KEY` not set
+9. `getAtRiskReasons` — returns empty map when `ANTHROPIC_API_KEY` not set
+10. `getAnalyticsNarrative` — returns null when `ANTHROPIC_API_KEY` not set
 
 ---
 
@@ -239,7 +240,6 @@ While `analyticsLoading`: skeleton rows.
 ### New types (inline in `OfficeDashboard.tsx` or `frontend/src/api/types.ts`)
 
 ```typescript
-interface AnalyticsTrendPoint { month: string; revenue?: number; jobs?: number }
 interface EquipmentBreakdownPoint { type: string; count: number }
 interface AtRiskCustomer {
   customerId: string
