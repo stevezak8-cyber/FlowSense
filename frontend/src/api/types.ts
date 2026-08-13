@@ -36,6 +36,7 @@ export interface ApiJob {
   completedAt: string | null
   createdAt: string
   updatedAt: string
+  recurringJobId?: string | null
   // Included relations from GET /api/jobs
   customer: { id: string; name: string; address: string; phone?: string }
   technician: { id: string; name: string } | null
@@ -172,6 +173,40 @@ export interface ComplianceLog {
     customer: { name: string } | null
     technician: { user: { name: string } | null } | null
   }
+}
+
+export interface RecurringJob {
+  id: string
+  organizationId: string
+  customerId: string
+  customer?: { name: string }
+  technicianId: string | null
+  technician?: { user: { name: string } | null } | null
+  equipmentId: string | null
+  equipment?: { make: string; model: string } | null
+  equipmentType: string | null
+  serviceType: string | null
+  intervalDays: number
+  nextDueAt: string
+  lastJobAt: string | null
+  notes: string | null
+  isActive: boolean
+  createdAt: string
+}
+
+export interface RecurringDraft {
+  id: string
+  customerId: string
+  customer: { name: string }
+  equipmentType: string | null
+  serviceType: string | null
+  recurringJobId: string
+  recurringJob: {
+    nextDueAt: string
+    intervalDays: number
+    equipment: { make: string; model: string } | null
+  }
+  createdAt: string
 }
 
 export interface CreateJobPayload {
