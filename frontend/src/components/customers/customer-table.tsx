@@ -1,8 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { api } from "@/api/client"
-import type { ApiCustomer, Equipment } from "@/api/types"
+import type { ApiCustomer, Equipment, RecurringJob } from "@/api/types"
+import { RecurringJobCard } from "@/components/recurring-jobs/RecurringJobCard"
+import { RecurringJobFormDialog } from "@/components/recurring-jobs/RecurringJobFormDialog"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { InviteDialog } from "@/components/invite-dialog"
@@ -36,6 +38,9 @@ export function CustomerTable({ customers, loading, onDelete }: CustomerTablePro
   const [equipment, setEquipment] = useState<Equipment[]>([])
   const [equipmentLoading, setEquipmentLoading] = useState(false)
   const [addEquipmentOpen, setAddEquipmentOpen] = useState(false)
+  const [recurringJobs, setRecurringJobs] = useState<RecurringJob[]>([])
+  const [recurringFormOpen, setRecurringFormOpen] = useState(false)
+  const [editingRecurring, setEditingRecurring] = useState<RecurringJob | null>(null)
 
   useEffect(() => {
     if (!expandedCustomer) { setEquipment([]); return }
@@ -46,6 +51,17 @@ export function CustomerTable({ customers, loading, onDelete }: CustomerTablePro
       .catch(() => setEquipment([]))
       .finally(() => setEquipmentLoading(false))
   }, [expandedCustomer])
+
+  const fetchRecurring = useCallback(async () => {
+    if (!expandedCustomer) return
+    const data = await api.get<RecurringJob[]>(`/api/recurring-jobs?customerId=${expandedCustomer}`)
+    setRecurringJobs(data)
+  }, [expandedCustomer])
+
+  useEffect(() => {
+    if (!expandedCustomer) { setRecurringJobs([]); return }
+    fetchRecurring()
+  }, [fetchRecurring, expandedCustomer])
 
   const filtered = customers.filter((c) => {
     if (search === "") return true
@@ -186,6 +202,52 @@ export function CustomerTable({ customers, loading, onDelete }: CustomerTablePro
                           onOpenChange={setAddEquipmentOpen}
                           customerId={expandedCustomer}
                           onSaved={(saved) => setEquipment((prev) => [...prev, saved])}
+                        />
+                      )}
+                    </div>
+
+                    {/* Recurring Jobs section */}
+                    <div className="mt-4 border-t border-border pt-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Recurring Jobs</span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 gap-1 text-xs"
+                          onClick={(e) => { e.stopPropagation(); setRecurringFormOpen(true) }}
+                        >
+                          <Plus className="h-3 w-3" />
+                          Add Recurring Job
+                        </Button>
+                      </div>
+                      {recurringJobs.length === 0 ? (
+                        <p className="text-xs text-muted-foreground py-1">No recurring schedules.</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {recurringJobs.map((rj) => (
+                            <RecurringJobCard
+                              key={rj.id}
+                              job={rj}
+                              onEdit={() => { setEditingRecurring(rj); setRecurringFormOpen(true) }}
+                              onDeactivate={async () => {
+                                await api.patch(`/api/recurring-jobs/${rj.id}`, { isActive: !rj.isActive })
+                                fetchRecurring()
+                              }}
+                              onDelete={async () => {
+                                await api.delete(`/api/recurring-jobs/${rj.id}`)
+                                fetchRecurring()
+                              }}
+                            />
+                          ))}
+                        </div>
+                      )}
+                      {recurringFormOpen && expandedCustomer && (
+                        <RecurringJobFormDialog
+                          customerId={expandedCustomer}
+                          customerEquipment={equipment}
+                          existing={editingRecurring ?? undefined}
+                          onSaved={() => { setRecurringFormOpen(false); setEditingRecurring(null); fetchRecurring() }}
+                          onClose={() => { setRecurringFormOpen(false); setEditingRecurring(null) }}
                         />
                       )}
                     </div>

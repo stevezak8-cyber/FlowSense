@@ -1,7 +1,9 @@
 "use client"
 
-import { useState } from "react"
-import type { ApiJob } from "@/api/types"
+import { useState, useEffect } from "react"
+import { api } from "@/api/client"
+import { toast } from "sonner"
+import type { ApiJob, ApiTechnician } from "@/api/types"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -73,6 +75,33 @@ export function JobsTable({ jobs, loading, onDelete }: JobsTableProps) {
   const [expandedJob, setExpandedJob] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
+  const [technicians, setTechnicians] = useState<ApiTechnician[]>([])
+  const [confirmScheduledAt, setConfirmScheduledAt] = useState("")
+  const [confirmTechId, setConfirmTechId] = useState("")
+  const [confirmingJobId, setConfirmingJobId] = useState<string | null>(null)
+
+  useEffect(() => {
+    api.get<ApiTechnician[]>("/api/technicians").then(setTechnicians).catch(() => {})
+  }, [])
+
+  async function handleConfirmRecurring(jobId: string) {
+    setConfirmingJobId(jobId)
+    try {
+      await api.patch(`/api/jobs/${jobId}`, {
+        scheduledAt: confirmScheduledAt,
+        technicianId: confirmTechId || null,
+        status: "scheduled",
+      })
+      toast.success("Job confirmed and scheduled")
+      setConfirmScheduledAt("")
+      setConfirmTechId("")
+      setExpandedJob(null)
+    } catch {
+      toast.error("Failed to confirm job")
+    } finally {
+      setConfirmingJobId(null)
+    }
+  }
 
   const filtered = jobs.filter((job) => {
     const matchesFilter =
@@ -188,10 +217,13 @@ export function JobsTable({ jobs, loading, onDelete }: JobsTableProps) {
                       {job.priority}
                     </Badge>
                   </div>
-                  <div className="col-span-1 hidden sm:block">
+                  <div className="col-span-1 hidden sm:flex sm:flex-col sm:gap-1">
                     <Badge variant="outline" className={cn("rounded-sm px-2 py-0.5 text-[10px] font-mono uppercase", statusStyles[job.status])}>
                       {statusLabels[job.status]}
                     </Badge>
+                    {job.recurringJobId && job.status === "pending" && (
+                      <Badge variant="outline" className="rounded-sm px-2 py-0.5 text-[10px] font-mono uppercase">Recurring</Badge>
+                    )}
                   </div>
                   <div className="col-span-2 hidden items-center justify-end gap-2 sm:flex">
                     <div className="text-right">
@@ -225,6 +257,43 @@ export function JobsTable({ jobs, loading, onDelete }: JobsTableProps) {
                       </div>
                     </div>
                     <ComplianceTimeline jobId={job.id} />
+                    {job.recurringJobId && job.status === "pending" && (
+                      <div className="mt-4 p-3 border rounded-md bg-muted/30">
+                        <h4 className="text-sm font-semibold mb-2">Confirm Recurring Job</h4>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-xs text-muted-foreground">Scheduled date & time</label>
+                            <input
+                              type="datetime-local"
+                              className="mt-1 w-full text-sm border rounded px-2 py-1"
+                              value={confirmScheduledAt}
+                              onChange={(e) => setConfirmScheduledAt(e.target.value)}
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs text-muted-foreground">Technician</label>
+                            <select
+                              className="mt-1 w-full text-sm border rounded px-2 py-1"
+                              value={confirmTechId}
+                              onChange={(e) => setConfirmTechId(e.target.value)}
+                            >
+                              <option value="">Unassigned</option>
+                              {technicians.map((t) => (
+                                <option key={t.id} value={t.id}>{t.name}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          className="mt-3"
+                          disabled={!confirmScheduledAt || confirmingJobId === job.id}
+                          onClick={() => handleConfirmRecurring(job.id)}
+                        >
+                          {confirmingJobId === job.id ? "Confirming..." : "Confirm & Schedule"}
+                        </Button>
+                      </div>
+                    )}
                     {onDelete && (job.status === "cancelled" || job.status === "completed") && (
                       <div className="mt-4 flex justify-end border-t border-border pt-4">
                         <Button
