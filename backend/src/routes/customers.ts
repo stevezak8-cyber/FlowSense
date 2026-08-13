@@ -19,6 +19,10 @@ const createCustomerSchema = z.object({
 const updateCustomerSchema = createCustomerSchema.partial();
 
 customersRouter.get("/", async (req, res) => {
+  // Customers should not browse the full customer list
+  if (req.user!.role === "customer") {
+    return res.status(403).json({ error: "Forbidden" });
+  }
   try {
     const q = (req.query.q as string)?.trim();
     const customers = await prisma.customer.findMany({
@@ -69,6 +73,26 @@ customersRouter.post("/", async (req, res) => {
     res.status(201).json(customer);
   } catch (e) {
     res.status(500).json({ error: e instanceof Error ? e.message : "Failed to create customer" });
+  }
+});
+
+customersRouter.delete("/:id", async (req, res) => {
+  if (req.user!.role !== "office") {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  try {
+    await prisma.customer.delete({
+      where: { id: req.params.id, organizationId: req.user!.organizationId },
+    });
+    res.status(204).send();
+  } catch (e) {
+    if ((e as { code?: string })?.code === "P2025") {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+    if ((e as { code?: string })?.code === "P2003") {
+      return res.status(409).json({ error: "Cannot delete customer with existing jobs or invoices" });
+    }
+    res.status(500).json({ error: e instanceof Error ? e.message : "Failed to delete customer" });
   }
 });
 

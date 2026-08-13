@@ -108,6 +108,83 @@ Auth and organization scoping are placeholders (single default org for MVP).
 | **Compliance** | Compliance log model and API; EPA 608 prompts and audit UI deferred |
 | **Data & intelligence** | Structured data in DB; predictive analytics and flywheel deferred |
 
+## Local Development
+
+### Prerequisites
+- Node.js 20+
+- Docker (for local Postgres)
+
+### Setup
+
+```bash
+# Install dependencies
+npm install --prefix backend
+npm install --prefix frontend
+
+# Start Postgres
+docker-compose up -d
+
+# Configure environment
+cp backend/.env.example backend/.env
+# Edit backend/.env — set DATABASE_URL and JWT_SECRET at minimum
+
+# Run migrations and seed demo data
+cd backend && npx prisma migrate deploy && npx prisma db seed
+
+# Start dev servers (two terminals)
+cd backend && npm run dev        # API on :4000
+cd frontend && npm run dev       # UI on :5173
+```
+
+Demo accounts created by the seed:
+
+| Role | Email | Password |
+|------|-------|----------|
+| Office | office@flowsense.demo | office123 |
+| Technician | tech@flowsense.demo | tech123 |
+| Customer | customer@flowsense.demo | customer123 |
+
+---
+
+## Deploying to Railway
+
+1. Create a Railway project, add a **PostgreSQL** service, then add a service pointing to this repo.
+2. Railway detects `railway.toml` and builds via `Dockerfile` automatically.
+3. Link the Postgres service so `DATABASE_URL` is injected automatically.
+4. Set the required environment variables in Railway → Variables:
+
+| Variable | Notes |
+|----------|-------|
+| `JWT_SECRET` | `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"` |
+| `NODE_ENV` | `production` |
+
+Optional variables (features degrade gracefully if not set):
+
+| Variable | Feature |
+|----------|---------|
+| `RESEND_API_KEY` | Email notifications |
+| `FROM_EMAIL` | Sender address e.g. `FlowSense <noreply@yourdomain.com>` |
+| `ANTHROPIC_API_KEY` | AI job briefings and summaries |
+| `GOOGLE_MAPS_API_KEY` | Drive-time estimates in dispatch |
+| `STRIPE_SECRET_KEY` | Online invoice payments |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signature verification |
+| `APP_URL` | Your production URL (for Stripe redirects) |
+
+Migrations run automatically on each deploy via the `releaseCommand` in `railway.toml`.
+
+**First deploy:** visit `https://your-app.up.railway.app/register` to create your organization and admin account.
+
+### Stripe webhook (production)
+
+1. Stripe Dashboard → Developers → Webhooks → Add endpoint
+2. URL: `https://your-app.up.railway.app/webhooks/stripe`
+3. Event: `checkout.session.completed`
+4. Copy the signing secret → add as `STRIPE_WEBHOOK_SECRET` in Railway
+
+For local Stripe testing: `stripe listen --forward-to localhost:4000/webhooks/stripe`
+
+---
+
 ## License
 
 Proprietary.

@@ -281,6 +281,124 @@ async function main() {
     data: { customerId: "seed-customer-1" },
   });
 
+  // --- Invoices with realistic amounts ---
+  // AC repair job (default-job-2): repair base $95 + 1.5hrs labor = $95 + $47.50 = $142.50
+  await prisma.invoice.upsert({
+    where: { id: "seed-invoice-1" },
+    create: {
+      id: "seed-invoice-1",
+      organizationId: org.id,
+      jobId: "default-job-2",
+      customerId: customer.id,
+      description: "AC repair — run capacitor replacement",
+      amount: 142.50,
+      status: "paid",
+      issuedDate: new Date(Date.now() - 7 * 86400000 + 3600000),
+      dueDate: new Date(Date.now() - 7 * 86400000 + 3600000 + 30 * 86400000),
+    },
+    update: { amount: 142.50, status: "paid" },
+  });
+
+  // Scheduled furnace job (default-job-1): pending invoice, repair base $95
+  await prisma.invoice.upsert({
+    where: { id: "seed-invoice-2" },
+    create: {
+      id: "seed-invoice-2",
+      organizationId: org.id,
+      jobId: "default-job-1",
+      customerId: customer.id,
+      description: "Furnace repair — estimated",
+      amount: 95.00,
+      status: "pending",
+      issuedDate: new Date(),
+      dueDate: new Date(Date.now() + 30 * 86400000),
+    },
+    update: { amount: 95.00 },
+  });
+
+  // AC noise job (seed-job-dispatch-demo): pending, maintenance base $79
+  await prisma.invoice.upsert({
+    where: { id: "seed-invoice-3" },
+    create: {
+      id: "seed-invoice-3",
+      organizationId: org.id,
+      jobId: "seed-job-dispatch-demo",
+      customerId: "seed-customer-2",
+      description: "AC inspection — noise diagnosis",
+      amount: 79.00,
+      status: "pending",
+      issuedDate: new Date(),
+      dueDate: new Date(Date.now() + 30 * 86400000),
+    },
+    update: { amount: 79.00 },
+  });
+
+  // --- Seed conversations so Messages tab isn't empty ---
+  const officeUser = await prisma.user.findUnique({
+    where: { email: "office@flowsense.demo" },
+    select: { id: true, name: true },
+  });
+  const techUser = await prisma.user.findUnique({
+    where: { email: "tech@flowsense.demo" },
+    select: { id: true, name: true },
+  });
+
+  if (officeUser && techUser) {
+    await prisma.conversation.upsert({
+      where: { id: "seed-conv-1" },
+      create: {
+        id: "seed-conv-1",
+        organizationId: org.id,
+        subject: "Furnace job #default-job-1 — parts update",
+        channel: "internal",
+        participants: [officeUser.id, techUser.id],
+        unreadCount: 1,
+        lastMessageAt: new Date(Date.now() - 30 * 60000),
+        messages: {
+          create: [
+            {
+              sender: officeUser.name,
+              senderRole: "dispatch",
+              content: "Jordan — hot surface igniter is backordered until tomorrow morning. Can you call the customer and let them know?",
+              createdAt: new Date(Date.now() - 45 * 60000),
+            },
+            {
+              sender: techUser.name,
+              senderRole: "technician",
+              content: "Got it. I'll call them now and see if they want to reschedule or wait it out.",
+              createdAt: new Date(Date.now() - 30 * 60000),
+            },
+          ],
+        },
+      },
+      update: { unreadCount: 1 },
+    });
+
+    await prisma.conversation.upsert({
+      where: { id: "seed-conv-2" },
+      create: {
+        id: "seed-conv-2",
+        organizationId: org.id,
+        subject: "AC job at Sunrise Office Park — access instructions",
+        channel: "internal",
+        participants: [officeUser.id, techUser.id],
+        unreadCount: 0,
+        lastMessageAt: new Date(Date.now() - 2 * 3600000),
+        messages: {
+          create: [
+            {
+              sender: officeUser.name,
+              senderRole: "dispatch",
+              content: "For the Sunrise job — check in at the front desk first, ask for Marcus. Rooftop unit is accessed from the east stairwell.",
+              createdAt: new Date(Date.now() - 2 * 3600000),
+            },
+          ],
+        },
+      },
+      update: {},
+    });
+  }
+
   console.log("Seed complete!");
   console.log("Login credentials:");
   console.log("  Office:     office@flowsense.demo / office123");

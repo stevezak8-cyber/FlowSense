@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "../lib/prisma.js";
+import { AI_MODEL } from "../lib/ai-config.js";
 
 // Silent skip pattern — consistent with pre-arrival.ts and email.ts
 const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -54,7 +55,7 @@ export async function generateCompletionSummary(
 - Address: ${job.customer.address}`;
 
     const response = await anthropic.messages.create({
-      model: "claude-haiku-4-20250514",
+      model: AI_MODEL,
       max_tokens: 400,
       system: systemPrompt,
       messages: [{ role: "user", content: userPrompt }],

@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "../lib/prisma.js";
+import { AI_MODEL } from "../lib/ai-config.js";
 
 // Silent skip pattern — consistent with email.ts / Resend
 const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -83,7 +84,7 @@ ${historyText}`;
 
     // 4. Call Claude Haiku
     const response = await anthropic.messages.create({
-      model: "claude-haiku-4-20250514",
+      model: AI_MODEL,
       max_tokens: 800,
       system: systemPrompt,
       messages: [{ role: "user", content: userPrompt }],

@@ -1,0 +1,29 @@
+# Local development environment
+# Provides a PostgreSQL database so you don't need to install one locally.
+# The backend and frontend still run with npm run dev (hot reload, faster).
+#
+# Usage:
+#   docker compose up -d        # start postgres in the background
+#   docker compose down         # stop and remove containers
+#   docker compose down -v      # also delete the database volume
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: flowsense
+      POSTGRES_PASSWORD: flowsense
+      POSTGRES_DB: flowsense
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flowsense"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

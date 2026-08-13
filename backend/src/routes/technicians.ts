@@ -10,6 +10,7 @@ const createTechnicianSchema = z.object({
   phone: z.string().optional(),
   epa608Level: z.string().optional(),
   skills: z.array(z.string()).default([]),
+  isOnDuty: z.boolean().optional(),
 });
 
 const updateTechnicianSchema = createTechnicianSchema.partial();
@@ -59,6 +60,26 @@ techniciansRouter.post("/", async (req, res) => {
     res.status(201).json(technician);
   } catch (e) {
     res.status(500).json({ error: e instanceof Error ? e.message : "Failed to create technician" });
+  }
+});
+
+techniciansRouter.delete("/:id", async (req, res) => {
+  if (req.user!.role !== "office") {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  try {
+    await prisma.technician.delete({
+      where: { id: req.params.id, organizationId: req.user!.organizationId },
+    });
+    res.status(204).send();
+  } catch (e) {
+    if ((e as { code?: string })?.code === "P2025") {
+      return res.status(404).json({ error: "Technician not found" });
+    }
+    if ((e as { code?: string })?.code === "P2003") {
+      return res.status(409).json({ error: "Cannot delete technician with existing jobs" });
+    }
+    res.status(500).json({ error: e instanceof Error ? e.message : "Failed to delete technician" });
   }
 });
 

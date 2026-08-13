@@ -25,7 +25,11 @@ export function setupWebSocket(server: Server) {
 
   server.on("upgrade", (request: IncomingMessage, socket, head) => {
     const url = new URL(request.url ?? "", `http://${request.headers.host}`);
-    const token = url.searchParams.get("token");
+    // Prefer token from Sec-WebSocket-Protocol header (never appears in URL
+    // access logs). Fall back to query param for backwards compatibility.
+    const token =
+      (request.headers["sec-websocket-protocol"] as string | undefined) ??
+      url.searchParams.get("token");
 
     if (!token) {
       socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");

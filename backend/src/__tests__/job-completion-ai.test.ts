@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { AI_MODEL } from "../lib/ai-config.js";
 
 // Mock Prisma
 vi.mock("../lib/prisma.js", () => ({
@@ -84,7 +85,7 @@ describe("generateCompletionSummary", () => {
 
     expect(mockCreate).toHaveBeenCalledTimes(1);
     const callArgs = mockCreate.mock.calls[0][0];
-    expect(callArgs.model).toBe("claude-haiku-4-20250514");
+    expect(callArgs.model).toBe(AI_MODEL);
     expect(callArgs.max_tokens).toBe(400);
     expect(callArgs.system).toContain("HVAC");
 
