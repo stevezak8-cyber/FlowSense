@@ -138,11 +138,16 @@ const ninetyDaysFromNow = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000)
 
 Month grouping: use `YYYY-MM` string format derived from JS Date in the route handler (not raw SQL). Ensures consistent formatting across environments.
 
-Forecast: compute 3-month average of `revenueTrend` (last 3 entries), project as next month. If fewer than 3 entries exist, average all available entries. If `revenueTrend` is empty, return `projectedRevenue: 0`. Month label derived from `new Date(now.getFullYear(), now.getMonth() + 1, 1)`.
+Forecast: compute 3-month average of `revenueTrend` (last 3 entries), project as next month. If fewer than 3 entries exist, average all available entries. If `revenueTrend` is empty, return `projectedRevenue: 0`. Month label derived from `new Date(now.getFullYear(), now.getMonth() + 1, 1)`. Month strings use manual formatting: `` `${year}-${String(month + 1).padStart(2, "0")}` `` (not `toISOString()`, which has UTC-offset risk when using local-time Date constructors).
 
 **`dashboardRouter.get("/analytics/insights", async (req, res) => { ... })`**
 
-Extracts a shared helper `getAnalyticsTrends(orgId: string): Promise<AnalyticsTrends>` from the `/analytics/data` handler. This helper runs only the trend-related DB queries (paid invoices last 6 months, completed jobs last 6 months) and returns `{ revenueTrend, jobTrend, equipmentBreakdown, atRiskCount }`. Both `/analytics/data` and `/analytics/insights` call this helper — `data` also runs the at-risk queries on top. This avoids duplicating query logic and prevents the insights endpoint from accidentally triggering `getAtRiskReasons`. Always returns 200 with `{ narrative }`.
+Extracts a shared helper `getAnalyticsTrends(orgId: string, prisma: PrismaClient): Promise<AnalyticsTrends>` from the `/analytics/data` handler. This helper runs:
+- Paid invoices last 6 months (for `revenueTrend`)
+- Completed jobs last 6 months (for `jobTrend` and `equipmentBreakdown`)
+- A count-only at-risk query to populate `atRiskCount` (a single `prisma.equipment.count` for overdue + warranty combined with a `prisma.job.groupBy` count for no_recent_job — lightweight, no full detail fetch)
+
+Returns `{ revenueTrend, jobTrend, equipmentBreakdown, atRiskCount }`. Both `/analytics/data` and `/analytics/insights` call this helper. The `/analytics/data` handler additionally runs the full at-risk detail queries. This keeps the helper self-contained and prevents the insights endpoint from triggering `getAtRiskReasons`. The `AnalyticsTrends` type is defined in `analytics-ai.ts` and imported by `dashboard.ts`. Always returns 200 with `{ narrative }`.
 
 Both routes wrapped in try/catch returning `res.status(500).json({ error: ... })`.
 
@@ -162,6 +167,8 @@ All route tests use `vi.mock` at top level; service tests use `vi.doMock` + `vi.
 8. `GET /analytics/insights` — returns 200 with `{ narrative: null }` when `ANTHROPIC_API_KEY` not set
 9. `getAtRiskReasons` — returns empty map when `ANTHROPIC_API_KEY` not set
 10. `getAnalyticsNarrative` — returns null when `ANTHROPIC_API_KEY` not set
+11. `GET /analytics/data` — `forecast.projectedRevenue` averages 2 available months when only 2 months of revenue data exist
+12. `GET /analytics/data` — `forecast.projectedRevenue` is 0 when `revenueTrend` is empty
 
 ---
 
@@ -172,7 +179,7 @@ All route tests use `vi.mock` at top level; service tests use `vi.doMock` + `vi.
 **Two additional fetch calls on mount** (alongside the existing stats/chart fetches):
 
 ```typescript
-// Fires immediately with existing calls
+// Included in the existing Promise.all alongside stats/chart fetches
 const analyticsData = await api.get<AnalyticsData>("/api/dashboard/analytics/data")
 
 // Fires separately — does not block the data render
