@@ -67,9 +67,10 @@ interface JobsTableProps {
   jobs: ApiJob[]
   loading?: boolean
   onDelete?: (id: string) => void
+  onRefresh?: () => void
 }
 
-export function JobsTable({ jobs, loading, onDelete }: JobsTableProps) {
+export function JobsTable({ jobs, loading, onDelete, onRefresh }: JobsTableProps) {
   const [activeFilter, setActiveFilter] = useState<StatusFilter>("all")
   const [search, setSearch] = useState("")
   const [expandedJob, setExpandedJob] = useState<string | null>(null)
@@ -96,6 +97,7 @@ export function JobsTable({ jobs, loading, onDelete }: JobsTableProps) {
       setConfirmScheduledAt("")
       setConfirmTechId("")
       setExpandedJob(null)
+      onRefresh?.()
     } catch {
       toast.error("Failed to confirm job")
     } finally {

@@ -199,7 +199,7 @@ export default function OfficeJobsPage() {
       )}
 
       {view === "list" ? (
-        <JobsTable jobs={jobs} loading={loading} onDelete={handleDelete} />
+        <JobsTable jobs={jobs} loading={loading} onDelete={handleDelete} onRefresh={fetchJobs} />
       ) : (
         <ScheduleCalendar />
       )}
