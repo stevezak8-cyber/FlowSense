@@ -151,6 +151,8 @@ describe("GET /analytics/data", () => {
     const atRisk = res.body.atRisk as Array<{ customerId: string }>
     const matches = atRisk.filter((c) => c.customerId === "cust4")
     expect(matches.length).toBe(1)
+    expect(matches[0].flags).toContain("overdue_service")
+    expect(matches[0].flags).toContain("warranty_expiring")
   })
 
   it("equipment with null lastServicedAt does NOT trigger overdue_service", async () => {

@@ -281,7 +281,7 @@ dashboardRouter.get("/analytics/data", async (req, res) => {
     }
 
     for (const eq of overdueEquipment) {
-      if (!eq.lastServicedAt || !eq.serviceIntervalMonths) continue
+      if (!eq.lastServicedAt || !eq.serviceIntervalMonths || !eq.customer) continue
       const dueDate = new Date(eq.lastServicedAt)
       dueDate.setMonth(dueDate.getMonth() + eq.serviceIntervalMonths)
       if (dueDate < now) {
@@ -289,6 +289,7 @@ dashboardRouter.get("/analytics/data", async (req, res) => {
       }
     }
     for (const eq of warrantyEquipment) {
+      if (!eq.customer) continue
       addFlag(eq.customerId, eq.customer.name, eq.customer.address, "warranty_expiring")
     }
     for (const c of noRecentJobCustomers) {
