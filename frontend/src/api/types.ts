@@ -331,3 +331,24 @@ export interface ConciergeMessage {
   role: "user" | "assistant"
   content: string
 }
+
+export interface EquipmentBreakdownPoint {
+  type: string
+  count: number
+}
+
+export interface AtRiskCustomer {
+  customerId: string
+  name: string
+  address: string
+  flags: ("overdue_service" | "warranty_expiring" | "no_recent_job")[]
+  aiReason: string | null
+}
+
+export interface AnalyticsData {
+  revenueTrend: { month: string; revenue: number }[]
+  jobTrend: { month: string; jobs: number }[]
+  forecast: { month: string; projectedRevenue: number }
+  equipmentBreakdown: EquipmentBreakdownPoint[]
+  atRisk: AtRiskCustomer[]
+}
