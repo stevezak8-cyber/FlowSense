@@ -74,8 +74,8 @@ Steps:
 1. Verify `s3Available()` — return 503 if not
 2. Fetch job, verify `job.organizationId === req.organizationId` — return 404 if not found or wrong org
 3. Verify `req.role === "technician"` — return 403 otherwise
-4. Validate `contentType` is one of `image/jpeg`, `image/png`, `image/webp`, `image/gif` — return 400 otherwise
-5. Derive extension from contentType (`jpeg`→`jpg`, `png`→`png`, `webp`→`webp`, `gif`→`gif`)
+4. Validate `contentType` is one of `image/jpeg`, `image/png`, `image/webp` — return 400 otherwise
+5. Derive extension from contentType (`jpeg`→`jpg`, `png`→`png`, `webp`→`webp`)
 6. Generate key: `{organizationId}/jobs/{jobId}/{randomUUID()}.{ext}`
 7. Call `getUploadUrl(key, contentType)` — return `{ uploadUrl, publicUrl }`
 
@@ -196,12 +196,12 @@ export interface PhotoUploadUrlResponse {
 
 | Condition | Behaviour |
 |---|---|
-| `AWS_S3_BUCKET` not set | `s3Available()` returns false; upload-url returns 503; UI shows "Photo upload unavailable" |
+| Any required S3 env var missing | `s3Available()` returns false; upload-url returns 503; UI shows "Photo upload unavailable" |
 | File >10 MB | Client-side check before upload; toast error |
 | Non-image file type | Client-side check; toast error |
 | S3 PUT fails | Toast error; URL not registered (POST /photos never called) |
 | URL injection attempt | Backend validates URL starts with expected S3 domain; returns 400 |
-| Office staff tries to upload | Route returns 403; UI never shows upload button for office role |
+| Office staff tries to upload or delete | Route returns 403; UI never shows upload button or delete controls for office role |
 
 ---
 
