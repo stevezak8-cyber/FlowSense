@@ -20,7 +20,7 @@ Search is office-only — technicians do not use the header layout and are not i
 
 Single endpoint:
 
-**`GET /api/search?q=`** — requires JWT auth, office role recommended but not enforced (any authenticated user in the org can call it)
+**`GET /api/search?q=`** — requires JWT auth. Returns 403 if `req.user.role !== "office"` — technicians and customers are not in scope.
 
 Query parameter:
 - `q` — the search string. Return 400 if missing or fewer than 2 characters.
@@ -180,8 +180,8 @@ A self-contained component that owns the search input, dropdown, and preview pan
 
 *Customer preview:*
 - Name, phone, email, address
-- Up to 3 most recent jobs (fetched from existing `GET /api/jobs` filtered client-side from results, or a separate fetch)
-- "View Full Customer Profile" → navigates to `/office/customers` (the customers page)
+- "View Full Customer Profile" → navigates to `/office/customers`
+- No recent-jobs list — `GET /api/jobs` does not support a `customerId` filter for office users, and no new endpoint will be added for this
 
 *Job preview:*
 - Status badge, scheduled date, equipment type, symptom summary, assigned technician name, customer name
@@ -191,7 +191,9 @@ A self-contained component that owns the search input, dropdown, and preview pan
 - Equipment type, make, model, serial number, customer name
 - "View Customer" → navigates to `/office/customers`
 
-**For customer and equipment previews that need recent jobs:** fetch `GET /api/jobs?customerId={id}` (if that filter is supported) or filter the already-loaded job results. If no jobs endpoint filter exists, show just the entity info without a recent-jobs list — do not add a new API endpoint just for this.
+**Navigation targets:** the app has no entity-specific detail routes (no `/office/customers/:id`, no `/office/jobs/:id`). Navigating to the list page is correct — the full detail view lives in the expanded row on those pages.
+
+**Flat-list keyboard nav ordering:** when the user presses ↑/↓, the cursor moves through results in this order: all Customers first, then all Jobs, then all Equipment — matching the visual grouping in the dropdown.
 
 ### Modified file: `frontend/src/components/top-header.tsx`
 
@@ -231,6 +233,11 @@ export interface SearchResults {
   customers: SearchCustomer[]
   equipment: SearchEquipment[]
 }
+
+export type SearchPreviewItem =
+  | { type: "customer"; data: SearchCustomer }
+  | { type: "job"; data: SearchJob }
+  | { type: "equipment"; data: SearchEquipment }
 ```
 
 ---
