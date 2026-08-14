@@ -1,6 +1,6 @@
-import { Bell, Search } from "lucide-react"
-import { Input } from "@/components/ui/input"
+import { Bell } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { GlobalSearch } from "@/components/search/GlobalSearch"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -19,13 +19,7 @@ export function TopHeader() {
 
   return (
     <header className="sticky top-0 z-20 flex h-[68px] items-center justify-between bg-background px-8">
-      <div className="relative w-72">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="Search jobs, technicians..."
-          className="h-9 bg-card pl-9 text-sm rounded-xl border-transparent shadow-sm placeholder:text-muted-foreground focus:border-primary/20"
-        />
-      </div>
+      <GlobalSearch />
       <div className="flex items-center gap-3">
         <div className="hidden items-center gap-2 rounded-full bg-card px-3 py-1.5 text-xs text-muted-foreground shadow-sm md:flex">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-success" />
