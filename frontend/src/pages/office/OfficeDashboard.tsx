@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { api } from "@/api/client"
 import type { DashboardStats, ChartDataPoint, ApiJob, ApiTechnician, AnalyticsData } from "@/api/types"
 import { StatCards } from "@/components/dashboard/stat-cards"
@@ -39,11 +39,14 @@ export default function OfficeDashboardPage() {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null)
   const [analyticsLoading, setAnalyticsLoading] = useState(true)
   const [narrative, setNarrative] = useState<string | null | undefined>(undefined)
+  const fetchIdRef = useRef(0)
 
   const fetchAll = useCallback(() => {
     setLoading(true)
     setAnalyticsLoading(true)
     setError(null)
+    setNarrative(undefined)
+    const fetchId = ++fetchIdRef.current
     Promise.all([
       api.get<DashboardStats>("/api/dashboard/stats"),
       api.get<ChartDataPoint[]>("/api/dashboard/chart"),
@@ -66,8 +69,8 @@ export default function OfficeDashboardPage() {
 
     api
       .get<{ narrative: string | null }>("/api/dashboard/analytics/insights")
-      .then((r) => setNarrative(r.narrative))
-      .catch(() => setNarrative(null))
+      .then((r) => { if (fetchIdRef.current === fetchId) setNarrative(r.narrative) })
+      .catch(() => { if (fetchIdRef.current === fetchId) setNarrative(null) })
   }, [])
 
   useEffect(() => { fetchAll() }, [fetchAll])
@@ -153,7 +156,7 @@ export default function OfficeDashboardPage() {
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                   <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip formatter={(v: number | undefined) => v != null ? [`$${v.toFixed(2)}`, "Revenue"] : ["", "Revenue"]} />
+                  <Tooltip formatter={(v) => [typeof v === "number" ? `$${v.toFixed(2)}` : v, "Revenue"]} />
                   <Line type="monotone" dataKey="revenue" stroke="#0d9488" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
@@ -165,7 +168,7 @@ export default function OfficeDashboardPage() {
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                   <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                  <Tooltip formatter={(v: number | undefined) => [v ?? 0, "Jobs"]} />
+                  <Tooltip formatter={(v) => [v, "Jobs"]} />
                   <Line type="monotone" dataKey="jobs" stroke="#6366f1" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
@@ -220,7 +223,7 @@ export default function OfficeDashboardPage() {
               <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
               <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
               <YAxis type="category" dataKey="type" tick={{ fontSize: 11 }} width={90} />
-              <Tooltip formatter={(v: number | undefined) => [v ?? 0, "Jobs"]} />
+              <Tooltip formatter={(v) => [v, "Jobs"]} />
               <Bar dataKey="count" fill="#0d9488" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
