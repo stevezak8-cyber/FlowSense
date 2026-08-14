@@ -1,8 +1,8 @@
 import { Router, type Request, type Response } from "express";
 import Stripe from "stripe";
 import { prisma } from "../lib/prisma.js";
-import { sendDepositReceiptEmail } from "../services/email.js";
-import { notifyOfficeDepositReceived } from "../services/org-notifications.js";
+import { sendDepositReceiptEmail, sendInvoiceReceiptEmail } from "../services/email.js";
+import { notifyOfficeDepositReceived, notifyOfficePaymentReceived } from "../services/org-notifications.js";
 
 export const webhooksRouter = Router();
 
@@ -61,6 +61,45 @@ webhooksRouter.post("/stripe", async (req: Request, res: Response) => {
         } catch (err) {
           console.error(`Failed to mark invoice ${invoiceId} as paid:`, err);
           return res.status(500).json({ error: "Failed to update invoice" });
+        }
+
+        // Notifications — fire-and-forget; failures must not affect webhook response
+        try {
+          const [paidInvoice, org] = await Promise.all([
+            prisma.invoice.findUnique({
+              where: { id: invoiceId },
+              include: { customer: { select: { name: true, email: true } } },
+            }),
+            prisma.organization.findUnique({
+              where: { id: organizationId },
+              select: { name: true, phone: true, email: true },
+            }),
+          ])
+
+          if (paidInvoice && org) {
+            sendInvoiceReceiptEmail({
+              invoiceId: paidInvoice.id,
+              amount: paidInvoice.amount,
+              description: paidInvoice.description,
+              issuedDate: paidInvoice.issuedDate,
+              customerName: paidInvoice.customer.name,
+              customerEmail: paidInvoice.customer.email,
+              orgName: org.name,
+              orgContactPhone: org.phone,
+              orgContactEmail: org.email,
+            }).catch((e: unknown) => console.error("[Webhook] Invoice receipt email failed:", e))
+
+            notifyOfficePaymentReceived({
+              invoiceId: paidInvoice.id,
+              amount: paidInvoice.amount,
+              description: paidInvoice.description,
+              customerName: paidInvoice.customer.name,
+              orgId: organizationId,
+            }).catch((e: unknown) => console.error("[Webhook] Office payment notification failed:", e))
+          }
+        } catch (e) {
+          console.error("[Webhook] Failed to fetch invoice/org for notifications:", e)
+          // intentionally do not return error — invoice is already marked paid
         }
       }
 

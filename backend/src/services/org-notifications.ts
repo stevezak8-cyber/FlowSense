@@ -9,6 +9,7 @@
 import { prisma } from "../lib/prisma.js";
 import { sendEmail } from "./email.js";
 import { escapeHtml } from "../lib/escape-html.js";
+import twilio from "twilio";
 
 interface JobSummary {
   id: string;
@@ -178,6 +179,61 @@ export async function notifyOrgJobCompleted(
        ${jobCard(job)}`
     ),
   }).catch(console.error);
+}
+
+export async function notifyOfficePaymentReceived(params: {
+  invoiceId: string
+  amount: number
+  description: string
+  customerName: string
+  orgId: string
+}): Promise<void> {
+  const { amount, description, customerName, orgId } = params
+
+  // Fetch org directly — getOrgDispatch is not used here because it only
+  // returns email + notificationPreferences, not phone or smsEnabled.
+  const org = await prisma.organization.findUnique({
+    where: { id: orgId },
+    select: { name: true, email: true, phone: true, smsEnabled: true },
+  })
+  if (!org) return
+
+  // Email notification
+  if (org.email) {
+    sendEmail({
+      to: org.email,
+      subject: `Payment received: $${amount.toFixed(2)} from ${customerName}`,
+      html: wrap(
+        "Payment Received",
+        `<p><strong>${escapeHtml(customerName)}</strong> has paid <strong>$${amount.toFixed(2)}</strong> for <strong>${escapeHtml(description)}</strong>.</p>
+         <div style="background:#f5f5f5;padding:16px;border-radius:8px;margin:16px 0;">
+           <p style="margin:4px 0;"><strong>Customer:</strong> ${escapeHtml(customerName)}</p>
+           <p style="margin:4px 0;"><strong>Amount:</strong> $${amount.toFixed(2)}</p>
+           <p style="margin:4px 0;"><strong>Service:</strong> ${escapeHtml(description)}</p>
+           <p style="margin:4px 0;"><strong>Time:</strong> ${new Date().toLocaleString("en-US")}</p>
+         </div>`
+      ),
+    }).catch((e: unknown) => console.error("[OrgNotify] Payment email failed:", e))
+  }
+
+  // SMS notification — only if smsEnabled and org has a valid E.164 phone
+  // Note: getClient() in sms.ts is private and not exported. We read Twilio
+  // env vars directly here — intentional duplication for a short, isolated path.
+  if (org.smsEnabled && org.phone) {
+    const E164 = /^\+[1-9]\d{7,14}$/
+    if (!E164.test(org.phone)) return
+
+    const sid = process.env.TWILIO_ACCOUNT_SID
+    const token = process.env.TWILIO_AUTH_TOKEN
+    const from = process.env.TWILIO_FROM_NUMBER
+    if (!sid || !token || !from) return
+
+    const client = twilio(sid, token)
+    const body = `[FlowSense] Payment received: $${amount.toFixed(2)} from ${customerName} (${description})`
+    client.messages
+      .create({ to: org.phone, from, body })
+      .catch((e: unknown) => console.error("[OrgNotify] Payment SMS failed:", e))
+  }
 }
 
 export async function notifyOfficeDepositReceived(estimateId: string): Promise<void> {
