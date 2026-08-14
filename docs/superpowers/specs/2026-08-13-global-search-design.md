@@ -43,6 +43,7 @@ interface SearchJob {
   equipmentType: string | null
   symptomSummary: string | null
   customer: { id: string; name: string; address: string }
+  assignedTechnician: { name: string } | null
 }
 
 interface SearchCustomer {
@@ -84,6 +85,7 @@ prisma.job.findMany({
     id: true, status: true, scheduledAt: true,
     equipmentType: true, symptomSummary: true,
     customer: { select: { id: true, name: true, address: true } },
+    technician: { select: { name: true } },
   },
   take: 5,
   orderBy: { scheduledAt: "desc" },
@@ -209,6 +211,7 @@ export interface SearchJob {
   equipmentType: string | null
   symptomSummary: string | null
   customer: { id: string; name: string; address: string }
+  assignedTechnician: { name: string } | null
 }
 
 export interface SearchCustomer {
@@ -250,7 +253,6 @@ export type SearchPreviewItem =
 | Network error during search | Dropdown shows "Search unavailable" message; no toast |
 | No results across all categories | Dropdown shows "No results for '{query}'" |
 | API returns 400 | Treated as empty results |
-| Preview fetch fails (if applicable) | Preview shows available data; missing section omitted |
 
 ---
 
