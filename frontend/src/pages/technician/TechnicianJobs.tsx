@@ -15,6 +15,7 @@ import { CompletionDialog } from "@/components/jobs/completion-dialog"
 import { EstimateBuilder } from "@/components/estimates/estimate-builder"
 import { AiChatPanel } from "@/components/jobs/AiChatPanel"
 import { ComplianceForm } from "@/components/compliance/ComplianceForm"
+import { JobPhotos } from "@/components/jobs/JobPhotos"
 
 type ApiStatus = ApiJob["status"]
 
@@ -305,6 +306,21 @@ export default function TechnicianJobsPage() {
                 </div>
               )
             )}
+
+            {/* Photos */}
+            <div className="rounded-lg border border-border bg-card p-4">
+              <h3 className="mb-3 text-sm font-semibold text-card-foreground">Photos</h3>
+              <JobPhotos
+                jobId={job.id}
+                photos={job.photos ?? []}
+                canUpload={true}
+                onPhotosChange={(updatedPhotos) =>
+                  setJobs((prev) =>
+                    prev.map((j) => (j.id === job.id ? { ...j, photos: updatedPhotos } : j))
+                  )
+                }
+              />
+            </div>
 
             {(job.status === "in_progress" || job.status === "completed") && (
               <ComplianceForm
