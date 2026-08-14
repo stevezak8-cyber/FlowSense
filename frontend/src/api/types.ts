@@ -352,3 +352,8 @@ export interface AnalyticsData {
   equipmentBreakdown: EquipmentBreakdownPoint[]
   atRisk: AtRiskCustomer[]
 }
+
+export interface PhotoUploadUrlResponse {
+  uploadUrl: string
+  publicUrl: string
+}
