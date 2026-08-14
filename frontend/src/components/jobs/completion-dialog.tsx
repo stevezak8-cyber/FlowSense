@@ -2,6 +2,7 @@ import { useState } from "react"
 import { api } from "@/api/client"
 import type { ApiJob, VoiceExtractedFields } from "@/api/types"
 import { VoiceRecorder } from "./VoiceRecorder"
+import { JobPhotos } from "./JobPhotos"
 import {
   Dialog,
   DialogContent,
@@ -15,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, Sparkles, RefreshCw, X, Plus, Camera } from "lucide-react"
+import { Loader2, Sparkles, RefreshCw, X, Plus } from "lucide-react"
 import { toast } from "sonner"
 
 // Module-level flag: starts true, permanently flipped to false on 503
@@ -40,7 +41,6 @@ export function CompletionDialog({
   const [notes, setNotes] = useState("")
   const [summary, setSummary] = useState("")
   const [laborHours, setLaborHours] = useState<number>(1)
-  const [photos, setPhotos] = useState<string[]>([])
   const [generating, setGenerating] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [hasGenerated, setHasGenerated] = useState(false)
@@ -54,23 +54,6 @@ export function CompletionDialog({
     setSummary(fields.summary)
     setHasGenerated(true)
     setVoiceFilled(true)
-  }
-
-  function handlePhotoFiles(files: FileList | null) {
-    if (!files) return
-    Array.from(files).forEach((file) => {
-      if (!file.type.startsWith("image/")) return
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const dataUrl = e.target?.result as string
-        if (dataUrl) setPhotos((prev) => [...prev, dataUrl])
-      }
-      reader.readAsDataURL(file)
-    })
-  }
-
-  function removePhoto(index: number) {
-    setPhotos((prev) => prev.filter((_, i) => i !== index))
   }
 
   function addPart(part: string) {
@@ -118,7 +101,6 @@ export function CompletionDialog({
         actionsTaken,
         partsUsed,
         laborHours,
-        photos: photos.length > 0 ? photos : undefined,
       })
       onCompleted(updated)
       onOpenChange(false)
@@ -275,35 +257,19 @@ export function CompletionDialog({
           </div>
 
           {/* Photos */}
-          <div className="space-y-2">
-            <Label>Job Photos</Label>
-            <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-border bg-secondary/30 px-4 py-3 text-sm text-muted-foreground hover:bg-secondary/50 transition-colors">
-              <Camera className="h-4 w-4 shrink-0" />
-              <span>{photos.length > 0 ? `${photos.length} photo${photos.length > 1 ? "s" : ""} added — tap to add more` : "Tap to add photos (before/after)"}</span>
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                className="sr-only"
-                onChange={(e) => handlePhotoFiles(e.target.files)}
+          <div>
+            <Label>Photos</Label>
+            <div className="mt-2">
+              <JobPhotos
+                jobId={job.id}
+                photos={job.photos ?? []}
+                canUpload={true}
+                onPhotosChange={(updatedPhotos) => {
+                  // Photos are saved eagerly — update local ref for display
+                  job.photos = updatedPhotos
+                }}
               />
-            </label>
-            {photos.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {photos.map((src, i) => (
-                  <div key={i} className="relative h-16 w-16 overflow-hidden rounded-lg border border-border">
-                    <img src={src} alt={`Photo ${i + 1}`} className="h-full w-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => removePhoto(i)}
-                      className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-black/60 text-white hover:bg-destructive"
-                    >
-                      <X className="h-2.5 w-2.5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+            </div>
           </div>
 
           {/* AI Summary Section */}
