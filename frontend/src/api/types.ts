@@ -357,3 +357,41 @@ export interface PhotoUploadUrlResponse {
   uploadUrl: string
   publicUrl: string
 }
+
+export interface SearchJob {
+  id: string
+  status: string
+  scheduledAt: string
+  equipmentType: string | null
+  symptomSummary: string | null
+  customer: { id: string; name: string; address: string }
+  assignedTechnician: { name: string } | null
+}
+
+export interface SearchCustomer {
+  id: string
+  name: string
+  phone: string
+  address: string
+  email: string | null
+}
+
+export interface SearchEquipment {
+  id: string
+  equipmentType: string
+  make: string | null
+  model: string | null
+  serialNumber: string | null
+  customer: { id: string; name: string }
+}
+
+export interface SearchResults {
+  jobs: SearchJob[]
+  customers: SearchCustomer[]
+  equipment: SearchEquipment[]
+}
+
+export type SearchPreviewItem =
+  | { type: "customer"; data: SearchCustomer }
+  | { type: "job"; data: SearchJob }
+  | { type: "equipment"; data: SearchEquipment }
