@@ -18,74 +18,77 @@ searchRouter.get("/", async (req, res) => {
 
   const { organizationId } = user
 
-  const [jobs, customers, equipment] = await Promise.all([
-    prisma.job.findMany({
-      where: {
-        organizationId,
-        OR: [
-          { symptomSummary: { contains: q, mode: "insensitive" } },
-          { equipmentType: { contains: q, mode: "insensitive" } },
-          { serviceType: { contains: q, mode: "insensitive" } },
-          { actionsTaken: { contains: q, mode: "insensitive" } },
-          { customer: { name: { contains: q, mode: "insensitive" } } },
-        ],
-      },
-      select: {
-        id: true,
-        status: true,
-        scheduledAt: true,
-        equipmentType: true,
-        symptomSummary: true,
-        customer: { select: { id: true, name: true, address: true } },
-        technician: { select: { name: true } },
-      },
-      take: 5,
-      orderBy: { scheduledAt: "desc" },
-    }),
-    prisma.customer.findMany({
-      where: {
-        organizationId,
-        OR: [
-          { name: { contains: q, mode: "insensitive" } },
-          { phone: { contains: q, mode: "insensitive" } },
-          { address: { contains: q, mode: "insensitive" } },
-          { email: { contains: q, mode: "insensitive" } },
-        ],
-      },
-      select: { id: true, name: true, phone: true, address: true, email: true },
-      take: 5,
-      orderBy: { name: "asc" },
-    }),
-    prisma.equipment.findMany({
-      where: {
-        organizationId,
-        OR: [
-          { equipmentType: { contains: q, mode: "insensitive" } },
-          { make: { contains: q, mode: "insensitive" } },
-          { model: { contains: q, mode: "insensitive" } },
-          { serialNumber: { contains: q, mode: "insensitive" } },
-          { customer: { name: { contains: q, mode: "insensitive" } } },
-        ],
-      },
-      select: {
-        id: true,
-        equipmentType: true,
-        make: true,
-        model: true,
-        serialNumber: true,
-        customer: { select: { id: true, name: true } },
-      },
-      take: 5,
-      orderBy: { createdAt: "desc" },
-    }),
-  ])
+  try {
+    const [jobs, customers, equipment] = await Promise.all([
+      prisma.job.findMany({
+        where: {
+          organizationId,
+          OR: [
+            { symptomSummary: { contains: q, mode: "insensitive" } },
+            { equipmentType: { contains: q, mode: "insensitive" } },
+            { serviceType: { contains: q, mode: "insensitive" } },
+            { actionsTaken: { contains: q, mode: "insensitive" } },
+            { customer: { name: { contains: q, mode: "insensitive" } } },
+          ],
+        },
+        select: {
+          id: true,
+          status: true,
+          scheduledAt: true,
+          equipmentType: true,
+          symptomSummary: true,
+          customer: { select: { id: true, name: true, address: true } },
+          technician: { select: { name: true } },
+        },
+        take: 5,
+        orderBy: { scheduledAt: "desc" },
+      }),
+      prisma.customer.findMany({
+        where: {
+          organizationId,
+          OR: [
+            { name: { contains: q, mode: "insensitive" } },
+            { phone: { contains: q, mode: "insensitive" } },
+            { address: { contains: q, mode: "insensitive" } },
+            { email: { contains: q, mode: "insensitive" } },
+          ],
+        },
+        select: { id: true, name: true, phone: true, address: true, email: true },
+        take: 5,
+        orderBy: { name: "asc" },
+      }),
+      prisma.equipment.findMany({
+        where: {
+          organizationId,
+          OR: [
+            { equipmentType: { contains: q, mode: "insensitive" } },
+            { make: { contains: q, mode: "insensitive" } },
+            { model: { contains: q, mode: "insensitive" } },
+            { serialNumber: { contains: q, mode: "insensitive" } },
+            { customer: { name: { contains: q, mode: "insensitive" } } },
+          ],
+        },
+        select: {
+          id: true,
+          equipmentType: true,
+          make: true,
+          model: true,
+          serialNumber: true,
+          customer: { select: { id: true, name: true } },
+        },
+        take: 5,
+        orderBy: { createdAt: "desc" },
+      }),
+    ])
 
-  // Map technician to assignedTechnician shape expected by frontend
-  const mappedJobs = jobs.map((j) => ({
-    ...j,
-    assignedTechnician: j.technician ?? null,
-    technician: undefined,
-  }))
+    const mappedJobs = jobs.map(({ technician, ...rest }) => ({
+      ...rest,
+      assignedTechnician: technician ?? null,
+    }))
 
-  res.json({ jobs: mappedJobs, customers, equipment })
+    res.json({ jobs: mappedJobs, customers, equipment })
+  } catch (err) {
+    console.error("Search query failed:", err)
+    res.status(500).json({ error: "Search temporarily unavailable" })
+  }
 })
