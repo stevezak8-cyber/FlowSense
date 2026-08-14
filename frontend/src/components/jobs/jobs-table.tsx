@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { ComplianceTimeline } from "@/components/compliance/ComplianceTimeline"
+import { JobPhotos } from "./JobPhotos"
 import { cn } from "@/lib/utils"
 import {
   Search,
@@ -259,6 +260,20 @@ export function JobsTable({ jobs, loading, onDelete, onRefresh }: JobsTableProps
                       </div>
                     </div>
                     <ComplianceTimeline jobId={job.id} />
+                    {job.photos && job.photos.length > 0 && (
+                      <div className="mt-4">
+                        <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                          Photos ({job.photos.length})
+                        </span>
+                        <div className="mt-2">
+                          <JobPhotos
+                            jobId={job.id}
+                            photos={job.photos}
+                            canUpload={false}
+                          />
+                        </div>
+                      </div>
+                    )}
                     {job.recurringJobId && job.status === "pending" && (
                       <div className="mt-4 p-3 border rounded-md bg-muted/30">
                         <h4 className="text-sm font-semibold mb-2">Confirm Recurring Job</h4>
