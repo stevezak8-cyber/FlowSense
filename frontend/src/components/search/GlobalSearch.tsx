@@ -149,6 +149,9 @@ export function GlobalSearch() {
         setLoading(false)
       }
     }, 300)
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
   }, [query])
 
   // Click outside closes dropdown and preview
