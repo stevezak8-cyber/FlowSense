@@ -45,9 +45,15 @@ Return ONLY the JSON object, no other text.`,
       ],
     })
 
-    const text = response.content[0].type === "text" ? response.content[0].text : ""
-    const parsed = JSON.parse(text) as Record<string, string>
-    return parsed
+    const block = response.content.find((b) => b.type === "text")
+    const text = block && block.type === "text" ? block.text : ""
+    const raw = JSON.parse(text) as unknown
+    if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return {}
+    const result: Record<string, string | null> = {}
+    for (const [k, v] of Object.entries(raw)) {
+      result[k] = typeof v === "string" ? v : null
+    }
+    return result
   } catch (e) {
     console.error("[AnalyticsAI] getAtRiskReasons failed:", e)
     return {}
@@ -92,8 +98,9 @@ At-risk customers: ${trends.atRiskCount}`,
       ],
     })
 
-    const text = response.content[0].type === "text" ? response.content[0].text : null
-    return text
+    const block = response.content.find((b) => b.type === "text")
+    const text = block && block.type === "text" ? block.text : null
+    return text?.trim() || null
   } catch (e) {
     console.error("[AnalyticsAI] getAnalyticsNarrative failed:", e)
     return null
