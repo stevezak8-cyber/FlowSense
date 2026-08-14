@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { api } from "@/api/client"
 import type { ApiJob, ApiInvoice } from "@/api/types"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Link } from "react-router-dom"
+import { Link, useSearchParams, useNavigate } from "react-router-dom"
 import {
   Wrench,
   Clock,
@@ -34,12 +34,27 @@ const statusLabels: Record<string, string> = {
 }
 
 export default function CustomerDashboard() {
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   const [jobs, setJobs] = useState<ApiJob[]>([])
   const [invoices, setInvoices] = useState<ApiInvoice[]>([])
   const [loading, setLoading] = useState(true)
   const [cancelling, setCancelling] = useState<string | null>(null)
   const [cancelError, setCancelError] = useState<string | null>(null)
   const [pendingCancelId, setPendingCancelId] = useState<string | null>(null)
+  const [showPaymentSuccess, setShowPaymentSuccess] = useState(false)
+  const paymentBannerTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (searchParams.get("payment") === "success") {
+      navigate("/customer", { replace: true })
+      setShowPaymentSuccess(true)
+      paymentBannerTimer.current = setTimeout(() => setShowPaymentSuccess(false), 5000)
+    }
+    return () => {
+      if (paymentBannerTimer.current) clearTimeout(paymentBannerTimer.current)
+    }
+  }, [])
 
   useEffect(() => {
     Promise.all([
@@ -84,6 +99,19 @@ export default function CustomerDashboard() {
 
   return (
     <div className="space-y-6">
+      {showPaymentSuccess && (
+        <div className="flex items-center justify-between rounded-lg border border-green-300 bg-green-100 px-4 py-3 text-green-800 dark:border-green-700 dark:bg-green-900/30 dark:text-green-300">
+          <span className="text-sm font-medium">Payment received — thank you!</span>
+          <button
+            type="button"
+            onClick={() => setShowPaymentSuccess(false)}
+            aria-label="Dismiss"
+            className="ml-4 text-lg leading-none text-green-800 hover:text-green-600 dark:text-green-300 dark:hover:text-green-100"
+          >
+            ×
+          </button>
+        </div>
+      )}
       <div>
         <h1 className="text-xl font-semibold text-foreground">
           Welcome back
