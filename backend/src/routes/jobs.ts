@@ -2,6 +2,8 @@ import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { z } from "zod";
 import { isValidTransition, getAllowedTransitions } from "../services/job-status.js";
+import { s3Available, getUploadUrl, deleteObject } from "../services/s3.js";
+import { randomUUID } from "crypto";
 import { broadcastToRole, notifyInApp } from "../services/notifications.js";
 import { sendEmail } from "../services/email.js";
 import { bookingConfirmationHtml } from "../templates/booking-confirmation.js";
@@ -588,3 +590,102 @@ jobsRouter.delete("/:id", async (req, res) => {
     res.status(500).json({ error: e instanceof Error ? e.message : "Failed to delete job" });
   }
 });
+
+// Photo routes
+
+const ALLOWED_CONTENT_TYPES: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+}
+
+jobsRouter.post("/:id/photos/upload-url", async (req, res) => {
+  if (!s3Available()) {
+    return res.status(503).json({ error: "Photo upload not configured" })
+  }
+
+  const { role, organizationId } = req.user!
+  if (role !== "technician") {
+    return res.status(403).json({ error: "Only technicians can upload photos" })
+  }
+
+  const { contentType } = req.body
+  const ext = ALLOWED_CONTENT_TYPES[contentType as string]
+  if (!ext) {
+    return res.status(400).json({ error: "Unsupported content type. Allowed: image/jpeg, image/png, image/webp" })
+  }
+
+  const job = await prisma.job.findFirst({
+    where: { id: req.params.id, organizationId },
+  })
+  if (!job) return res.status(404).json({ error: "Job not found" })
+
+  const key = `${organizationId}/jobs/${job.id}/${randomUUID()}.${ext}`
+  try {
+    const { uploadUrl, publicUrl } = await getUploadUrl(key, contentType)
+    return res.json({ uploadUrl, publicUrl })
+  } catch (e) {
+    return res.status(500).json({ error: "Failed to generate upload URL" })
+  }
+})
+
+jobsRouter.post("/:id/photos", async (req, res) => {
+  const { role, organizationId } = req.user!
+  if (role !== "technician") {
+    return res.status(403).json({ error: "Only technicians can upload photos" })
+  }
+
+  const { url } = req.body
+  const bucket = process.env.AWS_S3_BUCKET ?? ""
+  if (!url || !url.startsWith(`https://${bucket}.s3.`)) {
+    return res.status(400).json({ error: "Invalid photo URL" })
+  }
+
+  const job = await prisma.job.findFirst({
+    where: { id: req.params.id, organizationId },
+  })
+  if (!job) return res.status(404).json({ error: "Job not found" })
+
+  try {
+    const updated = await prisma.job.update({
+      where: { id: req.params.id },
+      data: { photos: { push: url } },
+    })
+    return res.json({ photos: updated.photos })
+  } catch {
+    return res.status(500).json({ error: "Failed to save photo" })
+  }
+})
+
+jobsRouter.delete("/:id/photos", async (req, res) => {
+  const { role, organizationId } = req.user!
+  if (role !== "technician") {
+    return res.status(403).json({ error: "Only technicians can delete photos" })
+  }
+
+  const { url } = req.body
+  const bucket = process.env.AWS_S3_BUCKET ?? ""
+  const region = process.env.AWS_REGION ?? "us-east-1"
+  if (!url || !url.startsWith(`https://${bucket}.s3.`)) {
+    return res.status(400).json({ error: "Invalid photo URL" })
+  }
+
+  const job = await prisma.job.findFirst({
+    where: { id: req.params.id, organizationId },
+  })
+  if (!job) return res.status(404).json({ error: "Job not found" })
+
+  const prefix = `https://${bucket}.s3.${region}.amazonaws.com/`
+  const key = url.startsWith(prefix) ? url.slice(prefix.length) : null
+
+  try {
+    const updated = await prisma.job.update({
+      where: { id: req.params.id },
+      data: { photos: job.photos.filter((p) => p !== url) },
+    })
+    if (key) deleteObject(key).catch((e) => console.error("[Photos] deleteObject failed:", e))
+    return res.json({ photos: updated.photos })
+  } catch {
+    return res.status(500).json({ error: "Failed to delete photo" })
+  }
+})
