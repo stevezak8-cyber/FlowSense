@@ -30,7 +30,7 @@ Extend it to also:
    })
    ```
    Organization fields (email, phone, smsEnabled) are fetched inside `notifyOfficePaymentReceived` via its own `getOrgDispatch` call — the webhook does not need to fetch or pass them. This avoids a duplicate Prisma read.
-3. Call `sendInvoiceReceiptEmail` with `{ invoiceId, amount, description, issuedDate, customerName: invoice.customer.name, customerEmail: invoice.customer.email, orgName, orgPhone, orgEmail }` — where `orgName`, `orgPhone`, `orgEmail` come from `session.metadata.organizationId` looked up once (fire-and-forget, errors logged not thrown)
+3. Call `sendInvoiceReceiptEmail` with `{ invoiceId, amount, description, issuedDate, customerName: invoice.customer.name, customerEmail: invoice.customer.email, orgName, orgContactPhone, orgContactEmail }` — where `orgName`, `orgContactPhone`, `orgContactEmail` come from a `prisma.organization.findUnique` on `session.metadata.organizationId` (fire-and-forget, errors logged not thrown)
 4. Call `notifyOfficePaymentReceived` with `{ invoiceId, amount, description, customerName, orgId: organizationId }` (fire-and-forget, errors logged not thrown)
 
 Failures in steps 3-4 must never cause a non-200 response to Stripe — Stripe retries webhooks on failure, so a notification error would cause duplicate retries and double-marking.
