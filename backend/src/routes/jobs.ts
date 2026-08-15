@@ -5,10 +5,8 @@ import { isValidTransition, getAllowedTransitions } from "../services/job-status
 import { s3Available, getUploadUrl, deleteObject } from "../services/s3.js";
 import { randomUUID } from "crypto";
 import { broadcastToRole, notifyInApp } from "../services/notifications.js";
-import { sendEmail } from "../services/email.js";
+import { sendEmail, sendEnRouteEmail, sendJobInProgressEmail, sendJobCompletedEmail } from "../services/email.js";
 import { bookingConfirmationHtml } from "../templates/booking-confirmation.js";
-import { statusUpdateHtml } from "../templates/status-update.js";
-import { jobCompletedHtml } from "../templates/job-completed.js";
 import { generatePreArrival } from "../services/pre-arrival.js";
 import { generateCompletionSummary } from "../services/job-completion-ai.js";
 import { sendPushToUser } from "../services/push.js";
@@ -70,39 +68,11 @@ async function sendStatusNotifications(
 }
 
 async function sendStatusEmails(
-  job: { id: string; customerId: string; status: string; equipmentType: string | null; completedAt: Date | null; technician: { name: string } | null },
+  job: { id: string; status: string },
 ) {
-  const customer = await prisma.customer.findUnique({
-    where: { id: job.customerId },
-    select: { email: true, name: true },
-  });
-  if (!customer?.email) return;
-
-  if (job.status === "en_route" && job.technician) {
-    sendEmail({
-      to: customer.email,
-      subject: "FlowSense: Your Technician Is On The Way",
-      html: statusUpdateHtml({
-        customerName: customer.name,
-        technicianName: job.technician.name,
-        equipmentType: job.equipmentType,
-        status: job.status,
-      }),
-    }).catch(console.error);
-  }
-
-  if (job.status === "completed" && job.technician) {
-    sendEmail({
-      to: customer.email,
-      subject: "FlowSense: Service Complete",
-      html: jobCompletedHtml({
-        customerName: customer.name,
-        equipmentType: job.equipmentType,
-        technicianName: job.technician.name,
-        completedAt: (job.completedAt ?? new Date()).toISOString(),
-      }),
-    }).catch(console.error);
-  }
+  if (job.status === "en_route") sendEnRouteEmail(job.id).catch(console.error)
+  if (job.status === "in_progress") sendJobInProgressEmail(job.id).catch(console.error)
+  if (job.status === "completed") sendJobCompletedEmail(job.id).catch(console.error)
 }
 
 const createJobSchema = z.object({
