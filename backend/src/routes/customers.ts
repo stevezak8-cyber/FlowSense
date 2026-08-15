@@ -45,6 +45,96 @@ customersRouter.get("/", async (req, res) => {
   }
 });
 
+// --- Customer self-service routes (must come before /:id) ---
+
+const CUSTOMER_SELF_SELECT = {
+  id: true,
+  name: true,
+  phone: true,
+  email: true,
+  address: true,
+  smsOptOut: true,
+  emailOptOut: true,
+};
+
+customersRouter.get("/me", async (req, res) => {
+  const user = req.user!;
+  if (user.role !== "customer" || !user.customerId) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  try {
+    const customer = await prisma.customer.findUnique({
+      where: { id: user.customerId },
+      select: CUSTOMER_SELF_SELECT,
+    });
+    if (!customer) return res.status(404).json({ error: "Not found" });
+    res.json(customer);
+  } catch (e) {
+    res.status(500).json({ error: "Failed to load profile" });
+  }
+});
+
+customersRouter.patch("/me", async (req, res) => {
+  const user = req.user!;
+  if (user.role !== "customer" || !user.customerId) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  const { name, phone, email, address, smsOptOut, emailOptOut } = req.body;
+  const data: Record<string, unknown> = {};
+  if (name !== undefined) data.name = String(name);
+  if (phone !== undefined) {
+    if (String(phone).trim().length < 10) return res.status(400).json({ error: "Phone must be at least 10 characters" });
+    data.phone = String(phone);
+  }
+  if (email !== undefined) {
+    if (!String(email).includes("@")) return res.status(400).json({ error: "Invalid email" });
+    data.email = String(email);
+  }
+  if (address !== undefined) data.address = String(address);
+  if (typeof smsOptOut === "boolean") data.smsOptOut = smsOptOut;
+  if (typeof emailOptOut === "boolean") data.emailOptOut = emailOptOut;
+  try {
+    const updated = await prisma.customer.update({
+      where: { id: user.customerId },
+      data,
+      select: CUSTOMER_SELF_SELECT,
+    });
+    res.json(updated);
+  } catch (e) {
+    res.status(500).json({ error: "Failed to update profile" });
+  }
+});
+
+customersRouter.get("/me/equipment", async (req, res) => {
+  const user = req.user!;
+  if (user.role !== "customer" || !user.customerId) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  try {
+    const items = await prisma.equipment.findMany({
+      where: {
+        customerId: user.customerId,
+        organizationId: user.organizationId,
+      },
+      select: {
+        id: true,
+        equipmentType: true,
+        make: true,
+        model: true,
+        serialNumber: true,
+        installDate: true,
+        warrantyExpiry: true,
+        serviceIntervalMonths: true,
+        lastServicedAt: true,
+      },
+      orderBy: { createdAt: "asc" },
+    });
+    res.json(items);
+  } catch (e) {
+    res.status(500).json({ error: "Failed to load equipment" });
+  }
+});
+
 customersRouter.get("/:id", async (req, res) => {
   try {
     const customer = await prisma.customer.findFirst({
