@@ -5,6 +5,8 @@ import {
   FileText,
   MessageSquare,
   LogOut,
+  Wrench,
+  UserCircle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { FlowSenseLogo } from "@/components/brand"
@@ -17,6 +19,8 @@ const navItems = [
   { label: "Book Service", to: "/customer/book", icon: CalendarPlus },
   { label: "Invoices", to: "/customer/invoices", icon: FileText },
   { label: "Messages", to: "/customer/messages", icon: MessageSquare },
+  { label: "Equipment", to: "/customer/equipment", icon: Wrench },
+  { label: "Account", to: "/customer/account", icon: UserCircle },
 ]
 
 export default function CustomerLayout() {

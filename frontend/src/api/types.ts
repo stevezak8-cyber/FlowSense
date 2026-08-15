@@ -395,3 +395,25 @@ export type SearchPreviewItem =
   | { type: "customer"; data: SearchCustomer }
   | { type: "job"; data: SearchJob }
   | { type: "equipment"; data: SearchEquipment }
+
+export interface CustomerEquipmentItem {
+  id: string
+  equipmentType: string
+  make: string | null
+  model: string | null
+  serialNumber: string | null
+  installDate: string | null
+  warrantyExpiry: string | null
+  serviceIntervalMonths: number | null
+  lastServicedAt: string | null
+}
+
+export interface CustomerProfile {
+  id: string
+  name: string
+  phone: string
+  email: string | null
+  address: string
+  smsOptOut: boolean
+  emailOptOut: boolean
+}
