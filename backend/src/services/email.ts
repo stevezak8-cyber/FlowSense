@@ -121,11 +121,9 @@ async function getJobForEmail(jobId: string) {
 }
 
 export async function sendEnRouteEmail(jobId: string): Promise<void> {
-  const resend = getResend()
   const job = await getJobForEmail(jobId)
-  if (!resend || !job?.customer?.email || job.customer.emailOptOut) return
-  await resend.emails.send({
-    from: FROM_EMAIL,
+  if (!job?.customer?.email || job.customer.emailOptOut) return
+  await sendEmail({
     to: job.customer.email,
     subject: "Your technician is on the way",
     html: `<p>Your technician is on the way and should arrive within the hour. Thank you for choosing ${job.organization.name}.</p>`,
@@ -133,11 +131,9 @@ export async function sendEnRouteEmail(jobId: string): Promise<void> {
 }
 
 export async function sendJobInProgressEmail(jobId: string): Promise<void> {
-  const resend = getResend()
   const job = await getJobForEmail(jobId)
-  if (!resend || !job?.customer?.email || job.customer.emailOptOut) return
-  await resend.emails.send({
-    from: FROM_EMAIL,
+  if (!job?.customer?.email || job.customer.emailOptOut) return
+  await sendEmail({
     to: job.customer.email,
     subject: "Your service has started",
     html: `<p>Your technician has arrived and your service is now in progress.</p>`,
@@ -145,11 +141,9 @@ export async function sendJobInProgressEmail(jobId: string): Promise<void> {
 }
 
 export async function sendJobCompletedEmail(jobId: string): Promise<void> {
-  const resend = getResend()
   const job = await getJobForEmail(jobId)
-  if (!resend || !job?.customer?.email || job.customer.emailOptOut) return
-  await resend.emails.send({
-    from: FROM_EMAIL,
+  if (!job?.customer?.email || job.customer.emailOptOut) return
+  await sendEmail({
     to: job.customer.email,
     subject: "Your service is complete",
     html: `<p>Your service is complete. Thank you for choosing ${job.organization.name}!</p>`,

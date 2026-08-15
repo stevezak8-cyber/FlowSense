@@ -39,16 +39,14 @@ describe("sendEnRouteEmail", () => {
     mockPrisma.job.findUnique.mockResolvedValue(makeJob({ emailOptOut: true }))
     await sendEnRouteEmail("job1")
     const { Resend } = await import("resend")
-    const instance = (Resend as ReturnType<typeof vi.fn>).mock.results[0]?.value
-    expect(instance?.emails.send).not.toHaveBeenCalled()
+    expect((Resend as ReturnType<typeof vi.fn>).mock.calls).toHaveLength(0)
   })
 
   it("skips customer with no email", async () => {
     mockPrisma.job.findUnique.mockResolvedValue(makeJob({ customerEmail: null }))
     await sendEnRouteEmail("job1")
     const { Resend } = await import("resend")
-    const instance = (Resend as ReturnType<typeof vi.fn>).mock.results[0]?.value
-    expect(instance?.emails.send).not.toHaveBeenCalled()
+    expect((Resend as ReturnType<typeof vi.fn>).mock.calls).toHaveLength(0)
   })
 })
 
