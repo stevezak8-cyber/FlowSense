@@ -49,7 +49,8 @@ import { conciergeRouter } from "./routes/concierge.js"
 import { setupWebSocket } from "./services/notifications.js";
 import { startInvoiceScheduler } from "./services/invoice-scheduler.js";
 import cron from "node-cron";
-import { spawnDueJobs } from "./services/recurring-jobs.js";
+import { spawnDueJobs } from "./services/recurring-jobs.js"
+import { runReminderSchedule } from "./services/reminder-scheduler.js";
 
 const app = express();
 const PORT = process.env.PORT ?? 4000;
@@ -157,3 +158,8 @@ startInvoiceScheduler();
 cron.schedule("0 0 * * *", () => {
   spawnDueJobs().catch(console.error)
 });
+
+// Appointment reminders — every 15 minutes
+cron.schedule("*/15 * * * *", () => {
+  runReminderSchedule().catch((err) => console.error("[Reminders] Error:", err))
+})
