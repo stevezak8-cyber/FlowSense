@@ -121,6 +121,7 @@ model Customer {
   phone          String
   address        String
   smsOptOut      Boolean  @default(false)
+  emailOptOut    Boolean  @default(false)
   addressLine2   String?
   city           String
   state          String
@@ -186,7 +187,9 @@ model Job {
   actionsTaken    String?
   partsUsed       String[]    @default([])
   photos          String[]    @default([])  // URLs after upload
-  completedAt     DateTime?
+  completedAt         DateTime?
+  reminder24hSentAt  DateTime?
+  reminder2hSentAt   DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
