@@ -39,6 +39,8 @@ import CustomerBook from "./pages/customer/CustomerBook";
 import CustomerInvoices from "./pages/customer/CustomerInvoices";
 import CustomerMessages from "./pages/customer/CustomerMessages"
 import CustomerEstimate from "./pages/customer/CustomerEstimate";
+import CustomerEquipment from "./pages/customer/CustomerEquipment";
+import CustomerAccount from "./pages/customer/CustomerAccount";
 
 function App() {
   useNotifications();
@@ -112,6 +114,8 @@ function App() {
         <Route path="book" element={<CustomerBook />} />
         <Route path="invoices" element={<CustomerInvoices />} />
         <Route path="messages" element={<CustomerMessages />} />
+        <Route path="equipment" element={<CustomerEquipment />} />
+        <Route path="account" element={<CustomerAccount />} />
       </Route>
 
       {/* Customer estimate approval — public, no auth required */}
