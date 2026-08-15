@@ -41,6 +41,7 @@ import CustomerMessages from "./pages/customer/CustomerMessages"
 import CustomerEstimate from "./pages/customer/CustomerEstimate";
 import CustomerEquipment from "./pages/customer/CustomerEquipment";
 import CustomerAccount from "./pages/customer/CustomerAccount";
+import CustomerHistory from "./pages/customer/CustomerHistory";
 
 function App() {
   useNotifications();
@@ -115,6 +116,7 @@ function App() {
         <Route path="invoices" element={<CustomerInvoices />} />
         <Route path="messages" element={<CustomerMessages />} />
         <Route path="equipment" element={<CustomerEquipment />} />
+        <Route path="history" element={<CustomerHistory />} />
         <Route path="account" element={<CustomerAccount />} />
       </Route>
 

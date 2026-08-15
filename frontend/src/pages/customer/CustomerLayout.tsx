@@ -7,6 +7,7 @@ import {
   LogOut,
   Wrench,
   UserCircle,
+  History,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { FlowSenseLogo } from "@/components/brand"
@@ -20,6 +21,7 @@ const navItems = [
   { label: "Invoices", to: "/customer/invoices", icon: FileText },
   { label: "Messages", to: "/customer/messages", icon: MessageSquare },
   { label: "Equipment", to: "/customer/equipment", icon: Wrench },
+  { label: "History", to: "/customer/history", icon: History },
   { label: "Account", to: "/customer/account", icon: UserCircle },
 ]
 

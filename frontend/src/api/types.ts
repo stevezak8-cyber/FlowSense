@@ -417,3 +417,14 @@ export interface CustomerProfile {
   smsOptOut: boolean
   emailOptOut: boolean
 }
+
+export interface CustomerJobHistoryItem {
+  id: string
+  status: string
+  scheduledAt: string
+  completedAt: string | null
+  equipmentType: string | null
+  symptomSummary: string | null
+  actionsTaken: string | null
+  technician: { name: string } | null
+}

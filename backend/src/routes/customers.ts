@@ -105,6 +105,36 @@ customersRouter.patch("/me", async (req, res) => {
   }
 });
 
+customersRouter.get("/me/jobs", async (req, res) => {
+  const user = req.user!;
+  if (user.role !== "customer" || !user.customerId) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  try {
+    const jobs = await prisma.job.findMany({
+      where: {
+        customerId: user.customerId,
+        organizationId: user.organizationId,
+        status: { in: ["completed", "cancelled"] },
+      },
+      select: {
+        id: true,
+        status: true,
+        scheduledAt: true,
+        completedAt: true,
+        equipmentType: true,
+        symptomSummary: true,
+        actionsTaken: true,
+        technician: { select: { name: true } },
+      },
+      orderBy: { scheduledAt: "desc" },
+    });
+    res.json(jobs);
+  } catch (e) {
+    res.status(500).json({ error: "Failed to load job history" });
+  }
+});
+
 customersRouter.get("/me/equipment", async (req, res) => {
   const user = req.user!;
   if (user.role !== "customer" || !user.customerId) {

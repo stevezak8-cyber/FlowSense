@@ -11,6 +11,9 @@ vi.mock("../lib/prisma.js", () => ({
     equipment: {
       findMany: vi.fn(),
     },
+    job: {
+      findMany: vi.fn(),
+    },
   },
 }))
 
@@ -20,6 +23,7 @@ import { customersRouter } from "../routes/customers.js"
 const mockPrisma = prisma as unknown as {
   customer: { findUnique: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> }
   equipment: { findMany: ReturnType<typeof vi.fn> }
+  job: { findMany: ReturnType<typeof vi.fn> }
 }
 
 function makeApp(role = "customer", customerId = "cust1", organizationId = "org1") {
@@ -102,6 +106,48 @@ describe("PATCH /me", () => {
     const res = await request(makeApp()).patch("/me").send({ emailOptOut: true })
     expect(res.status).toBe(200)
     expect(res.body.emailOptOut).toBe(true)
+  })
+})
+
+describe("GET /me/jobs", () => {
+  it("returns 403 for non-customer role", async () => {
+    const res = await request(makeApp("office")).get("/me/jobs")
+    expect(res.status).toBe(403)
+  })
+
+  it("returns completed and cancelled jobs for the customer", async () => {
+    mockPrisma.job.findMany.mockResolvedValue([
+      {
+        id: "job1",
+        status: "completed",
+        scheduledAt: "2026-08-10T10:00:00.000Z",
+        completedAt: "2026-08-10T12:00:00.000Z",
+        equipmentType: "AC",
+        symptomSummary: "Not cooling",
+        actionsTaken: "Replaced capacitor",
+        technician: { name: "Bob Tech" },
+      },
+      {
+        id: "job2",
+        status: "cancelled",
+        scheduledAt: "2026-07-01T09:00:00.000Z",
+        completedAt: null,
+        equipmentType: null,
+        symptomSummary: null,
+        actionsTaken: null,
+        technician: null,
+      },
+    ])
+    const res = await request(makeApp()).get("/me/jobs")
+    expect(res.status).toBe(200)
+    expect(res.body).toHaveLength(2)
+    expect(res.body[0].status).toBe("completed")
+    expect(res.body[1].status).toBe("cancelled")
+    const callArgs = mockPrisma.job.findMany.mock.calls[0][0]
+    expect(callArgs.where.customerId).toBe("cust1")
+    expect(callArgs.where.organizationId).toBe("org1")
+    expect(callArgs.where.status.in).toContain("completed")
+    expect(callArgs.where.status.in).toContain("cancelled")
   })
 })
 
