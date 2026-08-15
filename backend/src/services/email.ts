@@ -1,11 +1,11 @@
 import { Resend } from "resend";
 import { prisma } from "../lib/prisma.js";
 
-const resend = process.env.RESEND_API_KEY
-  ? new Resend(process.env.RESEND_API_KEY)
-  : null;
-
 const FROM_EMAIL = process.env.FROM_EMAIL ?? "FlowSense <onboarding@resend.dev>";
+
+function getResend() {
+  return process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+}
 
 export interface Attachment {
   filename: string;
@@ -21,6 +21,7 @@ interface SendEmailOptions {
 }
 
 export async function sendEmail(options: SendEmailOptions): Promise<void> {
+  const resend = getResend();
   if (!resend) {
     console.log(`[Email] Skipped (no RESEND_API_KEY): ${options.subject} → ${options.to}`);
     return;
@@ -106,5 +107,51 @@ export async function sendInvoiceReceiptEmail(params: {
         <p style="color:#888;font-size:13px;margin-top:24px;">— FlowSense</p>
       </div>
     `,
+  })
+}
+
+async function getJobForEmail(jobId: string) {
+  return prisma.job.findUnique({
+    where: { id: jobId },
+    select: {
+      customer: { select: { email: true, emailOptOut: true } },
+      organization: { select: { name: true } },
+    },
+  })
+}
+
+export async function sendEnRouteEmail(jobId: string): Promise<void> {
+  const resend = getResend()
+  const job = await getJobForEmail(jobId)
+  if (!resend || !job?.customer?.email || job.customer.emailOptOut) return
+  await resend.emails.send({
+    from: FROM_EMAIL,
+    to: job.customer.email,
+    subject: "Your technician is on the way",
+    html: `<p>Your technician is on the way and should arrive within the hour. Thank you for choosing ${job.organization.name}.</p>`,
+  })
+}
+
+export async function sendJobInProgressEmail(jobId: string): Promise<void> {
+  const resend = getResend()
+  const job = await getJobForEmail(jobId)
+  if (!resend || !job?.customer?.email || job.customer.emailOptOut) return
+  await resend.emails.send({
+    from: FROM_EMAIL,
+    to: job.customer.email,
+    subject: "Your service has started",
+    html: `<p>Your technician has arrived and your service is now in progress.</p>`,
+  })
+}
+
+export async function sendJobCompletedEmail(jobId: string): Promise<void> {
+  const resend = getResend()
+  const job = await getJobForEmail(jobId)
+  if (!resend || !job?.customer?.email || job.customer.emailOptOut) return
+  await resend.emails.send({
+    from: FROM_EMAIL,
+    to: job.customer.email,
+    subject: "Your service is complete",
+    html: `<p>Your service is complete. Thank you for choosing ${job.organization.name}!</p>`,
   })
 }
