@@ -44,6 +44,7 @@ import { aiRouter } from "./routes/ai.js";
 import { equipmentRouter } from "./routes/equipment.js";
 import { searchRouter } from "./routes/search.js"
 import { recurringJobsRouter } from "./routes/recurring-jobs.js";
+import { maintenancePlansRouter } from "./routes/maintenance-plans.js"
 import { voiceRouter } from "./routes/voice.js"
 import { conciergeRouter } from "./routes/concierge.js"
 import { setupWebSocket } from "./services/notifications.js";
@@ -125,6 +126,7 @@ app.use("/api/concierge", apiLimiter, requireAuth, requireSubscription, concierg
 app.use("/api/equipment", apiLimiter, requireAuth, requireSubscription, equipmentRouter);
 app.use("/api/search", apiLimiter, requireAuth, requireSubscription, searchRouter);
 app.use("/api/recurring-jobs", apiLimiter, requireAuth, requireSubscription, recurringJobsRouter);
+app.use("/api/maintenance-plans", apiLimiter, requireAuth, requireSubscription, maintenancePlansRouter)
 app.use("/api/voice", apiLimiter, requireAuth, requireSubscription, voiceRouter)
 
 // In production, serve the compiled frontend static build and handle SPA routing.
