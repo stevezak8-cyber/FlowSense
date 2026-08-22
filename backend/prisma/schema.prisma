@@ -48,6 +48,7 @@ model Organization {
   conversations Conversation[]
   equipment     Equipment[]
   recurringJobs RecurringJob[]
+  maintenancePlans MaintenancePlan[]
 
   estimateDepositThreshold Float  @default(500)
   estimateDepositPercent   Int    @default(25)
@@ -135,6 +136,7 @@ model Customer {
   user          User?
   equipment     Equipment[]
   recurringJobs RecurringJob[]
+  maintenancePlans MaintenancePlan[]
 
   @@index([organizationId])
 }
@@ -213,8 +215,8 @@ model Invoice {
   id             String       @id @default(cuid())
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  jobId          String
-  job            Job          @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  jobId          String?
+  job            Job?         @relation(fields: [jobId], references: [id], onDelete: Cascade)
   customerId     String
   customer       Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
   description    String
@@ -222,6 +224,8 @@ model Invoice {
   status         String       @default("pending") // pending | paid | overdue
   issuedDate     DateTime     @default(now())
   dueDate        DateTime
+
+  maintenancePlan  MaintenancePlan?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -356,6 +360,7 @@ model Equipment {
 
   jobs          Job[]
   recurringJobs RecurringJob[]
+  maintenancePlanItems MaintenancePlanItem[]
 
   @@index([organizationId])
   @@index([customerId])
@@ -381,6 +386,7 @@ model RecurringJob {
 
   isActive       Boolean   @default(true)
   jobs           Job[]
+  maintenancePlanItem MaintenancePlanItem?
 
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -388,6 +394,40 @@ model RecurringJob {
   @@index([organizationId])
   @@index([customerId])
   @@index([nextDueAt])
+}
+
+model MaintenancePlan {
+  id             String    @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customerId     String
+  customer       Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  name           String
+  price          Float
+  startDate      DateTime
+  endDate        DateTime
+  status         String    @default("active")
+  invoiceId      String?   @unique
+  invoice        Invoice?  @relation(fields: [invoiceId], references: [id])
+  items          MaintenancePlanItem[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([organizationId])
+  @@index([customerId])
+}
+
+model MaintenancePlanItem {
+  id             String    @id @default(cuid())
+  planId         String
+  plan           MaintenancePlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  equipmentId    String?
+  equipment      Equipment? @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
+  serviceType    String?
+  intervalMonths Int
+  recurringJobId String?   @unique
+  recurringJob   RecurringJob? @relation(fields: [recurringJobId], references: [id], onDelete: SetNull)
+  createdAt      DateTime  @default(now())
 }
 
 // Compliance & audit trail (EPA 608, safety, timestamps)
