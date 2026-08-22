@@ -65,15 +65,14 @@ model MaintenancePlanItem {
 
 **Changes to existing models:**
 
-`Invoice` — make `jobId` nullable, add `maintenancePlanId`:
+`Invoice` — make `jobId` nullable; add Prisma back-relation field (no new DB column):
 ```prisma
 jobId            String?           // was required — nullable for plan invoices
 job              Job?              @relation(...)
-maintenancePlanId String?          @unique
-maintenancePlan  MaintenancePlan?  @relation(...)  // inverse of the plan's invoiceId relation
+maintenancePlan  MaintenancePlan?  // back-relation only — no FK column; FK lives on MaintenancePlan.invoiceId
 ```
 
-Note: because `Invoice` has a back-relation from `MaintenancePlan` via `invoiceId`, and `Invoice` also needs its own `maintenancePlanId` to allow Prisma to resolve the relation from the Invoice side, only one direction is needed. Use the `MaintenancePlan.invoiceId` foreign key as the owner. Remove `maintenancePlanId` from Invoice — the relation is resolved via `MaintenancePlan.invoiceId` pointing at `Invoice.id`.
+Note: `MaintenancePlan.invoiceId` is the FK owner. Prisma requires a back-relation field on `Invoice` to resolve the inverse of the one-to-one, but this adds no column to the `Invoice` table.
 
 `RecurringJob` — add optional plan item back-link:
 ```prisma
@@ -119,7 +118,7 @@ Export: `maintenancePlansRouter`
 - Validation: `items` must have at least 1 entry; `endDate > startDate`; customer must belong to org
 - Logic (all in a Prisma transaction):
   1. Create `MaintenancePlan`
-  2. For each item: create `MaintenancePlanItem` + create `RecurringJob` (intervalDays = intervalMonths × 30, nextDueAt = startDate, linked via `maintenancePlanItemId`)
+  2. For each item: create `MaintenancePlanItem` + create `RecurringJob` (intervalDays = 180 for 6-month items, 365 for 12-month items — must match `VALID_INTERVALS = [7,14,30,90,180,365]` in recurring-jobs.ts; nextDueAt = startDate, linked via `maintenancePlanItemId`)
   3. Create `Invoice` with `jobId: null`, `maintenancePlanId: plan.id`, `amount: price`, `description: name`, `status: "pending"`, `issuedDate: now()`
   4. Update `MaintenancePlan.invoiceId` to the new invoice id
 - After transaction: fire `notifyOfficePlanCreated` (new helper — see section 4) as fire-and-forget
@@ -295,7 +294,7 @@ Below the equipment list, add a "Service Plans" section:
 
 **New backend endpoint:** `GET /api/customers/me/plans`
 
-Add to `backend/src/routes/customers.ts` (before `/:id`, following the established pattern):
+Add to `backend/src/routes/customers.ts` — **MUST be registered BEFORE the existing `/:id` route** (Express will otherwise match the literal string "me" as a customer id parameter). Follow the same ordering pattern as `GET /me`, `PATCH /me`, and `GET /me/equipment` which are already placed before `/:id`.
 - Auth: customer guard
 - Returns: `prisma.maintenancePlan.findMany({ where: { customerId: user.customerId, organizationId: user.organizationId, status: "active" }, include: { items: { include: { equipment: true } } } })`
 
