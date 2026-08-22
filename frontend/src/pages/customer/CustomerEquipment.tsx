@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { api } from "@/api/client"
-import type { CustomerEquipmentItem } from "@/api/types"
+import type { CustomerEquipmentItem, MaintenancePlan } from "@/api/types"
 import { Loader2, Wrench } from "lucide-react"
 
 function nextDueDate(item: CustomerEquipmentItem): Date | null {
@@ -29,12 +29,20 @@ export default function CustomerEquipment() {
   const [items, setItems] = useState<CustomerEquipmentItem[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
+  const [plans, setPlans] = useState<MaintenancePlan[]>([])
 
   useEffect(() => {
     api.get<CustomerEquipmentItem[]>("/api/customers/me/equipment")
       .then(setItems)
       .catch(() => setError(true))
       .finally(() => setLoading(false))
+  }, [])
+
+  useEffect(() => {
+    fetch("/api/customers/me/plans")
+      .then((r) => r.ok ? r.json() : [])
+      .then(setPlans)
+      .catch(() => {})
   }, [])
 
   if (loading) {
@@ -98,6 +106,31 @@ export default function CustomerEquipment() {
           </div>
         ))}
       </div>
+      {plans.length > 0 && (
+        <div className="mt-8">
+          <h2 className="mb-3 text-base font-semibold">Service Plans</h2>
+          <div className="space-y-3">
+            {plans.map((plan) => (
+              <div key={plan.id} className="rounded-lg border p-4">
+                <div className="flex items-start justify-between">
+                  <p className="font-medium">{plan.name}</p>
+                  <span className="rounded bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800">Active</span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {new Date(plan.startDate).toLocaleDateString()} – {new Date(plan.endDate).toLocaleDateString()}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {plan.items.map((item) => (
+                    <span key={item.id} className="rounded bg-muted px-2 py-0.5 text-xs">
+                      {item.equipment?.equipmentType ?? "Equipment"} · every {item.intervalMonths}mo
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
