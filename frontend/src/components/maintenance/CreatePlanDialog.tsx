@@ -30,12 +30,12 @@ export function CreatePlanDialog({ open, onClose, onCreated }: Props) {
 
   useEffect(() => {
     if (!open) return
-    fetch("/api/customers").then((r) => r.json()).then(setCustomers).catch(() => {})
+    fetch("/api/customers", { headers: { Authorization: `Bearer ${localStorage.getItem("flowsense_token")}` } }).then((r) => r.json()).then(setCustomers).catch(() => {})
   }, [open])
 
   useEffect(() => {
     if (!customerId) { setEquipment([]); return }
-    fetch(`/api/equipment?customerId=${customerId}`).then((r) => r.json()).then(setEquipment).catch(() => {})
+    fetch(`/api/equipment?customerId=${customerId}`, { headers: { Authorization: `Bearer ${localStorage.getItem("flowsense_token")}` } }).then((r) => r.json()).then(setEquipment).catch(() => {})
   }, [customerId])
 
   function resetForm() {
@@ -69,7 +69,7 @@ export function CreatePlanDialog({ open, onClose, onCreated }: Props) {
     try {
       const res = await fetch("/api/maintenance-plans", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("flowsense_token")}` },
         body: JSON.stringify(body),
       })
       if (!res.ok) throw new Error()

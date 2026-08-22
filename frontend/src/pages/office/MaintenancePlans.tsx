@@ -34,7 +34,9 @@ export function MaintenancePlans() {
     setLoading(true)
     setError(false)
     try {
-      const res = await fetch(`/api/maintenance-plans?status=${tab}`)
+      const res = await fetch(`/api/maintenance-plans?status=${tab}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("flowsense_token")}` },
+      })
       if (!res.ok) throw new Error()
       setPlans(await res.json())
     } catch {
@@ -50,7 +52,7 @@ export function MaintenancePlans() {
     if (!confirm("Cancel this maintenance plan? This will also deactivate its recurring jobs.")) return
     const res = await fetch(`/api/maintenance-plans/${id}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("flowsense_token")}` },
       body: JSON.stringify({ status: "cancelled" }),
     })
     if (res.ok) load()
