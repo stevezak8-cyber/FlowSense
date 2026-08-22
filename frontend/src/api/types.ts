@@ -428,3 +428,34 @@ export interface CustomerJobHistoryItem {
   actionsTaken: string | null
   technician: { name: string } | null
 }
+
+export interface MaintenancePlanItem {
+  id: string
+  equipmentId: string | null
+  serviceType: string | null
+  intervalMonths: number
+  equipment: { make: string | null; model: string | null; equipmentType: string } | null
+}
+
+export interface MaintenancePlan {
+  id: string
+  customerId: string
+  name: string
+  price: number
+  startDate: string
+  endDate: string
+  status: string
+  invoiceId: string | null
+  customer: { name: string }
+  invoice: { id: string; status: string } | null
+  items: MaintenancePlanItem[]
+}
+
+export interface CreateMaintenancePlanBody {
+  customerId: string
+  name: string
+  price: number
+  startDate: string
+  endDate: string
+  items: Array<{ equipmentId?: string; serviceType?: string; intervalMonths: 6 | 12 }>
+}

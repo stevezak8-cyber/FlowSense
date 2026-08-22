@@ -13,6 +13,7 @@ import {
   Calendar,
   CreditCard,
   ShieldCheck,
+  ClipboardList,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { FlowSenseLogo } from "@/components/brand"
@@ -22,6 +23,7 @@ const navItems = [
   { label: "Dashboard", href: "/office", icon: LayoutDashboard },
   { label: "Schedule", href: "/office/schedule", icon: Calendar },
   { label: "Jobs", href: "/office/jobs", icon: Wrench },
+  { label: "Maintenance", href: "/office/maintenance", icon: ClipboardList },
   { label: "Technicians", href: "/office/technicians", icon: UserCog },
   { label: "Customers", href: "/office/customers", icon: Users },
   { label: "Messages", href: "/office/messages", icon: MessageSquare },
