@@ -24,6 +24,7 @@ import OfficeRevenue from "./pages/office/OfficeRevenue"
 import OfficeSchedule from "./pages/office/OfficeSchedule"
 import OfficeSettings from "./pages/office/OfficeSettings";
 import OfficeCompliance from "./pages/office/OfficeCompliance"
+import { MaintenancePlans } from "./pages/office/MaintenancePlans"
 
 // Technician
 import TechnicianLayout from "./pages/technician/TechnicianLayout";
@@ -84,6 +85,7 @@ function App() {
         <Route path="messages" element={<OfficeMessages />} />
         <Route path="reports" element={<OfficeRevenue />} />
         <Route path="compliance" element={<OfficeCompliance />} />
+        <Route path="maintenance" element={<MaintenancePlans />} />
         <Route path="settings" element={<OfficeSettings />} />
       </Route>
 
