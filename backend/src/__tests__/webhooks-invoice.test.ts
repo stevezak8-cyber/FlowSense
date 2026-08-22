@@ -30,6 +30,7 @@ vi.mock("../services/org-notifications.js", () => ({
   notifyOrgJobCompleted: vi.fn(),
   notifyOfficeDepositReceived: vi.fn().mockResolvedValue(undefined),
   notifyOfficePaymentReceived: vi.fn().mockResolvedValue(undefined),
+  notifyOfficePlanCreated: vi.fn().mockResolvedValue(undefined),
 }))
 
 import { prisma } from "../lib/prisma.js"
@@ -83,7 +84,7 @@ describe("Stripe webhook — invoice payment", () => {
 
     const res = await request(makeApp())
       .post("/stripe")
-      .set("Content-Type", "application/json")
+      .set("content-type", "application/json")
       .send(JSON.stringify(event))
 
     expect(res.status).toBe(200)
@@ -114,7 +115,7 @@ describe("Stripe webhook — invoice payment", () => {
 
     await request(makeApp())
       .post("/stripe")
-      .set("Content-Type", "application/json")
+      .set("content-type", "application/json")
       .send(JSON.stringify(event))
 
     await new Promise((r) => setTimeout(r, 10))
@@ -142,7 +143,7 @@ describe("Stripe webhook — invoice payment", () => {
 
     await request(makeApp())
       .post("/stripe")
-      .set("Content-Type", "application/json")
+      .set("content-type", "application/json")
       .send(JSON.stringify(event))
 
     await new Promise((r) => setTimeout(r, 10))
@@ -160,7 +161,7 @@ describe("Stripe webhook — invoice payment", () => {
 
     const res = await request(makeApp())
       .post("/stripe")
-      .set("Content-Type", "application/json")
+      .set("content-type", "application/json")
       .send(JSON.stringify(event))
 
     expect(res.status).toBe(200)
@@ -188,7 +189,7 @@ describe("Stripe webhook — invoice payment", () => {
 
     const res = await request(makeApp())
       .post("/stripe")
-      .set("Content-Type", "application/json")
+      .set("content-type", "application/json")
       .send(JSON.stringify(event))
 
     expect(res.status).toBe(200)
