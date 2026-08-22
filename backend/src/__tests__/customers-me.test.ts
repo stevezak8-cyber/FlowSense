@@ -14,6 +14,9 @@ vi.mock("../lib/prisma.js", () => ({
     job: {
       findMany: vi.fn(),
     },
+    maintenancePlan: {
+      findMany: vi.fn(),
+    },
   },
 }))
 
@@ -24,6 +27,7 @@ const mockPrisma = prisma as unknown as {
   customer: { findUnique: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> }
   equipment: { findMany: ReturnType<typeof vi.fn> }
   job: { findMany: ReturnType<typeof vi.fn> }
+  maintenancePlan: { findMany: ReturnType<typeof vi.fn> }
 }
 
 function makeApp(role = "customer", customerId = "cust1", organizationId = "org1") {
@@ -164,5 +168,22 @@ describe("GET /me/equipment", () => {
     const callArgs = mockPrisma.equipment.findMany.mock.calls[0][0]
     expect(callArgs.where.customerId).toBe("cust1")
     expect(callArgs.where.organizationId).toBe("org1")
+  })
+})
+
+describe("GET /me/plans", () => {
+  it("returns 403 for non-customer role", async () => {
+    const res = await request(makeApp("office")).get("/me/plans")
+    expect(res.status).toBe(403)
+  })
+
+  it("returns active plans for the customer", async () => {
+    mockPrisma.maintenancePlan.findMany.mockResolvedValue([
+      { id: "plan1", name: "Gold Plan", status: "active", items: [] },
+    ])
+    const res = await request(makeApp()).get("/me/plans")
+    expect(res.status).toBe(200)
+    expect(res.body).toHaveLength(1)
+    expect(res.body[0].name).toBe("Gold Plan")
   })
 })

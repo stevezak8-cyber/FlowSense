@@ -236,6 +236,29 @@ export async function notifyOfficePaymentReceived(params: {
   }
 }
 
+export async function notifyOfficePlanCreated(params: {
+  planName: string
+  customerName: string
+  price: number
+  itemCount: number
+  orgId: string
+}): Promise<void> {
+  const { planName, customerName, price, itemCount, orgId } = params
+  const { email } = await getOrgDispatch(orgId)
+  if (!email) return
+  await sendEmail({
+    to: email,
+    subject: `New maintenance plan: ${planName} — ${customerName}`,
+    html: `<p>A new maintenance plan has been created.</p>
+<ul>
+  <li><strong>Plan:</strong> ${escapeHtml(planName)}</li>
+  <li><strong>Customer:</strong> ${escapeHtml(customerName)}</li>
+  <li><strong>Price:</strong> $${price.toFixed(2)}</li>
+  <li><strong>Equipment items:</strong> ${itemCount}</li>
+</ul>`,
+  })
+}
+
 export async function notifyOfficeDepositReceived(estimateId: string): Promise<void> {
   const estimate = await prisma.estimate.findUnique({
     where: { id: estimateId },

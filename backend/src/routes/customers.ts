@@ -165,6 +165,21 @@ customersRouter.get("/me/equipment", async (req, res) => {
   }
 });
 
+customersRouter.get("/me/plans", async (req, res) => {
+  if (req.user!.role !== "customer") return res.status(403).json({ error: "Forbidden" })
+  const { customerId, organizationId } = req.user!
+  const plans = await prisma.maintenancePlan.findMany({
+    where: { customerId: customerId!, organizationId, status: "active" },
+    include: {
+      items: {
+        include: { equipment: { select: { make: true, model: true, equipmentType: true } } },
+      },
+    },
+    orderBy: { startDate: "desc" },
+  })
+  return res.json(plans)
+})
+
 customersRouter.get("/:id", async (req, res) => {
   try {
     const customer = await prisma.customer.findFirst({
