@@ -61,20 +61,20 @@ export default function OfficeCompliance() {
 
       {/* Filters */}
       <div className="flex gap-3 flex-wrap">
-        <Select value={technicianId} onValueChange={setTechnicianId}>
+        <Select value={technicianId || "all"} onValueChange={(v) => setTechnicianId(v === "all" ? "" : v)}>
           <SelectTrigger className="w-48"><SelectValue placeholder="All technicians" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All technicians</SelectItem>
+            <SelectItem value="all">All technicians</SelectItem>
             {technicians.map((t) => (
               <SelectItem key={t.id} value={t.id}>{t.user?.name ?? "—"}</SelectItem>
             ))}
           </SelectContent>
         </Select>
 
-        <Select value={type} onValueChange={setType}>
+        <Select value={type || "all"} onValueChange={(v) => setType(v === "all" ? "" : v)}>
           <SelectTrigger className="w-40"><SelectValue placeholder="All types" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All types</SelectItem>
+            <SelectItem value="all">All types</SelectItem>
             <SelectItem value="epa608_prompt">EPA 608</SelectItem>
             <SelectItem value="safety_ack">Safety</SelectItem>
             <SelectItem value="code_reminder">Code</SelectItem>
