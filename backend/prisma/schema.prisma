@@ -55,6 +55,21 @@ model Organization {
   pricebookItems           PricebookItem[]
   estimates                Estimate[]
   pushSubscriptions        PushSubscription[]
+  availabilitySchedule     Json?
+  blockedDates             BlockedDate[]
+  reviews                  JobReview[]
+}
+
+model BlockedDate {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  date           DateTime
+  reason         String?
+  createdAt      DateTime     @default(now())
+
+  @@unique([organizationId, date])
+  @@index([organizationId])
 }
 
 model User {
@@ -137,6 +152,7 @@ model Customer {
   equipment     Equipment[]
   recurringJobs RecurringJob[]
   maintenancePlans MaintenancePlan[]
+  reviews       JobReview[]
 
   @@index([organizationId])
 }
@@ -200,6 +216,7 @@ model Job {
   invoices       Invoice[]
   estimates      Estimate[]
   aiMessages     AiMessage[]
+  review         JobReview?
 
   @@index([organizationId])
   @@index([technicianId])
@@ -208,6 +225,22 @@ model Job {
   @@index([recurringJobId])
   @@index([status])
   @@index([scheduledAt])
+}
+
+model JobReview {
+  id             String       @id @default(cuid())
+  jobId          String       @unique
+  job            Job          @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customerId     String
+  customer       Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  rating         Int
+  comment        String?
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId])
+  @@index([customerId])
 }
 
 // Invoices tied to jobs
