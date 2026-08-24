@@ -428,6 +428,7 @@ export interface CustomerJobHistoryItem {
   symptomSummary: string | null
   actionsTaken: string | null
   technician: { name: string } | null
+  review?: JobReview | null
 }
 
 export interface MaintenancePlanItem {
