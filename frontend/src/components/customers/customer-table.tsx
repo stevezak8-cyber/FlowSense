@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { api } from "@/api/client"
-import type { ApiCustomer, Equipment, RecurringJob } from "@/api/types"
+import type { ApiCustomer, Equipment, RecurringJob, JobReview } from "@/api/types"
 import { RecurringJobCard } from "@/components/recurring-jobs/RecurringJobCard"
 import { RecurringJobFormDialog } from "@/components/recurring-jobs/RecurringJobFormDialog"
 import { Input } from "@/components/ui/input"
@@ -41,6 +41,25 @@ export function CustomerTable({ customers, loading, onDelete }: CustomerTablePro
   const [recurringJobs, setRecurringJobs] = useState<RecurringJob[]>([])
   const [recurringFormOpen, setRecurringFormOpen] = useState(false)
   const [editingRecurring, setEditingRecurring] = useState<RecurringJob | null>(null)
+  const [customerReviews, setCustomerReviews] = useState<JobReview[]>([])
+  const [reviewsLoading, setReviewsLoading] = useState(false)
+
+  const loadReviews = (customerId: string) => {
+    setReviewsLoading(true)
+    const token = localStorage.getItem("flowsense_token")
+    fetch(`/api/reviews?customerId=${customerId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((data) => setCustomerReviews(Array.isArray(data) ? data : []))
+      .catch(() => setCustomerReviews([]))
+      .finally(() => setReviewsLoading(false))
+  }
+
+  useEffect(() => {
+    if (!expandedCustomer) { setCustomerReviews([]); return }
+    loadReviews(expandedCustomer)
+  }, [expandedCustomer])
 
   useEffect(() => {
     if (!expandedCustomer) { setEquipment([]); return }
@@ -112,6 +131,9 @@ export function CustomerTable({ customers, loading, onDelete }: CustomerTablePro
           {filtered.map((customer) => {
             const isExpanded = expandedCustomer === customer.id
             const fullAddress = [customer.address, customer.addressLine2, `${customer.city}, ${customer.state} ${customer.postalCode}`].filter(Boolean).join(", ")
+            const avgRating = isExpanded && customerReviews.length > 0
+              ? (customerReviews.reduce((sum, r) => sum + r.rating, 0) / customerReviews.length).toFixed(1)
+              : null
             return (
               <div key={customer.id}>
                 <div
@@ -123,7 +145,12 @@ export function CustomerTable({ customers, loading, onDelete }: CustomerTablePro
                       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary">
                         <User className="h-4 w-4 text-muted-foreground" />
                       </div>
-                      <div className="text-sm font-medium text-card-foreground">{customer.name}</div>
+                      <div className="text-sm font-medium text-card-foreground">
+                        {customer.name}
+                        {avgRating && (
+                          <span className="text-sm text-amber-500 font-medium ml-2">★ {avgRating}</span>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div className="col-span-3 hidden sm:block">
@@ -250,6 +277,34 @@ export function CustomerTable({ customers, loading, onDelete }: CustomerTablePro
                           onClose={() => { setRecurringFormOpen(false); setEditingRecurring(null) }}
                         />
                       )}
+                    </div>
+
+                    {/* Reviews section */}
+                    <div className="mt-4 border-t border-border pt-4">
+                      <div className="mt-4">
+                        <h3 className="text-sm font-semibold mb-2">Reviews</h3>
+                        {reviewsLoading ? (
+                          <p className="text-sm text-muted-foreground">Loading...</p>
+                        ) : customerReviews.length === 0 ? (
+                          <p className="text-sm text-muted-foreground">No reviews yet.</p>
+                        ) : (
+                          <div className="space-y-3">
+                            {customerReviews.map((review) => (
+                              <div key={review.id} className="text-sm border rounded p-3">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-amber-500">
+                                    {"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {new Date(review.createdAt).toLocaleDateString()}
+                                  </span>
+                                </div>
+                                {review.comment && <p className="mt-1 text-muted-foreground">{review.comment}</p>}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
