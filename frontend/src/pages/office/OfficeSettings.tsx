@@ -2,17 +2,37 @@
 
 import { useState, useEffect } from "react"
 import { api } from "@/api/client"
-import type { ApiOrganization, NotificationPreferences } from "@/api/types"
+import type { ApiOrganization, NotificationPreferences, AvailabilitySchedule, BlockedDate } from "@/api/types"
 import { useOnboarding } from "@/components/office/onboarding-context"
 import { useAuth } from "@/auth/auth-context"
 import { ChangePasswordCard } from "@/components/change-password-card"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Building2, User, Bell, Mail, Phone, Loader2, AlertCircle, BookOpen, CreditCard, CheckCircle, MessageSquare } from "lucide-react"
 import { PricebookSettings } from "@/components/pricebook/pricebook-settings"
 import { toast } from "sonner"
+
+const DAYS: { key: keyof AvailabilitySchedule; label: string }[] = [
+  { key: "mon", label: "Monday" },
+  { key: "tue", label: "Tuesday" },
+  { key: "wed", label: "Wednesday" },
+  { key: "thu", label: "Thursday" },
+  { key: "fri", label: "Friday" },
+  { key: "sat", label: "Saturday" },
+  { key: "sun", label: "Sunday" },
+]
+
+const DEFAULT_SCHEDULE: AvailabilitySchedule = {
+  mon: { open: "08:00", close: "17:00" },
+  tue: { open: "08:00", close: "17:00" },
+  wed: { open: "08:00", close: "17:00" },
+  thu: { open: "08:00", close: "17:00" },
+  fri: { open: "08:00", close: "17:00" },
+  sat: null,
+  sun: null,
+}
 
 const DEFAULT_PREFS: NotificationPreferences = {
   booking: true,
@@ -52,6 +72,26 @@ export default function OfficeSettings() {
   const [prefs, setPrefs] = useState<NotificationPreferences>(DEFAULT_PREFS)
   const [prefsSaving, setPrefsSaving] = useState(false)
   const [prefsError, setPrefsError] = useState<string | null>(null)
+
+  // Availability state
+  const [schedule, setSchedule] = useState<AvailabilitySchedule>(DEFAULT_SCHEDULE)
+  const [blockedDates, setBlockedDates] = useState<BlockedDate[]>([])
+  const [scheduleLoading, setScheduleLoading] = useState(false)
+  const [newBlockDate, setNewBlockDate] = useState("")
+  const [newBlockReason, setNewBlockReason] = useState("")
+  const [blockDateError, setBlockDateError] = useState("")
+
+  // Load availability data
+  useEffect(() => {
+    const token = localStorage.getItem("flowsense_token")
+    fetch("/api/availability", { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.schedule) setSchedule(data.schedule)
+        if (data.blockedDates) setBlockedDates(data.blockedDates)
+      })
+      .catch(() => {})
+  }, [])
 
   // Read connect URL param
   useEffect(() => {
@@ -149,6 +189,42 @@ export default function OfficeSettings() {
     } finally {
       setPrefsSaving(false)
     }
+  }
+
+  const saveSchedule = async () => {
+    setScheduleLoading(true)
+    const token = localStorage.getItem("flowsense_token")
+    await fetch("/api/availability/schedule", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(schedule),
+    })
+    setScheduleLoading(false)
+  }
+
+  const addBlockedDate = async () => {
+    if (!newBlockDate) return
+    const token = localStorage.getItem("flowsense_token")
+    const res = await fetch("/api/availability/blocked-dates", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ date: newBlockDate, reason: newBlockReason || undefined }),
+    })
+    if (res.status === 409) { setBlockDateError("This date is already blocked"); return }
+    if (res.ok) {
+      const created = await res.json()
+      setBlockedDates((prev) => [...prev, created].sort((a, b) => a.date.localeCompare(b.date)))
+      setNewBlockDate(""); setNewBlockReason(""); setBlockDateError("")
+    }
+  }
+
+  const removeBlockedDate = async (id: string) => {
+    const token = localStorage.getItem("flowsense_token")
+    await fetch(`/api/availability/blocked-dates/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    setBlockedDates((prev) => prev.filter((d) => d.id !== id))
   }
 
   function togglePref(key: keyof NotificationPreferences) {
@@ -452,6 +528,103 @@ export default function OfficeSettings() {
           </button>
         </div>
       </div>
+
+      {/* Availability */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Availability</CardTitle>
+          <CardDescription>Set your weekly working hours and block specific dates.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Weekly schedule */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium">Weekly Hours</h4>
+            {DAYS.map(({ key, label }) => (
+              <div key={key} className="flex items-center gap-3">
+                <div className="w-24 text-sm text-muted-foreground">{label}</div>
+                <input
+                  type="checkbox"
+                  checked={schedule[key] !== null}
+                  onChange={(e) =>
+                    setSchedule((prev) => ({
+                      ...prev,
+                      [key]: e.target.checked ? { open: "08:00", close: "17:00" } : null,
+                    }))
+                  }
+                />
+                {schedule[key] !== null ? (
+                  <>
+                    <input
+                      type="time"
+                      value={schedule[key]!.open}
+                      onChange={(e) =>
+                        setSchedule((prev) => ({
+                          ...prev,
+                          [key]: { ...prev[key]!, open: e.target.value },
+                        }))
+                      }
+                      className="border rounded px-2 py-1 text-sm"
+                    />
+                    <span className="text-sm text-muted-foreground">to</span>
+                    <input
+                      type="time"
+                      value={schedule[key]!.close}
+                      onChange={(e) =>
+                        setSchedule((prev) => ({
+                          ...prev,
+                          [key]: { ...prev[key]!, close: e.target.value },
+                        }))
+                      }
+                      className="border rounded px-2 py-1 text-sm"
+                    />
+                  </>
+                ) : (
+                  <span className="text-sm text-muted-foreground">Closed</span>
+                )}
+              </div>
+            ))}
+            <Button onClick={saveSchedule} disabled={scheduleLoading} className="mt-2">
+              {scheduleLoading ? "Saving..." : "Save Hours"}
+            </Button>
+          </div>
+
+          {/* Blocked dates */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium">Blocked Dates</h4>
+            {blockedDates.length === 0 && (
+              <p className="text-sm text-muted-foreground">No blocked dates.</p>
+            )}
+            {blockedDates.map((bd) => (
+              <div key={bd.id} className="flex items-center justify-between text-sm">
+                <span>
+                  {new Date(bd.date).toLocaleDateString()}
+                  {bd.reason && <span className="text-muted-foreground ml-2">— {bd.reason}</span>}
+                </span>
+                <Button variant="ghost" size="sm" onClick={() => removeBlockedDate(bd.id)}>
+                  Remove
+                </Button>
+              </div>
+            ))}
+            <div className="flex gap-2 mt-2">
+              <input
+                type="date"
+                value={newBlockDate}
+                onChange={(e) => { setNewBlockDate(e.target.value); setBlockDateError("") }}
+                className="border rounded px-2 py-1 text-sm"
+              />
+              <input
+                type="text"
+                placeholder="Reason (optional)"
+                value={newBlockReason}
+                onChange={(e) => setNewBlockReason(e.target.value)}
+                className="border rounded px-2 py-1 text-sm flex-1"
+              />
+              <Button onClick={addBlockedDate} size="sm">Add</Button>
+            </div>
+            {blockDateError && <p className="text-sm text-red-500">{blockDateError}</p>}
+          </div>
+        </CardContent>
+      </Card>
 
       <ChangePasswordCard />
 

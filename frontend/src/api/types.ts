@@ -40,6 +40,7 @@ export interface ApiJob {
   // Included relations from GET /api/jobs
   customer: { id: string; name: string; address: string; phone?: string }
   technician: { id: string; name: string } | null
+  review?: JobReview | null
 }
 
 export interface ApiTechnician {
@@ -458,4 +459,30 @@ export interface CreateMaintenancePlanBody {
   startDate: string
   endDate: string
   items: Array<{ equipmentId?: string; serviceType?: string; intervalMonths: 6 | 12 }>
+}
+
+export interface AvailabilitySchedule {
+  mon: { open: string; close: string } | null
+  tue: { open: string; close: string } | null
+  wed: { open: string; close: string } | null
+  thu: { open: string; close: string } | null
+  fri: { open: string; close: string } | null
+  sat: { open: string; close: string } | null
+  sun: { open: string; close: string } | null
+}
+
+export interface BlockedDate {
+  id: string
+  date: string
+  reason: string | null
+}
+
+export interface JobReview {
+  id: string
+  jobId: string
+  rating: number
+  comment: string | null
+  createdAt: string
+  customer?: { name: string }
+  job?: { scheduledAt: string; equipmentType: string | null }
 }
