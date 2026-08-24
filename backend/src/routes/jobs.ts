@@ -188,6 +188,42 @@ jobsRouter.post("/:id/cancel", async (req, res) => {
   return res.json(updated)
 })
 
+jobsRouter.post("/:id/review", async (req, res) => {
+  if (req.user!.role !== "customer") return res.status(403).json({ error: "Forbidden" })
+  const user = await prisma.user.findUnique({
+    where: { id: req.user!.userId },
+    select: { customerId: true },
+  })
+  if (!user?.customerId) return res.status(400).json({ error: "No customer profile linked to this account" })
+  const job = await prisma.job.findFirst({
+    where: { id: req.params.id, organizationId: req.user!.organizationId },
+  })
+  if (!job) return res.status(404).json({ error: "Job not found" })
+  if (job.customerId !== user.customerId) return res.status(403).json({ error: "Forbidden" })
+  if (job.status !== "completed") return res.status(400).json({ error: "Job must be completed before reviewing" })
+  const { rating, comment } = req.body as { rating?: unknown; comment?: string }
+  if (typeof rating !== "number" || rating < 1 || rating > 5) {
+    return res.status(400).json({ error: "rating must be a number between 1 and 5" })
+  }
+  try {
+    const review = await prisma.jobReview.create({
+      data: {
+        jobId: job.id,
+        organizationId: req.user!.organizationId,
+        customerId: user.customerId,
+        rating,
+        comment: comment ?? null,
+      },
+    })
+    return res.status(201).json(review)
+  } catch (e: unknown) {
+    if ((e as { code?: string }).code === "P2002") {
+      return res.status(409).json({ error: "You have already reviewed this job" })
+    }
+    return res.status(500).json({ error: "Failed to create review" })
+  }
+})
+
 jobsRouter.get("/:id", async (req, res) => {
   try {
     const job = await prisma.job.findFirst({
