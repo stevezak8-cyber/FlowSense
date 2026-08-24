@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,7 +26,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { api } from "@/api/client"
-import type { ApiJob } from "@/api/types"
+import type { ApiJob, AvailabilitySchedule, BlockedDate } from "@/api/types"
 
 const serviceTypes = [
   {
@@ -77,6 +77,39 @@ const timeSlots = [
   "4:00 PM - 6:00 PM",
 ]
 
+const DAY_KEYS: (keyof AvailabilitySchedule)[] = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"]
+
+function getAvailabilityError(dateStr: string, timeStr: string | null, avail: { schedule: AvailabilitySchedule | null; blockedDates: BlockedDate[] } | null): string {
+  if (!avail?.schedule || !dateStr) return ""
+  const date = new Date(dateStr + "T00:00:00")
+  const dayKey = DAY_KEYS[date.getDay()]
+  const daySchedule = avail.schedule[dayKey]
+  if (daySchedule === null) return "The office is closed on this day."
+  // Check blocked dates
+  const isBlocked = avail.blockedDates.some((bd) => bd.date.startsWith(dateStr))
+  if (isBlocked) return "This date is not available for booking."
+  // Check time (only if time is provided)
+  if (timeStr && daySchedule) {
+    // Parse slot start time e.g. "8:00 AM - 10:00 AM" -> "08:00"
+    const startPart = timeStr.split(" - ")[0]
+    const [time, period] = startPart.split(" ")
+    const [hours, minutes] = time.split(":")
+    let hour24 = parseInt(hours)
+    if (period === "PM" && hour24 !== 12) hour24 += 12
+    if (period === "AM" && hour24 === 12) hour24 = 0
+    const time24 = `${String(hour24).padStart(2, "0")}:${minutes}`
+    if (time24 < daySchedule.open || time24 > daySchedule.close) {
+      const fmt = (t: string) => {
+        const [h, m] = t.split(":")
+        const hr = parseInt(h)
+        return `${hr > 12 ? hr - 12 : hr || 12}:${m} ${hr >= 12 ? "PM" : "AM"}`
+      }
+      return `Available ${fmt(daySchedule.open)} – ${fmt(daySchedule.close)}.`
+    }
+  }
+  return ""
+}
+
 export default function CustomerBook() {
   const [step, setStep] = useState(1)
   const [selectedService, setSelectedService] = useState<string | null>(null)
@@ -89,6 +122,20 @@ export default function CustomerBook() {
   const [submitting, setSubmitting] = useState(false)
   const [jobId, setJobId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [availability, setAvailability] = useState<{
+    schedule: AvailabilitySchedule | null
+    blockedDates: BlockedDate[]
+  } | null>(null)
+
+  useEffect(() => {
+    const token = localStorage.getItem("flowsense_token")
+    fetch("/api/availability", { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => r.json())
+      .then((data) => setAvailability({ schedule: data.schedule ?? null, blockedDates: data.blockedDates ?? [] }))
+      .catch(() => {}) // fail open — no constraints if fetch fails
+  }, [])
+
+  const availabilityError = getAvailabilityError(selectedDate, selectedTime, availability)
 
   async function handleSubmit() {
     if (!selectedService || !selectedDate || !selectedTime) return;
@@ -285,6 +332,9 @@ export default function CustomerBook() {
               onChange={(e) => setSelectedDate(e.target.value)}
               className="h-10 max-w-xs bg-secondary border-border text-foreground"
             />
+            {availabilityError && (
+              <p className="text-sm text-amber-600 mt-1">{availabilityError}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -366,7 +416,7 @@ export default function CustomerBook() {
               Back
             </Button>
             <Button
-              disabled={!selectedDate || !selectedTime}
+              disabled={!selectedDate || !selectedTime || !!availabilityError}
               onClick={() => setStep(3)}
               className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
             >
