@@ -14,6 +14,7 @@ import {
   notifyOrgNewBooking,
   notifyOrgStatusChange,
   notifyOrgJobCompleted,
+  notifyOfficeCancellation,
 } from "../services/org-notifications.js"
 import {
   sendBookingConfirmedSms,
@@ -165,6 +166,27 @@ jobsRouter.get("/", async (req, res) => {
     res.status(500).json({ error: e instanceof Error ? e.message : "Failed to list jobs" });
   }
 });
+
+jobsRouter.post("/:id/cancel", async (req, res) => {
+  if (req.user!.role !== "customer") return res.status(403).json({ error: "Forbidden" })
+  const user = await prisma.user.findUnique({
+    where: { id: req.user!.userId },
+    select: { customerId: true },
+  })
+  if (!user?.customerId) return res.status(400).json({ error: "No customer profile linked to this account" })
+  const job = await prisma.job.findFirst({
+    where: { id: req.params.id, organizationId: req.user!.organizationId },
+    include: { customer: { select: { name: true } } },
+  })
+  if (!job) return res.status(404).json({ error: "Job not found" })
+  if (job.customerId !== user.customerId) return res.status(403).json({ error: "Forbidden" })
+  if (!["pending", "scheduled"].includes(job.status)) {
+    return res.status(400).json({ error: "Job cannot be cancelled at this stage" })
+  }
+  const updated = await prisma.job.update({ where: { id: job.id }, data: { status: "cancelled" } })
+  notifyOfficeCancellation({ jobId: job.id, customerName: job.customer.name, orgId: req.user!.organizationId }).catch(console.error)
+  return res.json(updated)
+})
 
 jobsRouter.get("/:id", async (req, res) => {
   try {

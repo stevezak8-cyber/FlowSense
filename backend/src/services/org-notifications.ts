@@ -259,6 +259,29 @@ export async function notifyOfficePlanCreated(params: {
   })
 }
 
+export async function notifyOfficeCancellation(params: {
+  jobId: string
+  customerName: string
+  orgId: string
+}): Promise<void> {
+  const { jobId, customerName, orgId } = params
+  const { email } = await getOrgDispatch(orgId)
+  if (!email) return
+  sendEmail({
+    to: email,
+    subject: `Appointment cancelled — ${customerName}`,
+    html: wrap(
+      "Appointment Cancelled",
+      `<p><strong>${escapeHtml(customerName)}</strong> has cancelled their appointment.</p>
+       <div style="background:#f5f5f5;padding:16px;border-radius:8px;margin:16px 0;">
+         <p style="margin:4px 0;"><strong>Reference:</strong> ${escapeHtml(jobId.slice(0, 12))}</p>
+         <p style="margin:4px 0;"><strong>Customer:</strong> ${escapeHtml(customerName)}</p>
+       </div>
+       <p>You may wish to contact them to reschedule.</p>`
+    ),
+  }).catch(console.error)
+}
+
 export async function notifyOfficeDepositReceived(estimateId: string): Promise<void> {
   const estimate = await prisma.estimate.findUnique({
     where: { id: estimateId },
