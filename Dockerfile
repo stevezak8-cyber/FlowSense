@@ -21,6 +21,7 @@ WORKDIR /app/backend
 RUN apk add --no-cache openssl
 
 COPY backend/package*.json ./
+COPY backend/prisma ./prisma
 # Install all deps (including dev) so tsc is available
 RUN npm ci
 
@@ -37,6 +38,7 @@ RUN apk add --no-cache openssl
 
 # Backend: production deps only
 COPY backend/package*.json ./backend/
+COPY backend/prisma ./backend/prisma
 RUN cd backend && npm ci --omit=dev
 
 # Compiled backend
