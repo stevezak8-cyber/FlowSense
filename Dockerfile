@@ -56,8 +56,6 @@ COPY --from=frontend-build /app/frontend/dist ./frontend/dist
 WORKDIR /app/backend
 
 ENV NODE_ENV=production
-ENV PORT=4000
-
-EXPOSE 4000
+EXPOSE 8080
 
 CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node dist/index.js"]
