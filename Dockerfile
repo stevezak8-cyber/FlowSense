@@ -18,6 +18,8 @@ RUN npm run build
 FROM node:22-alpine AS backend-build
 WORKDIR /app/backend
 
+RUN apk add --no-cache openssl
+
 COPY backend/package*.json ./
 # Install all deps (including dev) so tsc is available
 RUN npm ci
@@ -30,6 +32,8 @@ RUN npx prisma generate && npm run build
 # ── Stage 3: Production image ────────────────────────────────────────────────
 FROM node:22-alpine AS production
 WORKDIR /app
+
+RUN apk add --no-cache openssl
 
 # Backend: production deps only
 COPY backend/package*.json ./backend/
