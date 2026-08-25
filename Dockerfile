@@ -4,7 +4,7 @@
 # Stage 3: lean production image (backend + frontend/dist)
 
 # ── Stage 1: Frontend build ──────────────────────────────────────────────────
-FROM node:20-alpine AS frontend-build
+FROM node:22-alpine AS frontend-build
 WORKDIR /app/frontend
 
 COPY frontend/package*.json ./
@@ -15,7 +15,7 @@ RUN npm run build
 # Output: /app/frontend/dist/
 
 # ── Stage 2: Backend build ───────────────────────────────────────────────────
-FROM node:20-alpine AS backend-build
+FROM node:22-alpine AS backend-build
 WORKDIR /app/backend
 
 COPY backend/package*.json ./
@@ -28,7 +28,7 @@ RUN npx prisma generate && npm run build
 # Output: /app/backend/dist/
 
 # ── Stage 3: Production image ────────────────────────────────────────────────
-FROM node:20-alpine AS production
+FROM node:22-alpine AS production
 WORKDIR /app
 
 # Backend: production deps only
