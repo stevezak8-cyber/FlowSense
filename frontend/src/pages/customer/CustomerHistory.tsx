@@ -1,10 +1,83 @@
 import { useEffect, useState } from "react"
 import { api } from "@/api/client"
-import type { CustomerJobHistoryItem, JobReview } from "@/api/types"
-import { Loader2 } from "lucide-react"
+import type { CustomerJobHistoryItem } from "@/api/types"
+import { Loader2, Star } from "lucide-react"
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+}
+
+function StarRating({ rating, onRate }: { rating: number; onRate?: (r: number) => void }) {
+  const [hover, setHover] = useState(0)
+  return (
+    <div className="flex gap-0.5">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <button
+          key={n}
+          type="button"
+          onClick={() => onRate?.(n)}
+          onMouseEnter={() => onRate && setHover(n)}
+          onMouseLeave={() => onRate && setHover(0)}
+          disabled={!onRate}
+          className="disabled:cursor-default"
+        >
+          <Star
+            className={`h-4 w-4 ${n <= (hover || rating) ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`}
+          />
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function ReviewSection({ job, onReviewed }: { job: CustomerJobHistoryItem; onReviewed: (review: NonNullable<CustomerJobHistoryItem["review"]>) => void }) {
+  const [rating, setRating] = useState(0)
+  const [comment, setComment] = useState("")
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState("")
+
+  if (job.review) {
+    return (
+      <div className="mt-3 pt-3 border-t border-border">
+        <p className="text-xs text-muted-foreground mb-1">Your review</p>
+        <StarRating rating={job.review.rating} />
+        {job.review.comment && <p className="text-sm text-muted-foreground mt-1">{job.review.comment}</p>}
+      </div>
+    )
+  }
+
+  async function submit() {
+    if (!rating) { setError("Select a star rating."); return }
+    setSubmitting(true); setError("")
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/review`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("flowsense_token")}` },
+        body: JSON.stringify({ rating, comment: comment || undefined }),
+      })
+      if (res.status === 201) { onReviewed(await res.json()) }
+      else if (res.status === 409) { const data = await res.json(); onReviewed(data.existing) }
+      else { setError("Could not submit review.") }
+    } catch { setError("Could not submit review.") } finally { setSubmitting(false) }
+  }
+
+  return (
+    <div className="mt-3 pt-3 border-t border-border">
+      <p className="text-xs text-muted-foreground mb-2">Rate this visit</p>
+      <StarRating rating={rating} onRate={setRating} />
+      <textarea
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        placeholder="Leave a comment (optional)"
+        className="mt-2 w-full rounded border px-2 py-1.5 text-sm bg-background resize-none"
+        rows={2}
+      />
+      {error && <p className="text-xs text-destructive mt-1">{error}</p>}
+      <button onClick={submit} disabled={submitting} className="mt-2 rounded bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+        {submitting ? "Submitting…" : "Submit review"}
+      </button>
+    </div>
+  )
 }
 
 export default function CustomerHistory() {
@@ -12,8 +85,6 @@ export default function CustomerHistory() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [cancellingId, setCancellingId] = useState<string | null>(null)
-  const [cancelError, setCancelError] = useState<string>("")
-  const [reviewState, setReviewState] = useState<Record<string, { rating: number; comment: string; submitting: boolean }>>({})
 
   useEffect(() => {
     api.get<CustomerJobHistoryItem[]>("/api/customers/me/jobs")
@@ -22,162 +93,82 @@ export default function CustomerHistory() {
       .finally(() => setLoading(false))
   }, [])
 
-  const handleCancel = async (jobId: string) => {
+  async function handleCancel(id: string) {
     if (!confirm("Cancel this appointment?")) return
-    setCancellingId(jobId)
-    setCancelError("")
-    const token = localStorage.getItem("flowsense_token")
-    const res = await fetch(`/api/jobs/${jobId}/cancel`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    if (res.ok) {
-      setItems((prev) => prev ? prev.filter((j) => j.id !== jobId) : prev)
-    } else {
-      const data = await res.json().catch(() => ({}))
-      setCancelError(data.error ?? "Failed to cancel")
-    }
-    setCancellingId(null)
+    setCancellingId(id)
+    try {
+      await fetch(`/api/jobs/${id}/cancel`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${localStorage.getItem("flowsense_token")}` },
+      })
+      setItems(prev => prev?.map(j => j.id === id ? { ...j, status: "cancelled" } : j) ?? null)
+    } catch { /* silent */ } finally { setCancellingId(null) }
   }
 
-  const handleSubmitReview = async (jobId: string) => {
-    const state = reviewState[jobId]
-    if (!state || !state.rating) return
-    setReviewState((prev) => ({ ...prev, [jobId]: { ...prev[jobId], submitting: true } }))
-    const token = localStorage.getItem("flowsense_token")
-    const res = await fetch(`/api/jobs/${jobId}/review`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ rating: state.rating, comment: state.comment || undefined }),
-    })
-    if (res.ok || res.status === 409) {
-      const review: JobReview = await res.json()
-      setItems((prev) => prev ? prev.map((j) => j.id === jobId ? { ...j, review } : j) : prev)
-      setReviewState((prev) => { const n = { ...prev }; delete n[jobId]; return n })
-    } else {
-      setReviewState((prev) => ({ ...prev, [jobId]: { ...prev[jobId], submitting: false } }))
-    }
+  function handleReviewed(jobId: string, review: NonNullable<CustomerJobHistoryItem["review"]>) {
+    setItems(prev => prev?.map(j => j.id === jobId ? { ...j, review } : j) ?? null)
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    )
-  }
+  if (loading) return <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+  if (error) return <p className="py-10 text-center text-sm text-muted-foreground">Could not load job history.</p>
+  if (!items || items.length === 0) return <div className="py-10 text-center"><p className="text-sm text-muted-foreground">No service history yet.</p></div>
 
-  if (error) {
-    return <p className="py-10 text-center text-sm text-muted-foreground">Could not load job history.</p>
-  }
-
-  if (!items || items.length === 0) {
-    return (
-      <div className="py-10 text-center">
-        <p className="text-sm text-muted-foreground">No jobs yet.</p>
-      </div>
-    )
-  }
+  const upcoming = items.filter(j => ["pending", "scheduled"].includes(j.status))
+  const past = items.filter(j => !["pending", "scheduled"].includes(j.status))
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-lg font-semibold">Job History</h1>
-        <p className="text-sm text-muted-foreground">Your service visits</p>
-      </div>
-      {cancelError && (
-        <p className="text-sm text-red-600">{cancelError}</p>
-      )}
-      <div className="space-y-3">
-        {items.map((item) => (
-          <div key={item.id} className="rounded-xl border border-border bg-card p-4">
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <span className="font-semibold">{item.equipmentType ?? "Service"}</span>
-              <span
-                className={
-                  item.status === "completed"
-                    ? "rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                    : "rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
-                }
-              >
-                {item.status}
-              </span>
-            </div>
-            <div className="text-sm text-muted-foreground mb-1">{formatDate(item.scheduledAt)}</div>
-            {item.symptomSummary && (
-              <p className="text-sm text-muted-foreground mt-1">{item.symptomSummary}</p>
-            )}
-            {item.actionsTaken && (
-              <p className="text-sm text-muted-foreground mt-1 line-clamp-3">
-                <span className="font-medium text-foreground">Work done:</span> {item.actionsTaken}
-              </p>
-            )}
-            {item.technician && (
-              <p className="text-sm text-muted-foreground mt-1">Technician: {item.technician.name}</p>
-            )}
-            {(item.status === "pending" || item.status === "scheduled") && (
-              <div className="mt-2">
+    <div className="space-y-6">
+      {upcoming.length > 0 && (
+        <div>
+          <h1 className="text-lg font-semibold mb-3">Upcoming Appointments</h1>
+          <div className="space-y-3">
+            {upcoming.map((item) => (
+              <div key={item.id} className="rounded-xl border border-border bg-card p-4">
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <span className="font-semibold">{item.equipmentType ?? "Service"}</span>
+                  <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">{item.status}</span>
+                </div>
+                <div className="text-sm text-muted-foreground mb-2">{formatDate(item.scheduledAt)}</div>
+                {item.symptomSummary && <p className="text-sm text-muted-foreground">{item.symptomSummary}</p>}
                 <button
                   onClick={() => handleCancel(item.id)}
                   disabled={cancellingId === item.id}
-                  className="text-sm text-red-600 hover:underline disabled:opacity-50"
+                  className="mt-3 text-xs text-destructive hover:underline disabled:opacity-50"
                 >
-                  {cancellingId === item.id ? "Cancelling..." : "Cancel appointment"}
+                  {cancellingId === item.id ? "Cancelling…" : "Cancel appointment"}
                 </button>
               </div>
-            )}
-            {item.status === "completed" && (
-              <div className="mt-2 pt-2 border-t">
-                {item.review ? (
-                  <div className="text-sm">
-                    <span className="text-amber-500">{"★".repeat(item.review.rating)}{"☆".repeat(5 - item.review.rating)}</span>
-                    {item.review.comment && <p className="text-muted-foreground mt-1">{item.review.comment}</p>}
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">Rate this visit</p>
-                    <div className="flex gap-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          onClick={() => setReviewState((prev) => ({
-                            ...prev,
-                            [item.id]: { rating: star, comment: prev[item.id]?.comment ?? "", submitting: false }
-                          }))}
-                          className={`text-xl ${(reviewState[item.id]?.rating ?? 0) >= star ? "text-amber-500" : "text-muted-foreground"}`}
-                        >
-                          ★
-                        </button>
-                      ))}
-                    </div>
-                    {(reviewState[item.id]?.rating ?? 0) > 0 && (
-                      <>
-                        <textarea
-                          placeholder="Leave a comment (optional)"
-                          value={reviewState[item.id]?.comment ?? ""}
-                          onChange={(e) => setReviewState((prev) => ({
-                            ...prev,
-                            [item.id]: { ...prev[item.id], comment: e.target.value }
-                          }))}
-                          className="w-full border rounded px-2 py-1 text-sm resize-none"
-                          rows={2}
-                        />
-                        <button
-                          onClick={() => handleSubmitReview(item.id)}
-                          disabled={reviewState[item.id]?.submitting}
-                          className="text-sm bg-primary text-primary-foreground px-3 py-1 rounded disabled:opacity-50"
-                        >
-                          {reviewState[item.id]?.submitting ? "Submitting..." : "Submit"}
-                        </button>
-                      </>
-                    )}
-                  </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {past.length > 0 && (
+        <div>
+          <h1 className="text-lg font-semibold mb-3">Job History</h1>
+          <div className="space-y-3">
+            {past.map((item) => (
+              <div key={item.id} className="rounded-xl border border-border bg-card p-4">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <span className="font-semibold">{item.equipmentType ?? "Service"}</span>
+                  <span className={item.status === "completed"
+                    ? "rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700"
+                    : "rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"}>
+                    {item.status}
+                  </span>
+                </div>
+                <div className="text-sm text-muted-foreground mb-1">{formatDate(item.scheduledAt)}</div>
+                {item.symptomSummary && <p className="text-sm text-muted-foreground mt-1">{item.symptomSummary}</p>}
+                {item.actionsTaken && <p className="text-sm text-muted-foreground mt-1 line-clamp-3"><span className="font-medium text-foreground">Work done:</span> {item.actionsTaken}</p>}
+                {item.technician && <p className="text-sm text-muted-foreground mt-1">Technician: {item.technician.name}</p>}
+                {item.status === "completed" && (
+                  <ReviewSection job={item} onReviewed={(r) => handleReviewed(item.id, r)} />
                 )}
               </div>
-            )}
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

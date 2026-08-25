@@ -115,7 +115,6 @@ customersRouter.get("/me/jobs", async (req, res) => {
       where: {
         customerId: user.customerId,
         organizationId: user.organizationId,
-        status: { in: ["pending", "scheduled", "completed", "cancelled"] },
       },
       select: {
         id: true,
@@ -126,7 +125,7 @@ customersRouter.get("/me/jobs", async (req, res) => {
         symptomSummary: true,
         actionsTaken: true,
         technician: { select: { name: true } },
-        review: true,
+        review: { select: { id: true, rating: true, comment: true, createdAt: true } },
       },
       orderBy: { scheduledAt: "desc" },
     });
