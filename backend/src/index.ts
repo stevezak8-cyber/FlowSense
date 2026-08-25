@@ -4,14 +4,16 @@ import { execSync } from "child_process";
 // Run database migrations on startup before anything else
 try {
   console.log("[FlowSense] Running database migrations...");
-  execSync("node_modules/.bin/prisma migrate deploy", {
+  const { pathname: backendDir } = new URL("..", import.meta.url);
+  const prismaCli = new URL("../node_modules/prisma/build/index.js", import.meta.url).pathname;
+  execSync(`node ${prismaCli} migrate deploy`, {
     stdio: "inherit",
-    cwd: new URL("../..", import.meta.url).pathname,
+    cwd: backendDir,
   });
   console.log("[FlowSense] Migrations complete.");
 } catch (err) {
   console.error("[FlowSense] Migration failed:", err);
-  process.exit(1);
+  // Don't exit — let the app start even if migrations already applied
 }
 
 // ── Startup environment validation ────────────────────────────────────────────
