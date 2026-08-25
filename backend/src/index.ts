@@ -1,4 +1,18 @@
 import "dotenv/config";
+import { execSync } from "child_process";
+
+// Run database migrations on startup before anything else
+try {
+  console.log("[FlowSense] Running database migrations...");
+  execSync("node_modules/.bin/prisma migrate deploy", {
+    stdio: "inherit",
+    cwd: new URL("../..", import.meta.url).pathname,
+  });
+  console.log("[FlowSense] Migrations complete.");
+} catch (err) {
+  console.error("[FlowSense] Migration failed:", err);
+  process.exit(1);
+}
 
 // ── Startup environment validation ────────────────────────────────────────────
 // Fail fast with a clear message rather than mysterious runtime errors.
