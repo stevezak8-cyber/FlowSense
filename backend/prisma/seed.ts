@@ -219,23 +219,6 @@ async function main() {
     update: {},
   });
 
-  // Dispatch demo job
-  await prisma.job.upsert({
-    where: { id: "seed-job-dispatch-demo" },
-    create: {
-      id: "seed-job-dispatch-demo",
-      organizationId: org.id,
-      customerId: "seed-customer-2",
-      technicianId: "seed-tech-2",
-      status: "scheduled",
-      scheduledAt: new Date(new Date().setHours(8, 0, 0, 0)),
-      symptomSummary: "AC unit making noise during operation",
-      equipmentType: "ac",
-      priority: "normal",
-    },
-    update: {},
-  });
-
   // Additional customers
   await prisma.customer.upsert({
     where: { id: "seed-customer-2" },
@@ -265,6 +248,23 @@ async function main() {
       state: "CO",
       postalCode: "80226",
       notes: "Gate code 4821, contact property manager first",
+    },
+    update: {},
+  });
+
+  // Dispatch demo job (after seed-customer-2 is created)
+  await prisma.job.upsert({
+    where: { id: "seed-job-dispatch-demo" },
+    create: {
+      id: "seed-job-dispatch-demo",
+      organizationId: org.id,
+      customerId: "seed-customer-2",
+      technicianId: "seed-tech-2",
+      status: "scheduled",
+      scheduledAt: new Date(new Date().setHours(8, 0, 0, 0)),
+      symptomSummary: "AC unit making noise during operation",
+      equipmentType: "ac",
+      priority: "normal",
     },
     update: {},
   });
