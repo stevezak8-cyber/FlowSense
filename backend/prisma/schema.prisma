@@ -50,6 +50,7 @@ model Organization {
   equipment     Equipment[]
   recurringJobs RecurringJob[]
   maintenancePlans MaintenancePlan[]
+  notifications    Notification[]
 
   estimateDepositThreshold Float  @default(500)
   estimateDepositPercent   Int    @default(25)
@@ -477,4 +478,20 @@ model ComplianceLog {
 
   @@index([jobId])
   @@index([type])
+}
+
+// In-app notifications for office users
+model Notification {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  type           String   // job.created | job.completed | job.status_changed | payment.received | payment.failed | review.new | plan.created
+  title          String
+  body           String
+  link           String?  // optional deep-link (e.g. /office/jobs/xxx)
+  read           Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId, read])
+  @@index([organizationId, createdAt])
 }

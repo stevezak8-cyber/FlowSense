@@ -83,6 +83,7 @@ import { availabilityRouter } from "./routes/availability.js"
 import { reviewsRouter } from "./routes/reviews.js"
 import { voiceRouter } from "./routes/voice.js"
 import { conciergeRouter } from "./routes/concierge.js"
+import { notificationsRouter } from "./routes/notifications.js"
 import { setupWebSocket } from "./services/notifications.js";
 import { startInvoiceScheduler } from "./services/invoice-scheduler.js";
 import cron from "node-cron";
@@ -163,6 +164,7 @@ app.use("/api/equipment", apiLimiter, requireAuth, requireSubscription, equipmen
 app.use("/api/search", apiLimiter, requireAuth, requireSubscription, searchRouter);
 app.use("/api/recurring-jobs", apiLimiter, requireAuth, requireSubscription, recurringJobsRouter);
 app.use("/api/maintenance-plans", apiLimiter, requireAuth, requireSubscription, maintenancePlansRouter)
+app.use("/api/notifications", apiLimiter, requireAuth, notificationsRouter)
 app.use("/api/availability", apiLimiter, requireAuth, availabilityRouter)
 app.use("/api/reviews", apiLimiter, requireAuth, requireSubscription, reviewsRouter)
 app.use("/api/voice", apiLimiter, requireAuth, requireSubscription, voiceRouter)

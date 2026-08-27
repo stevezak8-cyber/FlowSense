@@ -1,10 +1,8 @@
-import { Bell } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { GlobalSearch } from "@/components/search/GlobalSearch"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useAuth } from "@/auth/auth-context"
+import { NotificationBell } from "@/components/notifications/NotificationBell"
 
 export function TopHeader() {
   const { user } = useAuth()
@@ -25,17 +23,7 @@ export function TopHeader() {
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-success" />
           <span className="font-medium">{new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground hover:bg-card"
-        >
-          <Bell className="h-4 w-4" />
-          <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-destructive p-0 text-[10px] text-destructive-foreground flex items-center justify-center border-0">
-            3
-          </Badge>
-          <span className="sr-only">Notifications</span>
-        </Button>
+        <NotificationBell />
         <ThemeToggle />
         <Avatar className="h-9 w-9 border-2 border-primary/15">
           <AvatarFallback className="bg-primary/8 text-xs text-primary font-semibold">

@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { prisma } from "../lib/prisma.js";
 import { sendDepositReceiptEmail, sendInvoiceReceiptEmail } from "../services/email.js";
 import { notifyOfficeDepositReceived, notifyOfficePaymentReceived } from "../services/org-notifications.js";
+import { createNotification } from "../services/create-notification.js";
 
 export const webhooksRouter = Router();
 
@@ -96,6 +97,14 @@ webhooksRouter.post("/stripe", async (req: Request, res: Response) => {
               customerName: paidInvoice.customer.name,
               orgId: organizationId,
             }).catch((e: unknown) => console.error("[Webhook] Office payment notification failed:", e))
+
+            createNotification({
+              organizationId,
+              type: "payment.received",
+              title: "Payment Received",
+              body: `$${paidInvoice.amount.toFixed(2)} from ${paidInvoice.customer.name}`,
+              link: `/office/revenue`,
+            }).catch(console.error)
           }
         } catch (e) {
           console.error("[Webhook] Failed to fetch invoice/org for notifications:", e)
@@ -213,6 +222,13 @@ webhooksRouter.post("/stripe", async (req: Request, res: Response) => {
         where: { id: failedOrg.id },
         data: { plan: "payment_failed" },
       });
+      createNotification({
+        organizationId: failedOrg.id,
+        type: "payment.failed",
+        title: "Payment Failed",
+        body: "A subscription payment failed. Update billing to restore access.",
+        link: `/office/settings`,
+      }).catch(console.error)
       console.warn(`[webhook] Payment failed — org ${failedOrg.id} plan set to payment_failed`);
       break;
     }

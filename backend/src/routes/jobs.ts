@@ -21,6 +21,7 @@ import {
   sendEnRouteSms,
   sendJobCompletedSms,
 } from "../services/sms.js";
+import { createNotification } from "../services/create-notification.js";
 
 export const jobsRouter = Router();
 
@@ -55,6 +56,33 @@ async function sendStatusNotifications(
       jobId: job.id,
       timestamp: now,
     });
+
+    // Persist in-app notification for office
+    if (job.status === "completed") {
+      createNotification({
+        organizationId,
+        type: "job.completed",
+        title: "Job Completed",
+        body: `${job.customer.name} — ${job.equipmentType ?? "HVAC"} service complete`,
+        link: `/office/jobs`,
+      }).catch(console.error)
+    } else if (job.status === "en_route") {
+      createNotification({
+        organizationId,
+        type: "job.status_changed",
+        title: "Technician En Route",
+        body: `${job.technician?.name ?? "Technician"} is en route to ${job.customer.name}`,
+        link: `/office/jobs`,
+      }).catch(console.error)
+    } else if (job.status === "in_progress") {
+      createNotification({
+        organizationId,
+        type: "job.status_changed",
+        title: "Job In Progress",
+        body: `${job.technician?.name ?? "Technician"} started work at ${job.customer.name}`,
+        link: `/office/jobs`,
+      }).catch(console.error)
+    }
 
     // Also notify the customer
     broadcastToRole(organizationId, "customer", {
@@ -337,6 +365,15 @@ jobsRouter.post("/", async (req, res) => {
     }
 
     sendBookingConfirmedSms(job.id).catch(console.error)
+
+    // Persist in-app notification for new booking
+    createNotification({
+      organizationId: req.user!.organizationId,
+      type: "job.created",
+      title: "New Job Booked",
+      body: `${job.customer.name} — ${job.equipmentType ?? "HVAC"} ${parsed.data.priority === "urgent" ? "🚨 URGENT" : ""}`,
+      link: `/office/jobs`,
+    }).catch(console.error)
 
     // Notify org dispatch email
     notifyOrgNewBooking(req.user!.organizationId, {
