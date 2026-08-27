@@ -62,7 +62,7 @@ async function geocodeAddress(address: string): Promise<{ lat: number; lng: numb
   try {
     const res = await fetch(
       `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`,
-      { headers: { "User-Agent": "FlowSense-HVAC-App" } }
+      { headers: { "User-Agent": "Pneuros-HVAC-App" } }
     )
     const data = await res.json()
     if (data.length > 0) {

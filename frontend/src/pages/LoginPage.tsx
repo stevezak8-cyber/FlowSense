@@ -4,7 +4,7 @@ import { useAuth } from "@/auth/auth-context"
 import type { UserRole } from "@/auth/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { FlowSenseLogo } from "@/components/brand"
+import { PneurosLogo } from "@/components/brand"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Loader2, Building2, Wrench, UserCircle, AlertCircle } from "lucide-react"
 
@@ -89,7 +89,7 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="flex items-center justify-between bg-background px-6 py-5 lg:px-10">
-        <FlowSenseLogo size="md" />
+        <PneurosLogo size="md" />
         <ThemeToggle />
       </header>
 
@@ -97,7 +97,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           <div className="mb-8 text-center">
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              Sign in to FlowSense
+              Sign in to Pneuros
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
               Enter your credentials to access your dashboard
@@ -161,7 +161,7 @@ export default function LoginPage() {
           </div>
 
           <p className="mt-5 text-center text-sm text-muted-foreground">
-            New to FlowSense?{" "}
+            New to Pneuros?{" "}
             <Link to="/register" className="font-medium text-primary hover:underline">
               Create an account
             </Link>

@@ -71,7 +71,7 @@ export async function generateInvoicePdf(invoice: InvoiceWithRelations): Promise
     doc.moveDown(2)
 
     // Footer
-    doc.fontSize(10).font("Helvetica").fillColor("#888888").text("Thank you for your business. — FlowSense", { align: "center" })
+    doc.fontSize(10).font("Helvetica").fillColor("#888888").text("Thank you for your business. — Pneuros", { align: "center" })
 
     doc.end()
   })

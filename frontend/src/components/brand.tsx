@@ -1,7 +1,7 @@
 import { Wind } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-export function FlowSenseLogo({
+export function PneurosLogo({
   size = "md",
   className,
 }: {
@@ -32,7 +32,7 @@ export function FlowSenseLogo({
             s.title
           )}
         >
-          FlowSense
+          Pneuros
         </span>
         <span
           className={cn(

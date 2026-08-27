@@ -91,7 +91,7 @@ function wrap(title: string, body: string): string {
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
       <h2 style="color:#1a1a1a;">${title}</h2>
       ${body}
-      <p style="color:#888;font-size:13px;margin-top:24px;">— FlowSense</p>
+      <p style="color:#888;font-size:13px;margin-top:24px;">— Pneuros</p>
     </div>
   `;
 }
@@ -110,7 +110,7 @@ export async function notifyOrgNewBooking(
   if (prefs.booking !== false) {
     sendEmail({
       to: email,
-      subject: `FlowSense: New booking — ${job.customer.name}`,
+      subject: `Pneuros: New booking — ${job.customer.name}`,
       html: wrap(
         "New Service Booking",
         `<p>A new job has been booked${isUrgent ? ' <strong style="color:#c0392b;">[URGENT]</strong>' : ""}.</p>
@@ -125,7 +125,7 @@ export async function notifyOrgNewBooking(
     // only send the urgent alert if we didn't already send a booking email that covers it
     sendEmail({
       to: email,
-      subject: `⚠️ FlowSense: URGENT job — ${job.customer.name}`,
+      subject: `⚠️ Pneuros: URGENT job — ${job.customer.name}`,
       html: wrap(
         "⚠️ Urgent Job Alert",
         `<p>A high-priority job has been created and requires immediate attention.</p>
@@ -152,7 +152,7 @@ export async function notifyOrgStatusChange(
 
   sendEmail({
     to: email,
-    subject: `FlowSense: Job status — ${statusLabel[job.status] ?? job.status} (${job.customer.name})`,
+    subject: `Pneuros: Job status — ${statusLabel[job.status] ?? job.status} (${job.customer.name})`,
     html: wrap(
       `Job Status: ${statusLabel[job.status] ?? job.status}`,
       `<p>A job has moved to <strong>${statusLabel[job.status] ?? job.status}</strong>.</p>
@@ -171,7 +171,7 @@ export async function notifyOrgJobCompleted(
 
   sendEmail({
     to: email,
-    subject: `FlowSense: Job completed — ${job.customer.name}`,
+    subject: `Pneuros: Job completed — ${job.customer.name}`,
     html: wrap(
       "Job Completed",
       `<p>A job has been marked complete. An invoice has been automatically generated.</p>
@@ -229,7 +229,7 @@ export async function notifyOfficePaymentReceived(params: {
     if (!sid || !token || !from) return
 
     const client = twilio(sid, token)
-    const body = `[FlowSense] Payment received: $${amount.toFixed(2)} from ${customerName} (${description})`
+    const body = `[Pneuros] Payment received: $${amount.toFixed(2)} from ${customerName} (${description})`
     client.messages
       .create({ to: org.phone, from, body })
       .catch((e: unknown) => console.error("[OrgNotify] Payment SMS failed:", e))

@@ -16,7 +16,7 @@ import {
   ClipboardList,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { FlowSenseLogo } from "@/components/brand"
+import { PneurosLogo } from "@/components/brand"
 import { useAuth } from "@/auth/auth-context"
 
 const navItems = [
@@ -63,7 +63,7 @@ export function AppSidebar() {
     <aside className="fixed inset-y-0 left-0 z-30 flex w-[220px] flex-col bg-sidebar shadow-[1px_0_8px_rgba(0,0,0,0.04)] dark:border-r dark:border-sidebar-border dark:shadow-none">
       {/* Logo */}
       <div className="flex h-[68px] items-center px-5">
-        <FlowSenseLogo size="sm" />
+        <PneurosLogo size="sm" />
       </div>
 
       {/* Nav Items */}

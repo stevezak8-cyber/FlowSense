@@ -103,7 +103,7 @@ export function InviteDialog({ email: defaultEmail = "", role, technicianId, cus
                 autoFocus={!defaultEmail}
               />
               <p className="text-[11px] text-muted-foreground">
-                They'll receive a link to set their password and access FlowSense.
+                They'll receive a link to set their password and access Pneuros.
               </p>
             </div>
             {error && (

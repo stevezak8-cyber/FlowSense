@@ -36,7 +36,7 @@ export function bookingConfirmationHtml(data: BookingConfirmationData): string {
         ${symptomSummary ? `<p style="margin: 4px 0;"><strong>Issue:</strong> ${symptomSummary}</p>` : ""}
         <p style="margin: 4px 0;"><strong>Reference:</strong> ${escapeHtml(data.jobId.slice(0, 12))}</p>
       </div>
-      <p style="color: #666; font-size: 14px;">— The FlowSense Team</p>
+      <p style="color: #666; font-size: 14px;">— The Pneuros Team</p>
     </div>
   `;
 }

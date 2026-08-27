@@ -106,7 +106,7 @@ export async function streamFieldAiResponse(
             .join("\n")
         : `No prior org history for ${job.equipmentType ?? "this equipment type"}.`
 
-    const systemPrompt = `You are FlowSense AI, an expert HVAC field assistant. You help technicians diagnose issues, look up error codes, and find specifications in the field. Be concise and practical — technicians are reading on a phone while on a job site.
+    const systemPrompt = `You are Pneuros AI, an expert HVAC field assistant. You help technicians diagnose issues, look up error codes, and find specifications in the field. Be concise and practical — technicians are reading on a phone while on a job site.
 
 CURRENT JOB:
 - Equipment: ${job.equipmentType ?? "Not specified"}

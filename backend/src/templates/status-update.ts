@@ -20,7 +20,7 @@ export function statusUpdateHtml(data: StatusUpdateData): string {
       <h2 style="color: #1a1a1a;">Service Update</h2>
       <p>Hi ${escapeHtml(data.customerName)},</p>
       <p>${statusMessage}</p>
-      <p style="color: #666; font-size: 14px;">— The FlowSense Team</p>
+      <p style="color: #666; font-size: 14px;">— The Pneuros Team</p>
     </div>
   `;
 }

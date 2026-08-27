@@ -103,7 +103,7 @@ estimatesRouter.post("/:id/send", async (req, res) => {
   try {
     await sendEmail({
       to: (estimate as any).job.customer.email ?? "",
-      subject: `Your estimate from FlowSense — expires in 48 hours`,
+      subject: `Your estimate from Pneuros — expires in 48 hours`,
       html: `<p>Hi ${(estimate as any).job.customer.name},</p>
 <p>Your estimate for <strong>${(estimate as any).job.title}</strong> is ready to review.</p>
 <p><a href="${portalUrl}">View Your Estimate</a></p>

@@ -1,7 +1,7 @@
 import { Resend } from "resend";
 import { prisma } from "../lib/prisma.js";
 
-const FROM_EMAIL = process.env.FROM_EMAIL ?? "FlowSense <onboarding@resend.dev>";
+const FROM_EMAIL = process.env.FROM_EMAIL ?? "Pneuros <onboarding@resend.dev>";
 
 function getResend() {
   return process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -65,7 +65,7 @@ export async function sendDepositReceiptEmail(estimateId: string): Promise<void>
       <p>Hi ${customerName},</p>
       <p>We've received your deposit of <strong>$${amount.toFixed(2)}</strong> for <strong>${jobTitle}</strong>.</p>
       <p>Your appointment is confirmed. Your technician will be in touch soon.</p>
-      <p>Thank you,<br/>The FlowSense Team</p>
+      <p>Thank you,<br/>The Pneuros Team</p>
     `,
   })
 }
@@ -104,7 +104,7 @@ export async function sendInvoiceReceiptEmail(params: {
           ${orgContactEmail ? `Email: ${orgContactEmail}` : ""}
         </p>` : ""}
         <p>Thank you,<br/>${orgName}</p>
-        <p style="color:#888;font-size:13px;margin-top:24px;">— FlowSense</p>
+        <p style="color:#888;font-size:13px;margin-top:24px;">— Pneuros</p>
       </div>
     `,
   })

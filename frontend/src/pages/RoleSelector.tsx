@@ -11,7 +11,7 @@ import {
   FileText,
   CalendarCheck,
 } from "lucide-react"
-import { FlowSenseLogo } from "@/components/brand"
+import { PneurosLogo } from "@/components/brand"
 
 const roles = [
   {
@@ -59,7 +59,7 @@ export default function RoleSelectorPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="flex items-center justify-between border-b border-border px-6 py-4 lg:px-10">
-        <FlowSenseLogo size="md" />
+        <PneurosLogo size="md" />
         <span className="hidden text-xs font-mono text-muted-foreground sm:block">
           v2.4.1 // MULTI-ROLE ACCESS
         </span>
@@ -71,7 +71,7 @@ export default function RoleSelectorPage() {
             Select your dashboard
           </h1>
           <p className="mt-3 max-w-lg text-sm text-muted-foreground leading-relaxed text-pretty">
-            FlowSense provides dedicated interfaces for every role in your HVAC
+            Pneuros provides dedicated interfaces for every role in your HVAC
             operation. Choose your portal below to get started.
           </p>
         </div>

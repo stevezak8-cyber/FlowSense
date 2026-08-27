@@ -14,7 +14,7 @@ export function UpdatePrompt() {
   return (
     <div className="fixed bottom-20 inset-x-0 z-50 flex justify-center px-4">
       <div className="flex items-center gap-3 rounded-lg bg-card border border-border shadow-lg px-4 py-3 text-sm max-w-sm w-full">
-        <span className="flex-1 text-foreground">A new version of FlowSense is available.</span>
+        <span className="flex-1 text-foreground">A new version of Pneuros is available.</span>
         <button
           type="button"
           onClick={() => updateServiceWorker(true)}

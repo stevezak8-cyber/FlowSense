@@ -3,16 +3,16 @@ import { execSync } from "child_process";
 
 // Run database migrations on startup before anything else
 try {
-  console.log("[FlowSense] Running database migrations...");
+  console.log("[Pneuros] Running database migrations...");
   const { pathname: backendDir } = new URL("..", import.meta.url);
   const prismaCli = new URL("../node_modules/prisma/build/index.js", import.meta.url).pathname;
   execSync(`node ${prismaCli} migrate deploy`, {
     stdio: "inherit",
     cwd: backendDir,
   });
-  console.log("[FlowSense] Migrations complete.");
+  console.log("[Pneuros] Migrations complete.");
 } catch (err) {
-  console.error("[FlowSense] Migration failed:", err);
+  console.error("[Pneuros] Migration failed:", err);
   // Don't exit — let the app start even if migrations already applied
 }
 
@@ -22,7 +22,7 @@ const REQUIRED_VARS = ["DATABASE_URL", "JWT_SECRET"] as const;
 const missing = REQUIRED_VARS.filter((v) => !process.env[v]);
 if (missing.length > 0) {
   console.error(
-    `\n[FlowSense] Missing required environment variables:\n` +
+    `\n[Pneuros] Missing required environment variables:\n` +
     missing.map((v) => `  ✗ ${v}`).join("\n") +
     `\n\nCopy backend/.env.example to backend/.env and fill in the values.\n`
   );
@@ -42,7 +42,7 @@ const OPTIONAL_IMPORTANT: { key: string; feature: string }[] = [
 const warnMissing = OPTIONAL_IMPORTANT.filter((v) => !process.env[v.key]);
 if (warnMissing.length > 0) {
   console.warn(
-    `\n[FlowSense] Optional env vars not set (features will be degraded):\n` +
+    `\n[Pneuros] Optional env vars not set (features will be degraded):\n` +
     warnMissing.map((v) => `  ⚠ ${v.key} — ${v.feature}`).join("\n") + "\n"
   );
 }
@@ -186,12 +186,12 @@ if (process.env.NODE_ENV === "production") {
   });
 } else {
   app.get("/", (_req, res) => {
-    res.json({ name: "FlowSense API", version: "0.1.0", docs: "/health" });
+    res.json({ name: "Pneuros API", version: "0.1.0", docs: "/health" });
   });
 }
 
 const server = app.listen(PORT, () => {
-  console.log(`FlowSense API running at http://localhost:${PORT}`);
+  console.log(`Pneuros API running at http://localhost:${PORT}`);
 });
 
 setupWebSocket(server);

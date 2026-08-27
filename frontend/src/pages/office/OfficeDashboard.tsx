@@ -90,7 +90,7 @@ export default function OfficeDashboardPage() {
             Office Dashboard
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Operations overview for FlowSense HVAC services
+            Operations overview for Pneuros HVAC services
           </p>
         </div>
         <div className="flex items-center gap-2">

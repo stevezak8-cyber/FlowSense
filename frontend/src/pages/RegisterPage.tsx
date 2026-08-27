@@ -3,7 +3,7 @@ import { Link, Navigate, useNavigate } from "react-router-dom"
 import { useAuth } from "@/auth/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { FlowSenseLogo } from "@/components/brand"
+import { PneurosLogo } from "@/components/brand"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Loader2, AlertCircle, Building2, User, Mail, Lock } from "lucide-react"
 
@@ -69,7 +69,7 @@ export default function RegisterPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="flex items-center justify-between bg-background px-6 py-5 lg:px-10">
-        <FlowSenseLogo size="md" />
+        <PneurosLogo size="md" />
         <ThemeToggle />
       </header>
 
@@ -77,7 +77,7 @@ export default function RegisterPage() {
         <div className="w-full max-w-md">
           <div className="mb-8 text-center">
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              Create your FlowSense account
+              Create your Pneuros account
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
               Get your HVAC business up and running in minutes

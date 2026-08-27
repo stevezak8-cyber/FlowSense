@@ -525,7 +525,7 @@ authRouter.post("/forgot-password", async (req, res) => {
 
     await sendEmail({
       to: user.email,
-      subject: "FlowSense: Reset your password",
+      subject: "Pneuros: Reset your password",
       html: passwordResetHtml({ name: user.name, resetUrl }),
     });
   } catch (e) {

@@ -12,7 +12,7 @@ export default function OfficeLayout() {
 
   useEffect(() => {
     if (searchParams.get("checkout") === "success") {
-      toast.success("Welcome to FlowSense. Let's get your team set up.")
+      toast.success("Welcome to Pneuros. Let's get your team set up.")
       setSearchParams((prev) => {
         prev.delete("checkout")
         return prev

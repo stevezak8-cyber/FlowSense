@@ -26,7 +26,7 @@ export function jobCompletedHtml(data: JobCompletedData): string {
       <p>Your ${equipmentType ?? "HVAC"} service has been completed by ${techName} on ${date}.</p>
       <p>An invoice will follow shortly with the service details and cost.</p>
       <p>If you have any questions about the work performed, please don't hesitate to reach out.</p>
-      <p style="color: #666; font-size: 14px;">— The FlowSense Team</p>
+      <p style="color: #666; font-size: 14px;">— The Pneuros Team</p>
     </div>
   `;
 }

@@ -11,7 +11,7 @@ import {
   ShieldCheck,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { FlowSenseLogo } from "@/components/brand"
+import { PneurosLogo } from "@/components/brand"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useAuth } from "@/auth/auth-context"
 import { ConciergeChatWidget } from "@/components/customer/ConciergeChatWidget"
@@ -43,7 +43,7 @@ export default function CustomerLayout() {
       {/* Header */}
       <header className="sticky top-0 z-30 bg-card shadow-[0_1px_4px_rgba(0,0,0,0.04)] dark:border-b dark:border-border dark:shadow-none">
         <div className="mx-auto flex h-[60px] max-w-5xl items-center justify-between px-4">
-          <FlowSenseLogo size="sm" />
+          <PneurosLogo size="sm" />
           <div className="flex items-center gap-3">
             {user && (
               <span className="text-xs text-muted-foreground font-medium hidden sm:block">

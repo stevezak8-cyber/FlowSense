@@ -2,7 +2,7 @@ import { Link, Outlet, useLocation, useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react"
 import { LayoutDashboard, MapPin, MessageSquare, User, LogOut, Download } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { FlowSenseLogo } from "@/components/brand"
+import { PneurosLogo } from "@/components/brand"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useAuth } from "@/auth/auth-context"
 import { api } from "@/api/client"
@@ -106,7 +106,7 @@ export default function TechnicianLayout() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="sticky top-0 z-30 flex h-[60px] items-center justify-between bg-card px-4 shadow-[0_1px_4px_rgba(0,0,0,0.04)] dark:border-b dark:border-border dark:shadow-none">
-        <FlowSenseLogo size="sm" />
+        <PneurosLogo size="sm" />
         <div className="flex items-center gap-3">
           {user && (
             <span className="text-xs font-medium text-muted-foreground hidden sm:block">
@@ -149,7 +149,7 @@ export default function TechnicianLayout() {
         <div className="flex items-center justify-between gap-3 bg-primary/10 border-b border-primary/20 px-4 py-2.5">
           <div className="flex items-center gap-2 text-sm">
             <Download className="h-4 w-4 text-primary flex-shrink-0" />
-            <span className="text-foreground font-medium">Add FlowSense to your home screen</span>
+            <span className="text-foreground font-medium">Add Pneuros to your home screen</span>
           </div>
           <div className="flex items-center gap-2">
             <button

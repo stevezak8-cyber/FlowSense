@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { FlowSenseLogo } from "@/components/brand"
+import { PneurosLogo } from "@/components/brand"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Loader2, AlertCircle, CheckCircle2, Lock } from "lucide-react"
 
@@ -46,7 +46,7 @@ export default function ResetPasswordPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="flex items-center justify-between bg-background px-6 py-5 lg:px-10">
-        <FlowSenseLogo size="md" />
+        <PneurosLogo size="md" />
         <ThemeToggle />
       </header>
 

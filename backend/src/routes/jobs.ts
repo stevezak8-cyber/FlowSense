@@ -352,7 +352,7 @@ jobsRouter.post("/", async (req, res) => {
     if (customer?.email) {
       sendEmail({
         to: customer.email,
-        subject: "FlowSense: Service Request Received",
+        subject: "Pneuros: Service Request Received",
         html: bookingConfirmationHtml({
           customerName: customer.name,
           serviceType: parsed.data.serviceType ?? null,

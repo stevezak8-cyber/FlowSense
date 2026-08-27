@@ -30,7 +30,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     if (path === "/jobs") return "Jobs";
     if (path === "/technicians") return "Technicians";
     if (path === "/customers") return "Customers";
-    return "FlowSense";
+    return "Pneuros";
   })();
 
   return (
@@ -44,7 +44,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           </div>
           <div>
             <h1 className="text-base font-bold tracking-tight text-white">
-              FlowSense
+              Pneuros
             </h1>
             <p className="text-[11px] font-medium uppercase tracking-wider text-sidebar-muted">
               HVAC Platform
@@ -94,7 +94,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="truncate text-sm font-medium text-white">
-                FlowSense Admin
+                Pneuros Admin
               </p>
               <p className="truncate text-xs text-sidebar-muted">
                 admin@flowsense.io

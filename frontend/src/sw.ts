@@ -30,7 +30,7 @@ registerRoute(
 self.addEventListener("push", (event) => {
   const data = (event as PushEvent).data?.json() ?? {}
   event.waitUntil(
-    self.registration.showNotification(data.title ?? "FlowSense", {
+    self.registration.showNotification(data.title ?? "Pneuros", {
       body: data.body ?? "",
       icon: "/icon-192.png",
       badge: "/icon-192.png",

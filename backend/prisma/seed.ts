@@ -8,7 +8,7 @@ async function main() {
     where: { slug: "default" },
     create: {
       id: "default-org",
-      name: "FlowSense Demo HVAC",
+      name: "Pneuros Demo HVAC",
       slug: "default",
     },
     update: {},

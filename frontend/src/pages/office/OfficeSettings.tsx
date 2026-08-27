@@ -507,7 +507,7 @@ export default function OfficeSettings() {
             <p className="text-sm font-medium">Enable SMS notifications</p>
             <p className="text-xs text-muted-foreground">
               {smsEnabled
-                ? "Customers will receive texts from our shared FlowSense number. Messages include your business name."
+                ? "Customers will receive texts from our shared Pneuros number. Messages include your business name."
                 : "Enable to send automated texts to customers at key job milestones."}
             </p>
           </div>

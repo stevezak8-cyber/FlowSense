@@ -65,7 +65,7 @@ export function OnboardingChecklist({ refreshKey }: Props) {
   if (allDone && allDoneShown) {
     return (
       <div className="mx-3 mb-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-300">
-        You're all set! FlowSense is ready.
+        You're all set! Pneuros is ready.
       </div>
     )
   }
