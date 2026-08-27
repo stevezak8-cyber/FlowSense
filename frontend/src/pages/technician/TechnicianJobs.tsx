@@ -6,7 +6,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet"
 import {
   MapPin, Clock, ChevronRight, Navigation, AlertTriangle,
   Wrench, CheckCircle2, Truck, User, Phone, Loader2, Sparkles, RefreshCw,
-  Zap, TrendingUp, TrendingDown, Calendar, MoreHorizontal, Search,
+  Zap, TrendingUp, Calendar, Search,
 } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
@@ -63,8 +63,7 @@ export default function TechnicianJobsPage() {
   const [completingJob, setCompletingJob] = useState<ApiJob | null>(null)
   const [estimateJob, setEstimateJob] = useState<ApiJob | null>(null)
   const [askAiJob, setAskAiJob] = useState<ApiJob | null>(null)
-  const [showAiPanel, setShowAiPanel] = useState(false)
-  const [currentEstimate, setCurrentEstimate] = useState<Estimate | null>(null)
+const [currentEstimate, setCurrentEstimate] = useState<Estimate | null>(null)
   const [generatingEstimate, setGeneratingEstimate] = useState(false)
   const [jobEquipment, setJobEquipment] = useState<Record<string, Equipment | null>>({})
 
@@ -504,7 +503,7 @@ export default function TechnicianJobsPage() {
             <button
               key={label}
               onClick={() => {
-                if (activeJobs[0]) { setAskAiJob(activeJobs[0]); setShowAiPanel(true) }
+                if (activeJobs[0]) setAskAiJob(activeJobs[0])
               }}
               className="flex flex-col items-start gap-2 rounded-xl bg-card border border-border/60 shadow-sm px-3 py-3 hover:border-violet-300 dark:hover:border-violet-500/40 transition-colors"
             >
