@@ -41,7 +41,9 @@ export default defineConfig({
     alias: { "@": path.resolve(__dirname, "./src") },
   },
   server: {
-    port: 5173,
+    port: Number(process.env.PORT) || 3000,
+    host: true,
+    allowedHosts: true,
     proxy: {
       "/api": { target: "http://localhost:4000", changeOrigin: true },
       "/health": { target: "http://localhost:4000", changeOrigin: true },
