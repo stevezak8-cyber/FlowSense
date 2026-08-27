@@ -33,11 +33,11 @@ const statusConfig: Record<string, { label: string; className: string; icon: typ
   cancelled: { label: "Cancelled", className: "bg-destructive/15 text-destructive border-destructive/30", icon: Clock },
 }
 
-const priorityConfig: Record<string, { label: string; className: string }> = {
-  low: { label: "Low", className: "text-muted-foreground" },
-  normal: { label: "Normal", className: "text-primary" },
-  high: { label: "High", className: "text-accent" },
-  urgent: { label: "Urgent", className: "text-destructive" },
+const priorityConfig: Record<string, { label: string; className: string; borderColor: string }> = {
+  low: { label: "Low", className: "text-muted-foreground", borderColor: "border-l-muted-foreground/30" },
+  normal: { label: "Normal", className: "text-primary", borderColor: "border-l-primary/60" },
+  high: { label: "High", className: "text-amber-500", borderColor: "border-l-amber-500" },
+  urgent: { label: "Urgent", className: "text-destructive", borderColor: "border-l-destructive" },
 }
 
 export default function TechnicianJobsPage() {
@@ -129,33 +129,38 @@ export default function TechnicianJobsPage() {
     const scheduled = new Date(job.scheduledAt)
 
     return (
-      <Card className="border-border bg-card overflow-hidden">
+      <Card className={cn("border-border bg-card overflow-hidden border-l-4", priority.borderColor)}>
         <button onClick={() => setExpandedId(isExpanded ? null : job.id)} className="w-full text-left">
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
-              <div className={cn("flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg", status.className, "border")}>
+              <div className={cn("flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl", status.className, "border")}>
                 <StatusIcon className="h-5 w-5" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
-                  <h3 className="text-sm font-semibold text-card-foreground truncate">
+                  <h3 className="text-sm font-bold text-card-foreground truncate leading-snug">
                     {job.equipmentType
                       ? job.equipmentType.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())
                       : "Service"}
-                    {job.symptomSummary ? ` — ${job.symptomSummary}` : ""}
                   </h3>
                   {isExpanded ? <ChevronUp className="h-4 w-4 flex-shrink-0 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 flex-shrink-0 text-muted-foreground" />}
                 </div>
-                <div className="mt-1 flex items-center gap-2">
-                  <span className="font-mono text-[10px] text-muted-foreground">{job.id.slice(0, 8)}</span>
-                  <Badge variant="outline" className={cn("rounded-sm px-1.5 py-0 text-[9px] font-mono uppercase border", status.className)}>{status.label}</Badge>
-                  {job.priority === "urgent" && <AlertTriangle className="h-3.5 w-3.5 text-destructive" />}
+                {job.symptomSummary && (
+                  <p className="text-xs text-muted-foreground truncate mt-0.5">{job.symptomSummary}</p>
+                )}
+                <div className="mt-2 flex items-center gap-2">
+                  <Badge variant="outline" className={cn("rounded-full px-2 py-0 text-[10px] font-semibold border", status.className)}>{status.label}</Badge>
+                  {(job.priority === "urgent" || job.priority === "high") && (
+                    <Badge variant="outline" className={cn("rounded-full px-2 py-0 text-[10px] font-semibold", priority.className, "border-current/30")}>
+                      {priority.label}
+                    </Badge>
+                  )}
                 </div>
                 <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1"><User className="h-3 w-3" /><span>{job.customer.name}</span></div>
+                  <div className="flex items-center gap-1"><User className="h-3 w-3" /><span className="font-medium text-card-foreground">{job.customer.name}</span></div>
                   <div className="flex items-center gap-1">
                     <Clock className="h-3 w-3" />
-                    <span>{scheduled.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                    <span className="font-medium">{scheduled.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
                   </div>
                 </div>
               </div>
@@ -396,11 +401,45 @@ export default function TechnicianJobsPage() {
     )
   }
 
+  const totalJobs = activeJobs.length + completedJobs.length
+  const progressPct = totalJobs > 0 ? Math.round((completedJobs.length / totalJobs) * 100) : 0
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening"
+  const dateStr = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })
+
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-lg font-semibold text-foreground">{"Today's Jobs"}</h1>
-        <p className="text-xs text-muted-foreground font-mono">{activeJobs.length} active, {completedJobs.length} completed</p>
+      {/* Greeting + stats header */}
+      <div className="rounded-xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/15 p-4 space-y-3">
+        <div>
+          <p className="text-xs text-muted-foreground">{dateStr}</p>
+          <h1 className="text-xl font-bold text-foreground mt-0.5">{greeting} 👋</h1>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          <div className="rounded-lg bg-card border border-border p-2.5 text-center">
+            <p className="text-2xl font-bold text-foreground">{totalJobs}</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide mt-0.5">Total</p>
+          </div>
+          <div className="rounded-lg bg-card border border-border p-2.5 text-center">
+            <p className="text-2xl font-bold text-primary">{activeJobs.length}</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide mt-0.5">Active</p>
+          </div>
+          <div className="rounded-lg bg-card border border-border p-2.5 text-center">
+            <p className="text-2xl font-bold text-success">{completedJobs.length}</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide mt-0.5">Done</p>
+          </div>
+        </div>
+        {totalJobs > 0 && (
+          <div className="space-y-1">
+            <div className="flex justify-between text-[10px] text-muted-foreground">
+              <span>Progress</span>
+              <span>{progressPct}%</span>
+            </div>
+            <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+              <div className="h-full rounded-full bg-success transition-all duration-500" style={{ width: `${progressPct}%` }} />
+            </div>
+          </div>
+        )}
       </div>
 
       {activeJobs.length > 0 && (
