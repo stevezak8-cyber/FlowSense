@@ -24,7 +24,7 @@ billingRouter.post("/portal", async (req, res) => {
   try {
     const session = await stripe.billingPortal.sessions.create({
       customer: org.stripeCustomerId,
-      return_url: "http://localhost:5173/office/settings",
+      return_url: `${process.env.FRONTEND_URL ?? "http://localhost:5173"}/office/settings`,
     });
     return res.json({ url: session.url });
   } catch {

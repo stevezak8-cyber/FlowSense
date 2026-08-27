@@ -2,6 +2,7 @@ import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { z } from "zod";
 import { sendPushToUser } from "../services/push.js";
+import twilio from "twilio";
 
 export const conversationsRouter = Router();
 
@@ -124,6 +125,30 @@ conversationsRouter.post("/:id/messages", async (req, res) => {
     });
 
     res.status(201).json(message);
+
+    // Dispatch outbound SMS if this is an SMS conversation
+    if (conversation.channel === "sms") {
+      const sid = process.env.TWILIO_ACCOUNT_SID
+      const token = process.env.TWILIO_AUTH_TOKEN
+      const from = process.env.TWILIO_PHONE_NUMBER
+      if (sid && token && from) {
+        // Extract customer phone from subject "SMS — Name (customerId)"
+        const match = (conversation.subject as string).match(/\(([^)]+)\)$/)
+        if (match) {
+          const customer = await prisma.customer.findUnique({
+            where: { id: match[1] },
+            select: { phone: true, smsOptOut: true },
+          }).catch(() => null)
+          if (customer?.phone && !customer.smsOptOut) {
+            twilio(sid, token).messages.create({
+              body: parsed.data.content,
+              from,
+              to: customer.phone,
+            }).catch((err: unknown) => console.error("[SMS] Outbound send failed:", err))
+          }
+        }
+      }
+    }
 
     // Fire push to participants (other than sender)
     const participantIds: string[] = (conversation.participants as string[]) ?? []

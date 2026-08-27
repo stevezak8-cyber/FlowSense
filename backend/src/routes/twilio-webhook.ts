@@ -43,12 +43,53 @@ twilioWebhookRouter.post("/", async (req: Request, res: Response) => {
     }
 
     // UNSTOP: customer re-opted in
-    // `From` is the customer's number on inbound messages
     if (SmsStatus === "received" && Body?.trim().toUpperCase() === "UNSTOP" && From) {
       const customer = await prisma.customer.findFirst({ where: { phone: From } })
       if (customer) {
         await prisma.customer.update({ where: { id: customer.id }, data: { smsOptOut: false } })
         console.log(`[SMS] Opt-in restored for ${From}`)
+      }
+    }
+
+    // Inbound SMS — store as conversation message
+    if (SmsStatus === "received" && From && Body && Body.trim().toUpperCase() !== "UNSTOP") {
+      const customer = await prisma.customer.findFirst({ where: { phone: From } })
+      if (customer) {
+        // Find or create an SMS conversation for this customer
+        let conversation = await prisma.conversation.findFirst({
+          where: {
+            organizationId: customer.organizationId,
+            channel: "sms",
+            subject: { contains: customer.id },
+          },
+        })
+        if (!conversation) {
+          conversation = await prisma.conversation.create({
+            data: {
+              organizationId: customer.organizationId,
+              subject: `SMS — ${customer.name} (${customer.id})`,
+              channel: "sms",
+              participants: [],
+              lastMessageAt: new Date(),
+              unreadCount: 1,
+            },
+          })
+        }
+        await prisma.message.create({
+          data: {
+            conversationId: conversation.id,
+            sender: customer.name,
+            senderRole: "customer",
+            content: Body.trim(),
+          },
+        })
+        await prisma.conversation.update({
+          where: { id: conversation.id },
+          data: { lastMessageAt: new Date(), unreadCount: { increment: 1 } },
+        })
+        console.log(`[SMS] Inbound message from ${customer.name} stored in conversation ${conversation.id}`)
+      } else {
+        console.warn(`[SMS] Inbound from unknown number: ${From}`)
       }
     }
   } catch (err) {

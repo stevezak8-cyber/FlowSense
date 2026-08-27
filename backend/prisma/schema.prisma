@@ -238,6 +238,8 @@ model JobReview {
   customer       Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
   rating         Int
   comment        String?
+  officeResponse String?
+  flagged        Boolean      @default(false)
   createdAt      DateTime     @default(now())
 
   @@index([organizationId])

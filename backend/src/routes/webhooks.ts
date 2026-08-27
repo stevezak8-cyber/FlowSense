@@ -204,7 +204,16 @@ webhooksRouter.post("/stripe", async (req: Request, res: Response) => {
 
     case "invoice.payment_failed": {
       const inv = event.data.object as Stripe.Invoice;
-      console.warn(`[webhook] Payment failed for customer ${inv.customer as string}`);
+      if (!inv.subscription) break;
+      const failedOrg = await prisma.organization.findFirst({
+        where: { stripeCustomerId: inv.customer as string },
+      });
+      if (!failedOrg) break;
+      await prisma.organization.update({
+        where: { id: failedOrg.id },
+        data: { plan: "payment_failed" },
+      });
+      console.warn(`[webhook] Payment failed — org ${failedOrg.id} plan set to payment_failed`);
       break;
     }
 
