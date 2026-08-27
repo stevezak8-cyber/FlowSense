@@ -43,6 +43,7 @@ import CustomerEstimate from "./pages/customer/CustomerEstimate";
 import CustomerEquipment from "./pages/customer/CustomerEquipment";
 import CustomerAccount from "./pages/customer/CustomerAccount";
 import CustomerHistory from "./pages/customer/CustomerHistory";
+import CustomerMaintenancePlans from "./pages/customer/CustomerMaintenancePlans";
 
 function App() {
   useNotifications();
@@ -120,6 +121,7 @@ function App() {
         <Route path="equipment" element={<CustomerEquipment />} />
         <Route path="history" element={<CustomerHistory />} />
         <Route path="account" element={<CustomerAccount />} />
+        <Route path="plans" element={<CustomerMaintenancePlans />} />
       </Route>
 
       {/* Customer estimate approval — public, no auth required */}

@@ -98,8 +98,21 @@ maintenancePlansRouter.post("/", async (req, res) => {
 })
 
 maintenancePlansRouter.get("/", async (req, res) => {
-  if (req.user!.role !== "office") return res.status(403).json({ error: "Forbidden" })
   const { organizationId } = req.user!
+
+  // Customers see only their own plans
+  if (req.user!.role === "customer") {
+    const customerId = req.user!.customerId
+    if (!customerId) return res.status(400).json({ error: "Customer account required" })
+    const plans = await prisma.maintenancePlan.findMany({
+      where: { organizationId, customerId },
+      include: { items: true, invoice: { select: { id: true, status: true } } },
+      orderBy: { startDate: "desc" },
+    })
+    return res.json(plans)
+  }
+
+  if (req.user!.role !== "office") return res.status(403).json({ error: "Forbidden" })
   const status = (req.query.status as string) ?? "active"
   const customerId = req.query.customerId as string | undefined
 

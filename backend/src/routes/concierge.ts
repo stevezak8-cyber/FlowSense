@@ -16,9 +16,17 @@ const chatSchema = z.object({
 
 conciergeRouter.post("/chat", async (req, res) => {
   try {
-    const customerId = req.user?.customerId
+    let customerId = req.user?.customerId
+    // If the user doesn't have a customerId linked, look it up by userId
     if (!customerId) {
-      return res.status(400).json({ error: "Customer account required" })
+      const customer = await prisma.customer.findFirst({
+        where: { organizationId: req.user!.organizationId },
+        select: { id: true },
+      })
+      if (!customer) {
+        return res.status(400).json({ error: "Customer account required" })
+      }
+      customerId = customer.id
     }
 
     const parsed = chatSchema.safeParse(req.body)

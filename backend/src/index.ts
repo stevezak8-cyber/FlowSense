@@ -29,6 +29,24 @@ if (missing.length > 0) {
   process.exit(1);
 }
 
+// Warn about optional but important vars that will cause silent failures if absent
+const OPTIONAL_IMPORTANT: { key: string; feature: string }[] = [
+  { key: "STRIPE_SECRET_KEY", feature: "Stripe payments" },
+  { key: "STRIPE_WEBHOOK_SECRET", feature: "Stripe webhooks" },
+  { key: "STRIPE_CONNECT_CLIENT_ID", feature: "Stripe Connect" },
+  { key: "ANTHROPIC_API_KEY", feature: "AI features" },
+  { key: "TWILIO_ACCOUNT_SID", feature: "SMS notifications" },
+  { key: "VAPID_PUBLIC_KEY", feature: "Push notifications" },
+  { key: "FRONTEND_URL", feature: "Stripe portal redirect" },
+];
+const warnMissing = OPTIONAL_IMPORTANT.filter((v) => !process.env[v.key]);
+if (warnMissing.length > 0) {
+  console.warn(
+    `\n[FlowSense] Optional env vars not set (features will be degraded):\n` +
+    warnMissing.map((v) => `  ⚠ ${v.key} — ${v.feature}`).join("\n") + "\n"
+  );
+}
+
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
