@@ -128,34 +128,52 @@ export default function TechnicianJobsPage() {
     const nextAction = statusFlow[job.status]
     const scheduled = new Date(job.scheduledAt)
 
+    const accentBar = {
+      scheduled: "bg-primary",
+      en_route: "bg-accent",
+      in_progress: "bg-chart-4",
+      completed: "bg-success",
+      cancelled: "bg-destructive",
+    }[job.status] ?? "bg-primary"
+
     return (
-      <Card className="border-border bg-card overflow-hidden">
+      <Card className={cn(
+        "relative overflow-hidden border-border bg-card shadow-sm transition-all hover:shadow-md",
+        isExpanded ? "ring-1 ring-primary/20" : "",
+        job.status === "completed" && "opacity-90"
+      )}>
+        <span className={cn("absolute inset-y-0 left-0 w-1", accentBar)} aria-hidden="true" />
         <button onClick={() => setExpandedId(isExpanded ? null : job.id)} className="w-full text-left">
-          <CardContent className="p-4">
+          <CardContent className="p-4 pl-5">
             <div className="flex items-start gap-3">
-              <div className={cn("flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg", status.className, "border")}>
+              <div className={cn("flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border", status.className)}>
                 <StatusIcon className="h-5 w-5" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
-                  <h3 className="text-sm font-semibold text-card-foreground truncate">
+                  <h3 className="text-sm font-semibold leading-snug text-card-foreground line-clamp-2">
                     {job.equipmentType
                       ? job.equipmentType.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())
                       : "Service"}
                     {job.symptomSummary ? ` — ${job.symptomSummary}` : ""}
                   </h3>
-                  {isExpanded ? <ChevronUp className="h-4 w-4 flex-shrink-0 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 flex-shrink-0 text-muted-foreground" />}
+                  <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                    {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </span>
                 </div>
-                <div className="mt-1 flex items-center gap-2">
-                  <span className="font-mono text-[10px] text-muted-foreground">{job.id.slice(0, 8)}</span>
-                  <Badge variant="outline" className={cn("rounded-sm px-1.5 py-0 text-[9px] font-mono uppercase border", status.className)}>{status.label}</Badge>
-                  {job.priority === "urgent" && <AlertTriangle className="h-3.5 w-3.5 text-destructive" />}
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                  <Badge variant="outline" className={cn("rounded-full px-2 py-0 text-[10px] font-semibold uppercase tracking-wide", status.className)}>{status.label}</Badge>
+                  {job.priority === "urgent" && (
+                    <Badge variant="outline" className="gap-1 rounded-full border-destructive/30 bg-destructive/10 px-2 py-0 text-[10px] font-semibold uppercase text-destructive">
+                      <AlertTriangle className="h-3 w-3" /> Urgent
+                    </Badge>
+                  )}
                 </div>
-                <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1"><User className="h-3 w-3" /><span>{job.customer.name}</span></div>
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    <span>{scheduled.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                <div className="mt-2.5 flex items-center gap-4 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5"><User className="h-3.5 w-3.5" /><span className="font-medium text-foreground/80">{job.customer.name}</span></div>
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="h-3.5 w-3.5" />
+                    <span className="tabular-nums">{scheduled.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
                   </div>
                 </div>
               </div>
@@ -396,31 +414,66 @@ export default function TechnicianJobsPage() {
     )
   }
 
+  const today = new Date().toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" })
+
   return (
-    <div className="space-y-5">
-      <div>
-        <h1 className="text-lg font-semibold text-foreground">{"Today's Jobs"}</h1>
-        <p className="text-xs text-muted-foreground font-mono">{activeJobs.length} active, {completedJobs.length} completed</p>
+    <div className="mx-auto max-w-lg space-y-6">
+      <div className="space-y-4">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{today}</p>
+          <h1 className="mt-0.5 text-2xl font-bold tracking-tight text-foreground">{"Today's Jobs"}</h1>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 to-primary/5 p-4">
+            <div className="flex items-center gap-2">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                <Wrench className="h-4 w-4" />
+              </span>
+              <span className="text-3xl font-bold tabular-nums text-foreground">{activeJobs.length}</span>
+            </div>
+            <p className="mt-2 text-xs font-medium text-muted-foreground">Active jobs</p>
+          </div>
+          <div className="rounded-2xl border border-success/20 bg-gradient-to-br from-success/10 to-success/5 p-4">
+            <div className="flex items-center gap-2">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-success/15 text-success">
+                <CheckCircle2 className="h-4 w-4" />
+              </span>
+              <span className="text-3xl font-bold tabular-nums text-foreground">{completedJobs.length}</span>
+            </div>
+            <p className="mt-2 text-xs font-medium text-muted-foreground">Completed today</p>
+          </div>
+        </div>
       </div>
 
       {activeJobs.length > 0 && (
         <div className="space-y-3">
-          <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Active</span>
+          <div className="flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+            <span className="text-xs font-semibold uppercase tracking-wider text-foreground">Active</span>
+            <span className="text-xs text-muted-foreground">({activeJobs.length})</span>
+          </div>
           {activeJobs.map((job) => (<JobCard key={job.id} job={job} />))}
         </div>
       )}
 
       {completedJobs.length > 0 && (
         <div className="space-y-3">
-          <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Completed</span>
+          <div className="flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-success" />
+            <span className="text-xs font-semibold uppercase tracking-wider text-foreground">Completed</span>
+            <span className="text-xs text-muted-foreground">({completedJobs.length})</span>
+          </div>
           {completedJobs.map((job) => (<JobCard key={job.id} job={job} />))}
         </div>
       )}
 
       {activeJobs.length === 0 && completedJobs.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <Wrench className="h-8 w-8 text-muted-foreground/50" />
-          <p className="mt-3 text-sm text-muted-foreground">No jobs assigned yet</p>
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-16 text-center">
+          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
+            <Wrench className="h-7 w-7 text-muted-foreground/60" />
+          </span>
+          <p className="mt-4 text-sm font-medium text-foreground">No jobs assigned yet</p>
+          <p className="mt-1 text-xs text-muted-foreground">New jobs will appear here when dispatched.</p>
         </div>
       )}
 

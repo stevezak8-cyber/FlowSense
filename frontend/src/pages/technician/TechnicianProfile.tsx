@@ -106,36 +106,37 @@ export default function TechnicianProfile() {
   const initials = tech.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h1 className="text-lg font-semibold text-foreground">Profile</h1>
-        <p className="text-xs text-muted-foreground font-mono">Technician Details</p>
-      </div>
-
+    <div className="mx-auto max-w-lg space-y-5">
       {/* Profile Header */}
-      <Card className="border-border bg-card">
-        <CardContent className="p-5">
-          <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16 border-2 border-primary/30">
-              <AvatarFallback className="bg-primary/15 text-primary text-lg font-mono">
+      <Card className="overflow-hidden border-border bg-card shadow-sm">
+        <div className="h-20 bg-gradient-to-r from-primary/80 via-primary to-accent" />
+        <CardContent className="p-5 pt-0">
+          <div className="-mt-10 flex items-end gap-4">
+            <Avatar className="h-20 w-20 border-4 border-card shadow-md">
+              <AvatarFallback className="bg-primary text-xl font-bold text-primary-foreground">
                 {initials}
               </AvatarFallback>
             </Avatar>
-            <div>
-              <h2 className="text-lg font-semibold text-card-foreground">{tech.name}</h2>
-              <p className="text-xs text-muted-foreground font-mono">
-                {tech.epa608Level ? `EPA 608 ${tech.epa608Level}` : "Technician"}
+            <div className="flex-1 pb-1">
+              <h2 className="text-xl font-bold tracking-tight text-card-foreground">{tech.name}</h2>
+              <p className="text-sm text-muted-foreground">
+                {tech.epa608Level ? `EPA 608 · Type ${tech.epa608Level}` : "Technician"}
               </p>
-              {tech.skills.length > 0 && (
-                <p className="mt-1 text-sm text-primary capitalize">
-                  {tech.skills.join(", ").replace(/-/g, " ")}
-                </p>
-              )}
             </div>
           </div>
+          {tech.skills.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-1.5">
+              {tech.skills.map((skill) => (
+                <Badge key={skill} variant="outline" className="rounded-full border-primary/25 bg-primary/10 px-2.5 py-0.5 text-xs font-medium capitalize text-primary">
+                  {skill.replace(/-/g, " ")}
+                </Badge>
+              ))}
+            </div>
+          )}
           <Button
             variant="outline"
             size="sm"
+            className="mt-4 w-full"
             onClick={() => {
               setEditing(true)
               setEditForm({
@@ -193,25 +194,31 @@ export default function TechnicianProfile() {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
-        <Card className="border-border bg-card">
-          <CardContent className="p-3 text-center">
-            <CheckCircle2 className="mx-auto h-5 w-5 text-success" />
-            <div className="mt-1.5 text-xl font-bold text-card-foreground">{completedCount}</div>
-            <p className="text-[10px] font-mono text-muted-foreground uppercase">Completed</p>
+        <Card className="border-border bg-card shadow-sm">
+          <CardContent className="flex flex-col items-center gap-1 p-4">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-success/15 text-success">
+              <CheckCircle2 className="h-4.5 w-4.5" />
+            </span>
+            <div className="mt-1 text-2xl font-bold tabular-nums text-card-foreground">{completedCount}</div>
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Completed</p>
           </CardContent>
         </Card>
-        <Card className="border-border bg-card">
-          <CardContent className="p-3 text-center">
-            <TrendingUp className="mx-auto h-5 w-5 text-primary" />
-            <div className="mt-1.5 text-xl font-bold text-card-foreground">{completedThisMonth}</div>
-            <p className="text-[10px] font-mono text-muted-foreground uppercase">This Month</p>
+        <Card className="border-border bg-card shadow-sm">
+          <CardContent className="flex flex-col items-center gap-1 p-4">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 text-primary">
+              <TrendingUp className="h-4.5 w-4.5" />
+            </span>
+            <div className="mt-1 text-2xl font-bold tabular-nums text-card-foreground">{completedThisMonth}</div>
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">This Month</p>
           </CardContent>
         </Card>
-        <Card className="border-border bg-card">
-          <CardContent className="p-3 text-center">
-            <Wrench className="mx-auto h-5 w-5 text-accent" />
-            <div className="mt-1.5 text-xl font-bold text-card-foreground">{activeJobs}</div>
-            <p className="text-[10px] font-mono text-muted-foreground uppercase">Active</p>
+        <Card className="border-border bg-card shadow-sm">
+          <CardContent className="flex flex-col items-center gap-1 p-4">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent/15 text-accent">
+              <Wrench className="h-4.5 w-4.5" />
+            </span>
+            <div className="mt-1 text-2xl font-bold tabular-nums text-card-foreground">{activeJobs}</div>
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Active</p>
           </CardContent>
         </Card>
       </div>

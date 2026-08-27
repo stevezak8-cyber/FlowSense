@@ -105,11 +105,11 @@ export default function TechnicianLayout() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <header className="sticky top-0 z-30 flex h-[60px] items-center justify-between bg-card px-4 shadow-[0_1px_4px_rgba(0,0,0,0.04)] dark:border-b dark:border-border dark:shadow-none">
+      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border/60 bg-card/80 px-4 backdrop-blur-xl supports-[backdrop-filter]:bg-card/60">
         <FlowSenseLogo size="sm" />
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {user && (
-            <span className="text-xs font-medium text-muted-foreground hidden sm:block">
+            <span className="mr-1 hidden text-sm font-medium text-foreground sm:block">
               {user.name}
             </span>
           )}
@@ -120,17 +120,25 @@ export default function TechnicianLayout() {
             disabled={toggling}
             title={isOnDuty ? "Tap to go off duty" : "Tap to go on duty"}
             className={cn(
-              "flex items-center gap-1.5 rounded-full px-2.5 py-1 transition-colors",
+              "flex items-center gap-2 rounded-full border px-3 py-1.5 transition-all active:scale-95",
               isOnDuty
-                ? "bg-success/15 hover:bg-success/25"
-                : "bg-muted hover:bg-muted/80"
+                ? "border-success/30 bg-success/10 hover:bg-success/20"
+                : "border-border bg-muted hover:bg-muted/70"
             )}
           >
-            <div className={cn(
-              "h-2 w-2 rounded-full",
-              isOnDuty ? "bg-success animate-pulse" : "bg-muted-foreground"
-            )} />
-            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <span className="relative flex h-2 w-2">
+              {isOnDuty && (
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-75" />
+              )}
+              <span className={cn(
+                "relative inline-flex h-2 w-2 rounded-full",
+                isOnDuty ? "bg-success" : "bg-muted-foreground"
+              )} />
+            </span>
+            <span className={cn(
+              "text-[11px] font-semibold uppercase tracking-wide",
+              isOnDuty ? "text-success" : "text-muted-foreground"
+            )}>
               {isOnDuty ? "On Duty" : "Off Duty"}
             </span>
           </button>
@@ -138,9 +146,10 @@ export default function TechnicianLayout() {
           <button
             type="button"
             onClick={handleLogout}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive transition-colors"
+            title="Sign out"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
           >
-            <LogOut className="h-3.5 w-3.5" />
+            <LogOut className="h-4 w-4" />
           </button>
         </div>
       </header>
@@ -198,26 +207,30 @@ export default function TechnicianLayout() {
         <Outlet />
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-around bg-card py-2.5 shadow-[0_-1px_4px_rgba(0,0,0,0.04)] dark:border-t dark:border-border dark:shadow-none">
-        {navItems.map((item) => {
-          const isActive =
-            item.href === "/technician"
-              ? pathname === "/technician"
-              : pathname.startsWith(item.href)
-          return (
-            <Link
-              key={item.href}
-              to={item.href}
-              className={cn(
-                "flex flex-col items-center gap-1 px-3 py-1.5 transition-colors",
-                isActive ? "text-primary" : "text-muted-foreground"
-              )}
-            >
-              <item.icon className="h-5 w-5" />
-              <span className="text-[10px] font-medium">{item.label}</span>
-            </Link>
-          )
-        })}
+      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-card/80 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl supports-[backdrop-filter]:bg-card/60">
+        <div className="mx-auto flex max-w-lg items-center justify-around px-2 py-2">
+          {navItems.map((item) => {
+            const isActive =
+              item.href === "/technician"
+                ? pathname === "/technician"
+                : pathname.startsWith(item.href)
+            return (
+              <Link
+                key={item.href}
+                to={item.href}
+                className={cn(
+                  "flex flex-1 flex-col items-center gap-1 rounded-xl py-2 transition-all active:scale-95",
+                  isActive
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <item.icon className={cn("h-5 w-5 transition-transform", isActive && "scale-110")} />
+                <span className="text-[10px] font-semibold tracking-wide">{item.label}</span>
+              </Link>
+            )
+          })}
+        </div>
       </nav>
     </div>
   )
