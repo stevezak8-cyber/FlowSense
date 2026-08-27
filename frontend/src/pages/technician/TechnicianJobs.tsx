@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react"
 import { api } from "@/api/client"
 import type { ApiJob, Estimate, Equipment } from "@/api/types"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import {
