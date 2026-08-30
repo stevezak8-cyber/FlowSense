@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { api } from "@/api/client"
-import { Loader2, Wind, Droplets, Thermometer, AlertTriangle } from "lucide-react"
+import { Loader2, Wind, Droplets, AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface WeatherData {
