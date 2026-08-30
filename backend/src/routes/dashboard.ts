@@ -378,106 +378,104 @@ dashboardRouter.get("/weather", async (req, res) => {
 
 // ── HVAC Industry News ────────────────────────────────────────────────────────
 // GET /api/dashboard/news
-// Fetches ACHR News RSS, optionally summarizes with Anthropic, caches 1hr
-
-let newsCache: { articles: NewsArticle[]; fetchedAt: number } | null = null
-
 interface NewsArticle {
   title: string
   summary: string
   url: string
   publishedAt: string
   source: string
+  category: "hvac" | "general"
+}
+
+let newsCache: { articles: NewsArticle[]; fetchedAt: number } | null = null
+
+async function fetchRssFeed(url: string, source: string, category: NewsArticle["category"], maxItems = 3): Promise<NewsArticle[]> {
+  try {
+    const rssRes = await fetch(url, {
+      headers: { "User-Agent": "Pneuros-HVAC-App/1.0", "Accept": "application/rss+xml,application/xml,text/xml" },
+      signal: AbortSignal.timeout(8000),
+    })
+    const xml = await rssRes.text()
+    const items: NewsArticle[] = []
+    const itemRegex = /<item>([\s\S]*?)<\/item>/g
+    let match
+    while ((match = itemRegex.exec(xml)) !== null && items.length < maxItems) {
+      const item = match[1]
+      const title = item.match(/<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/title>/)?.[1]?.trim()
+      const link = item.match(/<link>([^<]+)<\/link>/)?.[1]?.trim() ||
+                   item.match(/<guid[^>]*isPermaLink="true"[^>]*>([^<]+)<\/guid>/)?.[1]?.trim() ||
+                   item.match(/<guid[^>]*>([^<]+)<\/guid>/)?.[1]?.trim()
+      const pubDate = item.match(/<pubDate>(.*?)<\/pubDate>/)?.[1]?.trim()
+      const desc = item.match(/<description>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/description>/)?.[1]
+        ?.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&nbsp;/g, " ").trim().slice(0, 300)
+      if (title && link) {
+        items.push({
+          title: title.replace(/&amp;/g, "&").replace(/&#8217;/g, "'").replace(/&#8216;/g, "'"),
+          summary: desc || title,
+          url: link,
+          publishedAt: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),
+          source,
+          category,
+        })
+      }
+    }
+    return items
+  } catch {
+    return []
+  }
 }
 
 dashboardRouter.get("/news", async (req, res) => {
   if (req.user!.role !== "office") return res.status(403).json({ error: "Forbidden" })
 
-  // Return cache if fresh (< 1 hour)
   if (newsCache && Date.now() - newsCache.fetchedAt < 60 * 60 * 1000) {
     return res.json(newsCache.articles)
   }
 
   try {
-    // Fetch RSS feeds
-    const feeds = [
-      { url: "https://www.achrnews.com/rss/topic/2648", source: "ACHR News" },
-      { url: "https://www.achrnews.com/rss/all", source: "ACHR News" },
-      { url: "https://www.hpac.com/rss/all", source: "HPAC Engineering" },
-      { url: "https://feeds.feedburner.com/contracting-business", source: "Contracting Business" },
-    ]
+    const [hvac1, hvac2, hvac3, general1, general2] = await Promise.all([
+      fetchRssFeed("https://www.achrnews.com/rss/topic/2648", "ACHR News", "hvac", 3),
+      fetchRssFeed("https://www.achrnews.com/rss/all", "ACHR News", "hvac", 3),
+      fetchRssFeed("https://www.hpac.com/rss/all", "HPAC Engineering", "hvac", 2),
+      fetchRssFeed("https://feeds.bbci.co.uk/news/rss.xml", "BBC News", "general", 3),
+      fetchRssFeed("https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml", "NY Times", "general", 3),
+    ])
 
-    const articles: NewsArticle[] = []
-
-    for (const feed of feeds) {
-      try {
-        const rssRes = await fetch(feed.url, {
-          headers: { "User-Agent": "Pneuros-HVAC-App/1.0", "Accept": "application/rss+xml,application/xml,text/xml" },
-          signal: AbortSignal.timeout(8000),
-        })
-        const xml = await rssRes.text()
-
-        // Simple XML parsing — extract items
-        const itemRegex = /<item>([\s\S]*?)<\/item>/g
-        let match
-        let count = 0
-        while ((match = itemRegex.exec(xml)) !== null && count < 3) {
-          const item = match[1]
-          const title = item.match(/<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/title>/)?.[1]?.trim()
-          const link = item.match(/<link>([^<]+)<\/link>/)?.[1]?.trim() ||
-                       item.match(/<guid[^>]*>([^<]+)<\/guid>/)?.[1]?.trim()
-          const pubDate = item.match(/<pubDate>(.*?)<\/pubDate>/)?.[1]?.trim()
-          const desc = item.match(/<description>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/description>/)?.[1]
-            ?.replace(/<[^>]+>/g, "")
-            ?.replace(/&amp;/g, "&")
-            ?.replace(/&lt;/g, "<")
-            ?.replace(/&gt;/g, ">")
-            ?.replace(/&nbsp;/g, " ")
-            ?.trim()
-            ?.slice(0, 300)
-
-          if (title && link) {
-            articles.push({
-              title: title.replace(/&amp;/g, "&").replace(/&#8217;/g, "'").replace(/&#8216;/g, "'"),
-              summary: desc || title,
-              url: link,
-              publishedAt: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),
-              source: feed.source,
-            })
-            count++
-          }
-        }
-      } catch {
-        // Skip failed feed
-      }
+    // Deduplicate HVAC articles by title
+    const hvacSeen = new Set<string>()
+    const hvacArticles: NewsArticle[] = []
+    for (const a of [...hvac1, ...hvac2, ...hvac3]) {
+      if (!hvacSeen.has(a.title)) { hvacSeen.add(a.title); hvacArticles.push(a) }
+      if (hvacArticles.length >= 5) break
     }
 
-    // If Anthropic is available, generate a brief AI summary for each article
+    const generalArticles = [...general1, ...general2].slice(0, 5)
+
+    const allArticles = [...hvacArticles, ...generalArticles]
+
+    // AI summarize if available
     const anthropicKey = process.env.ANTHROPIC_API_KEY
-    if (anthropicKey && articles.length > 0) {
+    if (anthropicKey && allArticles.length > 0) {
       try {
         const { default: Anthropic } = await import("@anthropic-ai/sdk")
         const client = new Anthropic({ apiKey: anthropicKey })
-        const prompt = `Summarize each of these HVAC industry news headlines in one crisp sentence (max 20 words each) relevant to an HVAC business owner. Return as JSON array of strings in the same order:\n${articles.map((a, i) => `${i + 1}. ${a.title}`).join("\n")}`
+        const prompt = `Summarize each headline in one crisp sentence (max 20 words). Return as JSON array of strings in the same order:\n${allArticles.map((a, i) => `${i + 1}. ${a.title}`).join("\n")}`
         const msg = await client.messages.create({
           model: "claude-haiku-4-5-20251001",
-          max_tokens: 400,
+          max_tokens: 600,
           messages: [{ role: "user", content: prompt }],
         })
         const raw = (msg.content[0] as { text: string }).text
         const jsonMatch = raw.match(/\[[\s\S]*\]/)
         if (jsonMatch) {
           const summaries = JSON.parse(jsonMatch[0]) as string[]
-          summaries.forEach((s, i) => { if (articles[i] && s) articles[i].summary = s })
+          summaries.forEach((s, i) => { if (allArticles[i] && s) allArticles[i].summary = s })
         }
-      } catch {
-        // Use raw descriptions if AI fails
-      }
+      } catch { /* use raw descriptions */ }
     }
 
-    const result = articles.slice(0, 6)
-    newsCache = { articles: result, fetchedAt: Date.now() }
-    res.json(result)
+    newsCache = { articles: allArticles, fetchedAt: Date.now() }
+    res.json(allArticles)
   } catch (e) {
     res.status(500).json({ error: "News unavailable" })
   }
