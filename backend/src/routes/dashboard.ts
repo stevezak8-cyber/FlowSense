@@ -402,7 +402,9 @@ dashboardRouter.get("/news", async (req, res) => {
     // Fetch RSS feeds
     const feeds = [
       { url: "https://www.achrnews.com/rss/topic/2648", source: "ACHR News" },
+      { url: "https://www.achrnews.com/rss/all", source: "ACHR News" },
       { url: "https://www.hpac.com/rss/all", source: "HPAC Engineering" },
+      { url: "https://feeds.feedburner.com/contracting-business", source: "Contracting Business" },
     ]
 
     const articles: NewsArticle[] = []

@@ -37,7 +37,12 @@ export function NewsWidget() {
     </div>
   )
 
-  if (!articles.length) return null
+  if (!articles.length) return (
+    <div className="rounded-2xl border border-border/60 bg-card shadow-sm p-5 flex items-center gap-2 text-muted-foreground">
+      <Newspaper className="h-4 w-4" />
+      <span className="text-sm">Industry news unavailable right now.</span>
+    </div>
+  )
 
   return (
     <div className="rounded-2xl border border-border/60 bg-card shadow-sm p-5 space-y-4">
