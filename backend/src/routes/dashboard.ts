@@ -340,25 +340,41 @@ dashboardRouter.get("/analytics/insights", async (req, res) => {
 })
 
 // ── Weather ──────────────────────────────────────────────────────────────────
-// GET /api/dashboard/weather?city=Denver,CO
-// Uses Open-Meteo (free, no key) + Nominatim geocoding
+// GET /api/dashboard/weather?lat=&lon= (browser geolocation) or ?city= (fallback)
 dashboardRouter.get("/weather", async (req, res) => {
   if (req.user!.role !== "office") return res.status(403).json({ error: "Forbidden" })
 
-  const city = (req.query.city as string) || "Denver, CO"
-
   try {
-    // Geocode the city
-    const geoRes = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`,
-      { headers: { "User-Agent": "Pneuros-HVAC-App/1.0" } }
-    )
-    const geoData = await geoRes.json() as Array<{ lat: string; lon: string; display_name: string }>
-    if (!geoData.length) return res.status(404).json({ error: "City not found" })
+    let lat: string, lon: string, cityName: string
 
-    const { lat, lon } = geoData[0]
+    if (req.query.lat && req.query.lon) {
+      // Browser geolocation — reverse geocode for display name
+      lat = req.query.lat as string
+      lon = req.query.lon as string
+      try {
+        const revRes = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
+          { headers: { "User-Agent": "Pneuros-HVAC-App/1.0" }, signal: AbortSignal.timeout(5000) }
+        )
+        const revData = await revRes.json() as { address?: { city?: string; town?: string; county?: string; state?: string } }
+        cityName = revData.address?.city || revData.address?.town || revData.address?.county || "Your Location"
+      } catch {
+        cityName = "Your Location"
+      }
+    } else {
+      // Fall back to org city
+      const city = (req.query.city as string) || "Denver, CO"
+      const geoRes = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`,
+        { headers: { "User-Agent": "Pneuros-HVAC-App/1.0" }, signal: AbortSignal.timeout(5000) }
+      )
+      const geoData = await geoRes.json() as Array<{ lat: string; lon: string; display_name: string }>
+      if (!geoData.length) return res.status(404).json({ error: "City not found" })
+      lat = geoData[0].lat
+      lon = geoData[0].lon
+      cityName = geoData[0].display_name.split(",")[0]
+    }
 
-    // Fetch weather from Open-Meteo
     const weatherRes = await fetch(
       `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
       `&current=temperature_2m,apparent_temperature,weathercode,windspeed_10m,relativehumidity_2m` +
@@ -370,7 +386,7 @@ dashboardRouter.get("/weather", async (req, res) => {
       daily: { time: string[]; temperature_2m_max: number[]; temperature_2m_min: number[]; weathercode: number[]; precipitation_probability_max: number[] }
     }
 
-    res.json({ city: geoData[0].display_name.split(",")[0], lat, lon, ...weather })
+    res.json({ city: cityName, lat, lon, ...weather })
   } catch (e) {
     res.status(500).json({ error: "Weather unavailable" })
   }

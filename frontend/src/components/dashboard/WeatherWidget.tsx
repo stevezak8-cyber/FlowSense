@@ -43,11 +43,27 @@ export function WeatherWidget({ city }: { city?: string }) {
   const [error, setError] = useState(false)
 
   useEffect(() => {
-    const q = city ? `?city=${encodeURIComponent(city)}` : ""
-    api.get<WeatherData>(`/api/dashboard/weather${q}`)
-      .then(setWeather)
-      .catch(() => setError(true))
-      .finally(() => setLoading(false))
+    function fetchWeather(query: string) {
+      api.get<WeatherData>(`/api/dashboard/weather${query}`)
+        .then(setWeather)
+        .catch(() => setError(true))
+        .finally(() => setLoading(false))
+    }
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => fetchWeather(`?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`),
+        () => {
+          // Permission denied — fall back to org city
+          const q = city ? `?city=${encodeURIComponent(city)}` : ""
+          fetchWeather(q)
+        },
+        { timeout: 6000 }
+      )
+    } else {
+      const q = city ? `?city=${encodeURIComponent(city)}` : ""
+      fetchWeather(q)
+    }
   }, [city])
 
   if (loading) return (
