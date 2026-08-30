@@ -297,7 +297,7 @@ export async function notifyOfficeDepositReceived(estimateId: string): Promise<v
 
   const amount = estimate.depositAmount ?? 0
   const customerName = estimate.job?.customer?.name ?? "Customer"
-  const jobTitle = estimate.job?.title ?? "job"
+  const jobTitle = estimate.job?.equipmentType ?? "job"
 
   await sendEmail({
     to: orgEmail,
