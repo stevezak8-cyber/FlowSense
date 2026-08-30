@@ -437,8 +437,8 @@ dashboardRouter.get("/news", async (req, res) => {
       fetchRssFeed("https://www.achrnews.com/rss/topic/2648", "ACHR News", "hvac", 3),
       fetchRssFeed("https://www.achrnews.com/rss/all", "ACHR News", "hvac", 3),
       fetchRssFeed("https://www.hpac.com/rss/all", "HPAC Engineering", "hvac", 2),
-      fetchRssFeed("https://feeds.reuters.com/reuters/topNews", "Reuters", "general", 4),
-      fetchRssFeed("https://feeds.npr.org/1001/rss.xml", "NPR", "general", 3),
+      fetchRssFeed("https://feeds.reuters.com/reuters/domesticNews", "Reuters", "general", 4),
+      fetchRssFeed("https://feeds.npr.org/1003/rss.xml", "NPR", "general", 3),
     ])
 
     // Deduplicate HVAC articles by title

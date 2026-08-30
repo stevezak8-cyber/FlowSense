@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { api } from "@/api/client"
 import { Loader2, Newspaper, ExternalLink, Globe } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface NewsArticle {
   title: string
@@ -16,11 +17,13 @@ function timeAgo(iso: string) {
   const hrs = Math.floor(diff / 3600000)
   if (hrs < 1) return "just now"
   if (hrs < 24) return `${hrs}h ago`
-  const days = Math.floor(hrs / 24)
-  return `${days}d ago`
+  return `${Math.floor(hrs / 24)}d ago`
 }
 
-function ArticleList({ articles, startIndex }: { articles: NewsArticle[]; startIndex: number }) {
+function ArticleList({ articles }: { articles: NewsArticle[] }) {
+  if (!articles.length) return (
+    <p className="text-sm text-muted-foreground py-4 text-center">No articles available right now.</p>
+  )
   return (
     <div className="space-y-1">
       {articles.map((article, i) => (
@@ -32,7 +35,7 @@ function ArticleList({ articles, startIndex }: { articles: NewsArticle[]; startI
           className="group flex items-start gap-3 rounded-xl p-2.5 hover:bg-muted/50 transition-colors -mx-2.5"
         >
           <div className="flex-shrink-0 mt-0.5 flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary text-xs font-bold">
-            {startIndex + i + 1}
+            {i + 1}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-foreground leading-snug group-hover:text-primary transition-colors line-clamp-2">
@@ -57,6 +60,7 @@ function ArticleList({ articles, startIndex }: { articles: NewsArticle[]; startI
 export function NewsWidget() {
   const [articles, setArticles] = useState<NewsArticle[]>([])
   const [loading, setLoading] = useState(true)
+  const [tab, setTab] = useState<"hvac" | "general">("hvac")
 
   useEffect(() => {
     api.get<NewsArticle[]>("/api/dashboard/news")
@@ -65,47 +69,57 @@ export function NewsWidget() {
       .finally(() => setLoading(false))
   }, [])
 
-  if (loading) return (
-    <div className="rounded-2xl border border-border/60 bg-card shadow-sm p-5 flex items-center gap-2 text-muted-foreground">
-      <Loader2 className="h-4 w-4 animate-spin" />
-      <span className="text-sm">Loading news…</span>
-    </div>
-  )
-
-  if (!articles.length) return (
-    <div className="rounded-2xl border border-border/60 bg-card shadow-sm p-5 flex items-center gap-2 text-muted-foreground">
-      <Newspaper className="h-4 w-4" />
-      <span className="text-sm">News unavailable right now.</span>
-    </div>
-  )
-
   const hvac = articles.filter(a => a.category === "hvac")
   const general = articles.filter(a => a.category === "general")
 
   return (
-    <div className="rounded-2xl border border-border/60 bg-card shadow-sm p-5 space-y-5">
-      {hvac.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Newspaper className="h-4 w-4 text-muted-foreground" />
-            <h3 className="text-sm font-bold text-foreground">HVAC Industry</h3>
-            <span className="ml-auto text-[10px] text-muted-foreground">AI summarized</span>
-          </div>
-          <ArticleList articles={hvac} startIndex={0} />
+    <div className="rounded-2xl border border-border/60 bg-card shadow-sm p-5 space-y-4">
+      {/* Tab switcher */}
+      <div className="flex items-center gap-1 rounded-xl bg-muted/50 p-1">
+        <button
+          onClick={() => setTab("hvac")}
+          className={cn(
+            "flex flex-1 items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-semibold transition-all",
+            tab === "hvac"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <Newspaper className="h-3.5 w-3.5" />
+          HVAC Industry
+        </button>
+        <button
+          onClick={() => setTab("general")}
+          className={cn(
+            "flex flex-1 items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-semibold transition-all",
+            tab === "general"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <Globe className="h-3.5 w-3.5" />
+          U.S. News
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center gap-2 text-muted-foreground py-4">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span className="text-sm">Loading news…</span>
         </div>
-      )}
-
-      {hvac.length > 0 && general.length > 0 && (
-        <div className="border-t border-border/60" />
-      )}
-
-      {general.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Globe className="h-4 w-4 text-muted-foreground" />
-            <h3 className="text-sm font-bold text-foreground">Today's News</h3>
+      ) : tab === "hvac" ? (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[10px] text-muted-foreground">AI summarized</span>
           </div>
-          <ArticleList articles={general} startIndex={hvac.length} />
+          <ArticleList articles={hvac} />
+        </div>
+      ) : (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[10px] text-muted-foreground">Reuters · NPR</span>
+          </div>
+          <ArticleList articles={general} />
         </div>
       )}
     </div>
