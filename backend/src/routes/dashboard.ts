@@ -67,6 +67,13 @@ dashboardRouter.get("/stats", async (req, res) => {
     });
     const revenueMtd = revenueResult._sum.amount ?? 0;
 
+    // Org city for weather widget
+    const org = await prisma.organization.findUnique({
+      where: { id: req.user!.organizationId },
+      select: { address: true },
+    });
+    const city = org?.address ?? undefined;
+
     res.json({
       totalJobs,
       activeJobs,
@@ -77,6 +84,7 @@ dashboardRouter.get("/stats", async (req, res) => {
       totalCustomers,
       completedJobs,
       revenueMtd,
+      city,
     });
   } catch (e) {
     res.status(500).json({ error: e instanceof Error ? e.message : "Failed to get stats" });
@@ -328,5 +336,147 @@ dashboardRouter.get("/analytics/insights", async (req, res) => {
     res.json({ narrative })
   } catch (e) {
     res.status(500).json({ error: e instanceof Error ? e.message : "Failed to get insights" })
+  }
+})
+
+// ── Weather ──────────────────────────────────────────────────────────────────
+// GET /api/dashboard/weather?city=Denver,CO
+// Uses Open-Meteo (free, no key) + Nominatim geocoding
+dashboardRouter.get("/weather", async (req, res) => {
+  if (req.user!.role !== "office") return res.status(403).json({ error: "Forbidden" })
+
+  const city = (req.query.city as string) || "Denver, CO"
+
+  try {
+    // Geocode the city
+    const geoRes = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`,
+      { headers: { "User-Agent": "Pneuros-HVAC-App/1.0" } }
+    )
+    const geoData = await geoRes.json() as Array<{ lat: string; lon: string; display_name: string }>
+    if (!geoData.length) return res.status(404).json({ error: "City not found" })
+
+    const { lat, lon } = geoData[0]
+
+    // Fetch weather from Open-Meteo
+    const weatherRes = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+      `&current=temperature_2m,apparent_temperature,weathercode,windspeed_10m,relativehumidity_2m` +
+      `&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max` +
+      `&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto&forecast_days=5`
+    )
+    const weather = await weatherRes.json() as {
+      current: { temperature_2m: number; apparent_temperature: number; weathercode: number; windspeed_10m: number; relativehumidity_2m: number }
+      daily: { time: string[]; temperature_2m_max: number[]; temperature_2m_min: number[]; weathercode: number[]; precipitation_probability_max: number[] }
+    }
+
+    res.json({ city: geoData[0].display_name.split(",")[0], lat, lon, ...weather })
+  } catch (e) {
+    res.status(500).json({ error: "Weather unavailable" })
+  }
+})
+
+// ── HVAC Industry News ────────────────────────────────────────────────────────
+// GET /api/dashboard/news
+// Fetches ACHR News RSS, optionally summarizes with Anthropic, caches 1hr
+
+let newsCache: { articles: NewsArticle[]; fetchedAt: number } | null = null
+
+interface NewsArticle {
+  title: string
+  summary: string
+  url: string
+  publishedAt: string
+  source: string
+}
+
+dashboardRouter.get("/news", async (req, res) => {
+  if (req.user!.role !== "office") return res.status(403).json({ error: "Forbidden" })
+
+  // Return cache if fresh (< 1 hour)
+  if (newsCache && Date.now() - newsCache.fetchedAt < 60 * 60 * 1000) {
+    return res.json(newsCache.articles)
+  }
+
+  try {
+    // Fetch RSS feeds
+    const feeds = [
+      { url: "https://www.achrnews.com/rss/topic/2648", source: "ACHR News" },
+      { url: "https://www.hpac.com/rss/all", source: "HPAC Engineering" },
+    ]
+
+    const articles: NewsArticle[] = []
+
+    for (const feed of feeds) {
+      try {
+        const rssRes = await fetch(feed.url, {
+          headers: { "User-Agent": "Pneuros-HVAC-App/1.0", "Accept": "application/rss+xml,application/xml,text/xml" },
+          signal: AbortSignal.timeout(8000),
+        })
+        const xml = await rssRes.text()
+
+        // Simple XML parsing — extract items
+        const itemRegex = /<item>([\s\S]*?)<\/item>/g
+        let match
+        let count = 0
+        while ((match = itemRegex.exec(xml)) !== null && count < 3) {
+          const item = match[1]
+          const title = item.match(/<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/title>/)?.[1]?.trim()
+          const link = item.match(/<link>([^<]+)<\/link>/)?.[1]?.trim() ||
+                       item.match(/<guid[^>]*>([^<]+)<\/guid>/)?.[1]?.trim()
+          const pubDate = item.match(/<pubDate>(.*?)<\/pubDate>/)?.[1]?.trim()
+          const desc = item.match(/<description>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/description>/)?.[1]
+            ?.replace(/<[^>]+>/g, "")
+            ?.replace(/&amp;/g, "&")
+            ?.replace(/&lt;/g, "<")
+            ?.replace(/&gt;/g, ">")
+            ?.replace(/&nbsp;/g, " ")
+            ?.trim()
+            ?.slice(0, 300)
+
+          if (title && link) {
+            articles.push({
+              title: title.replace(/&amp;/g, "&").replace(/&#8217;/g, "'").replace(/&#8216;/g, "'"),
+              summary: desc || title,
+              url: link,
+              publishedAt: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),
+              source: feed.source,
+            })
+            count++
+          }
+        }
+      } catch {
+        // Skip failed feed
+      }
+    }
+
+    // If Anthropic is available, generate a brief AI summary for each article
+    const anthropicKey = process.env.ANTHROPIC_API_KEY
+    if (anthropicKey && articles.length > 0) {
+      try {
+        const { default: Anthropic } = await import("@anthropic-ai/sdk")
+        const client = new Anthropic({ apiKey: anthropicKey })
+        const prompt = `Summarize each of these HVAC industry news headlines in one crisp sentence (max 20 words each) relevant to an HVAC business owner. Return as JSON array of strings in the same order:\n${articles.map((a, i) => `${i + 1}. ${a.title}`).join("\n")}`
+        const msg = await client.messages.create({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 400,
+          messages: [{ role: "user", content: prompt }],
+        })
+        const raw = (msg.content[0] as { text: string }).text
+        const jsonMatch = raw.match(/\[[\s\S]*\]/)
+        if (jsonMatch) {
+          const summaries = JSON.parse(jsonMatch[0]) as string[]
+          summaries.forEach((s, i) => { if (articles[i] && s) articles[i].summary = s })
+        }
+      } catch {
+        // Use raw descriptions if AI fails
+      }
+    }
+
+    const result = articles.slice(0, 6)
+    newsCache = { articles: result, fetchedAt: Date.now() }
+    res.json(result)
+  } catch (e) {
+    res.status(500).json({ error: "News unavailable" })
   }
 })

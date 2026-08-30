@@ -12,6 +12,8 @@ import { AddTechnicianDialog } from "@/components/technicians/add-technician-dia
 import { AddCustomerDialog } from "@/components/customers/add-customer-dialog"
 import { MaintenanceDueWidget } from "@/components/equipment/MaintenanceDueWidget"
 import { RecurringDraftsWidget } from "@/components/recurring-jobs/RecurringDraftsWidget"
+import { WeatherWidget } from "@/components/dashboard/WeatherWidget"
+import { NewsWidget } from "@/components/dashboard/NewsWidget"
 import { PageError } from "@/components/page-error"
 import { Button } from "@/components/ui/button"
 import { Link } from "react-router-dom"
@@ -104,6 +106,12 @@ export default function OfficeDashboardPage() {
       </div>
 
       <StatCards stats={stats} loading={loading} />
+
+      {/* Weather + News side by side */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <WeatherWidget city={stats?.city} />
+        <NewsWidget />
+      </div>
 
       <MaintenanceDueWidget />
 

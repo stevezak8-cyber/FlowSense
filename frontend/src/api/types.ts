@@ -82,6 +82,7 @@ export interface DashboardStats {
   totalCustomers: number
   completedJobs: number
   revenueMtd: number
+  city?: string
 }
 
 export interface ChartDataPoint {
