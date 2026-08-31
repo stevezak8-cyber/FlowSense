@@ -362,14 +362,18 @@ authRouter.post("/invite", requireAuth, async (req, res) => {
     }
 
     if (!user) {
-      // Verify referenced technician/customer belong to this org
+      // Verify referenced technician/customer belong to this org and aren't already linked to a user
       if (technicianId) {
         const tech = await prisma.technician.findFirst({ where: { id: technicianId, organizationId } });
         if (!tech) return res.status(404).json({ error: "Technician not found" });
+        const existing = await prisma.user.findFirst({ where: { technicianId, organizationId } });
+        if (existing) return res.status(409).json({ error: "This technician already has a linked account" });
       }
       if (customerId) {
         const cust = await prisma.customer.findFirst({ where: { id: customerId, organizationId } });
         if (!cust) return res.status(404).json({ error: "Customer not found" });
+        const existing = await prisma.user.findFirst({ where: { customerId, organizationId } });
+        if (existing) return res.status(409).json({ error: "This customer already has a linked account" });
       }
 
       user = await prisma.user.create({
