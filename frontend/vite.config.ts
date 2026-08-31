@@ -18,9 +18,9 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["favicon.svg", "icon-192.png", "icon-512.png"],
       manifest: {
-        name: "FlowSense",
-        short_name: "FlowSense",
-        description: "Field service management for HVAC & plumbing crews",
+        name: "Pneuros",
+        short_name: "Pneuros",
+        description: "HVAC field service platform for technicians",
         theme_color: "#0f766e",
         background_color: "#0f172a",
         display: "standalone",

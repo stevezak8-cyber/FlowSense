@@ -78,6 +78,15 @@ const [currentEstimate, setCurrentEstimate] = useState<Estimate | null>(null)
 
   useEffect(() => { fetchJobs() }, [])
 
+  // Refresh jobs when SW replays a queued offline action
+  useEffect(() => {
+    function onSwMessage(e: MessageEvent) {
+      if (e.data?.type === "SYNC_COMPLETE") fetchJobs()
+    }
+    navigator.serviceWorker?.addEventListener("message", onSwMessage)
+    return () => navigator.serviceWorker?.removeEventListener("message", onSwMessage)
+  }, [])
+
   useEffect(() => {
     if (!expandedId) return
     const job = jobs.find((j) => j.id === expandedId)
