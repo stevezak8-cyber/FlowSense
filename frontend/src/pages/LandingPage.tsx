@@ -1,7 +1,13 @@
 import { Link, useNavigate } from "react-router-dom"
 import { useState } from "react"
-import { ChevronDown } from "lucide-react"
+import { ChevronDown, Building2, Wrench, UserCircle } from "lucide-react"
 import { useAuth } from "@/auth/auth-context"
+
+const DEMO_ROLES = [
+  { role: "office" as const, label: "Office Manager", icon: Building2, desc: "Dashboard, dispatch, schedule, revenue" },
+  { role: "technician" as const, label: "Technician", icon: Wrench, desc: "Jobs, map, AI co-pilot, offline mode" },
+  { role: "customer" as const, label: "Customer", icon: UserCircle, desc: "Booking, estimates, invoices, history" },
+]
 
 const NAV_LINKS = [
   { label: "Roles", href: "#roles" },
@@ -175,11 +181,24 @@ export default function LandingPage() {
             </p>
             <div className="flex items-center gap-3 flex-wrap">
               <Link to="/register" className="rounded-full bg-[#e63f2a] px-7 py-3.5 text-sm font-bold text-white hover:bg-[#c73522] transition-colors">Start free trial</Link>
-              <button onClick={() => handleDemo("office")} disabled={!!demoLoading} className="rounded-full border border-gray-300 px-7 py-3.5 text-sm font-bold text-gray-700 hover:border-gray-400 transition-colors disabled:opacity-60">{demoLoading === "office" ? "Loading…" : "See the office dashboard"}</button>
             </div>
-            <p className="mt-4 text-xs text-gray-400">
-              <strong className="text-gray-600">Can I try it before signing up?</strong> Yes. The sign-in screen has one-click demo accounts for the office, technician and customer views.
-            </p>
+            <div className="mt-6">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Try a demo account — no sign-up needed</p>
+              <div className="flex gap-3 flex-wrap">
+                {DEMO_ROLES.map(({ role, label, icon: Icon, desc }) => (
+                  <button key={role} onClick={() => handleDemo(role)} disabled={!!demoLoading}
+                    className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-left hover:border-gray-300 hover:shadow-sm transition-all disabled:opacity-50">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-100">
+                      <Icon className="h-4 w-4 text-gray-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-gray-900">{demoLoading === role ? "Loading…" : label}</p>
+                      <p className="text-xs text-gray-400">{desc}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className="space-y-px">
@@ -506,16 +525,23 @@ export default function LandingPage() {
             <div className="flex items-center gap-2 text-sm font-semibold"><span className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center text-xs font-black">2</span>Invite office, techs and customers by email</div>
             <div className="flex items-center gap-2 text-sm font-semibold"><span className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center text-xs font-black">3</span>Dispatch your first job</div>
           </div>
-          <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-3 flex-wrap mb-6">
             <Link to="/register" className="rounded-full bg-white text-[#e63f2a] px-8 py-4 text-sm font-black hover:bg-red-50 transition-colors">Start free trial</Link>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-red-200 mr-1">Try a demo →</span>
-              {(["office","technician","customer"] as const).map(role => (
-                <button key={role} onClick={() => handleDemo(role)} disabled={!!demoLoading} className="rounded-full border-2 border-white/40 text-white px-5 py-4 text-sm font-black hover:border-white transition-colors disabled:opacity-60 capitalize">
-                  {demoLoading === role ? "…" : role}
-                </button>
-              ))}
-            </div>
+          </div>
+          <p className="text-xs font-semibold text-red-200 uppercase tracking-widest mb-3">Or try a demo — no sign-up needed</p>
+          <div className="flex gap-3 flex-wrap">
+            {DEMO_ROLES.map(({ role, label, icon: Icon, desc }) => (
+              <button key={role} onClick={() => handleDemo(role)} disabled={!!demoLoading}
+                className="flex items-center gap-3 rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-left hover:bg-white/20 transition-all disabled:opacity-50">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/20">
+                  <Icon className="h-4 w-4 text-white" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-white">{demoLoading === role ? "Loading…" : label}</p>
+                  <p className="text-xs text-red-200">{desc}</p>
+                </div>
+              </button>
+            ))}
           </div>
           <p className="mt-5 text-xs text-red-200">No card required to start. Month to month.</p>
         </div>
