@@ -130,8 +130,9 @@ self.addEventListener("fetch", (event) => {
 
 // Replay queued actions when back online
 self.addEventListener("sync", (event) => {
-  if ((event as SyncEvent).tag !== SYNC_TAG) return
-  ;(event as SyncEvent).waitUntil(replayQueue())
+  const syncEvent = event as Event & { tag: string; waitUntil: (p: Promise<unknown>) => void }
+  if (syncEvent.tag !== SYNC_TAG) return
+  syncEvent.waitUntil(replayQueue())
 })
 
 // Also replay on activation (catches cases where sync wasn't registered)
