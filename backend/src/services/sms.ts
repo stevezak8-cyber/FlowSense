@@ -1,125 +1,29 @@
-import twilio from "twilio"
-import { prisma } from "../lib/prisma.js"
+const TWILIO_SID = process.env.TWILIO_ACCOUNT_SID
+const TWILIO_TOKEN = process.env.TWILIO_AUTH_TOKEN
+const TWILIO_FROM = process.env.TWILIO_FROM_NUMBER
 
-function getClient() {
-  const s = process.env.TWILIO_ACCOUNT_SID
-  const t = process.env.TWILIO_AUTH_TOKEN
-  const f = process.env.TWILIO_FROM_NUMBER
-  if (!s || !t || !f) return null
-  return { client: twilio(s, t), from: f }
-}
-
-const E164 = /^\+[1-9]\d{7,14}$/
-
-function isValidPhone(phone: string | null | undefined): phone is string {
-  return !!phone && E164.test(phone)
-}
-
-async function send(to: string, fromNum: string, orgName: string, message: string, client: ReturnType<typeof twilio>): Promise<void> {
-  const body = `[${orgName}] ${message} Reply STOP to opt out.`
-  const callbackBase = process.env.API_URL
-  if (!callbackBase) console.warn("[SMS] API_URL not set — statusCallback omitted, delivery opt-outs will not be tracked")
-  try {
-    await client.messages.create({
-      to,
-      from: fromNum,
-      body,
-      ...(callbackBase ? { statusCallback: `${callbackBase}/api/webhooks/twilio` } : {}),
-    })
-    console.log(`[SMS] Sent to ${to}: ${body.slice(0, 60)}…`)
-  } catch (err) {
-    console.error("[SMS] Failed to send:", err)
-  }
-}
-
-export async function sendBookingConfirmedSms(jobId: string): Promise<void> {
-  const creds = getClient()
-  if (!creds) return
-  const job = await prisma.job.findUnique({
-    where: { id: jobId },
-    include: {
-      customer: { select: { phone: true, smsOptOut: true } },
-      organization: { select: { name: true, smsEnabled: true } },
-    },
-  })
-  if (!job) return
-  if (!job.organization.smsEnabled) return
-  if (!isValidPhone(job.customer?.phone)) {
-    if (job.customer?.phone) console.warn(`[SMS] Invalid phone for job ${jobId}: ${job.customer.phone}`)
+export async function sendSms(to: string, body: string): Promise<void> {
+  if (!TWILIO_SID || !TWILIO_TOKEN || !TWILIO_FROM) {
+    console.log(`[SMS] Skipped (no Twilio credentials): ${body.slice(0, 60)}… → ${to}`)
     return
   }
-  if (job.customer.smsOptOut) return
-  const date = job.scheduledAt
-    ? new Date(job.scheduledAt).toLocaleDateString("en-US", {
-        weekday: "long", month: "long", day: "numeric",
-        hour: "numeric", minute: "2-digit",
-      })
-    : "your scheduled time"
-  await send(job.customer.phone, creds.from, job.organization.name,
-    `Your service appointment has been scheduled for ${date}.`, creds.client)
-}
 
-export async function sendEnRouteSms(jobId: string): Promise<void> {
-  const creds = getClient()
-  if (!creds) return
-  const job = await prisma.job.findUnique({
-    where: { id: jobId },
-    include: {
-      customer: { select: { phone: true, smsOptOut: true } },
-      organization: { select: { name: true, smsEnabled: true } },
-    },
-  })
-  if (!job) return
-  if (!job.organization.smsEnabled) return
-  if (!isValidPhone(job.customer?.phone)) {
-    if (job.customer?.phone) console.warn(`[SMS] Invalid phone for job ${jobId}: ${job.customer.phone}`)
-    return
-  }
-  if (job.customer.smsOptOut) return
-  await send(job.customer.phone, creds.from, job.organization.name,
-    "Your technician is on the way and should arrive within the hour.", creds.client)
-}
+  const url = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/Messages.json`
+  const params = new URLSearchParams({ To: to, From: TWILIO_FROM, Body: body })
 
-export async function sendJobCompletedSms(jobId: string): Promise<void> {
-  const creds = getClient()
-  if (!creds) return
-  const job = await prisma.job.findUnique({
-    where: { id: jobId },
-    include: {
-      customer: { select: { phone: true, smsOptOut: true } },
-      organization: { select: { name: true, smsEnabled: true } },
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${Buffer.from(`${TWILIO_SID}:${TWILIO_TOKEN}`).toString("base64")}`,
+      "Content-Type": "application/x-www-form-urlencoded",
     },
+    body: params.toString(),
   })
-  if (!job) return
-  if (!job.organization.smsEnabled) return
-  if (!isValidPhone(job.customer?.phone)) {
-    if (job.customer?.phone) console.warn(`[SMS] Invalid phone for job ${jobId}: ${job.customer.phone}`)
-    return
-  }
-  if (job.customer.smsOptOut) return
-  await send(job.customer.phone, creds.from, job.organization.name,
-    "Your service is complete. Thank you for choosing us!", creds.client)
-}
 
-export async function sendEstimateReadySms(estimateId: string): Promise<void> {
-  const creds = getClient()
-  if (!creds) return
-  const estimate = await prisma.estimate.findUnique({
-    where: { id: estimateId },
-    include: {
-      job: { include: { customer: { select: { phone: true, smsOptOut: true } } } },
-      organization: { select: { name: true, smsEnabled: true } },
-    },
-  })
-  if (!estimate) return
-  if (!estimate.organization.smsEnabled) return
-  const customer = estimate.job.customer
-  if (!isValidPhone(customer?.phone)) {
-    if (customer?.phone) console.warn(`[SMS] Invalid phone for estimate ${estimateId}: ${customer.phone}`)
-    return
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({})) as { message?: string }
+    throw new Error(`Twilio error: ${err.message ?? res.statusText}`)
   }
-  if (customer.smsOptOut) return
-  const portalUrl = `${process.env.FRONTEND_URL ?? ""}/customer/estimates/${estimate.token}`
-  await send(customer.phone, creds.from, estimate.organization.name,
-    `Your estimate is ready to review: ${portalUrl}`, creds.client)
+
+  console.log(`[SMS] Sent → ${to}`)
 }

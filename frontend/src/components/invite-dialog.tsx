@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Mail, Copy, CheckCircle2, Loader2, AlertCircle } from "lucide-react"
+import { Mail, Phone, Copy, CheckCircle2, Loader2, AlertCircle } from "lucide-react"
 import { toast } from "sonner"
 
 interface Props {
@@ -26,16 +26,20 @@ interface Props {
 export function InviteDialog({ email: defaultEmail = "", role, technicianId, customerId, trigger }: Props) {
   const [open, setOpen] = useState(false)
   const [email, setEmail] = useState(defaultEmail)
+  const [phone, setPhone] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [inviteUrl, setInviteUrl] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [sentVia, setSentVia] = useState<string[]>([])
 
   function reset() {
     setEmail(defaultEmail)
+    setPhone("")
     setError(null)
     setInviteUrl(null)
     setCopied(false)
+    setSentVia([])
   }
 
   async function handleGenerate(e: React.FormEvent) {
@@ -46,12 +50,15 @@ export function InviteDialog({ email: defaultEmail = "", role, technicianId, cus
       const { token } = await api.post<{ token: string }>("/api/auth/invite", {
         email,
         role,
+        ...(phone && { phone }),
         ...(technicianId && { technicianId }),
         ...(customerId && { customerId }),
       })
       const url = `${window.location.origin}/invite/${token}`
       setInviteUrl(url)
-      toast.success("Invite link generated")
+      const via = ["email", ...(phone ? ["SMS"] : [])]
+      setSentVia(via)
+      toast.success(`Invite sent via ${via.join(" & ")}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to generate invite")
     } finally {
@@ -92,18 +99,37 @@ export function InviteDialog({ email: defaultEmail = "", role, technicianId, cus
           <form onSubmit={handleGenerate} className="space-y-4 pt-2">
             <div className="space-y-1.5">
               <Label htmlFor="invite-email" className="text-sm text-foreground">Email address</Label>
-              <Input
-                id="invite-email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@example.com"
-                className="h-9"
-                required
-                autoFocus={!defaultEmail}
-              />
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                  id="invite-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@example.com"
+                  className="h-9 pl-9"
+                  required
+                  autoFocus={!defaultEmail}
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="invite-phone" className="text-sm text-foreground">
+                Phone number <span className="text-muted-foreground font-normal">(optional — sends SMS)</span>
+              </Label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                  id="invite-phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+1 555 000 0000"
+                  className="h-9 pl-9"
+                />
+              </div>
               <p className="text-[11px] text-muted-foreground">
-                They'll receive a link to set their password and access Pneuros.
+                Invite link is always sent by email. Add a phone number to also send it by SMS.
               </p>
             </div>
             {error && (
@@ -153,7 +179,7 @@ export function InviteDialog({ email: defaultEmail = "", role, technicianId, cus
                 </Button>
               </div>
               <p className="text-[11px] text-muted-foreground">
-                This link expires in 7 days. Send it to <span className="font-medium">{email}</span> so they can set their password.
+                Sent via {sentVia.join(" & ")} to <span className="font-medium">{email}</span>{phone ? ` and ${phone}` : ""}. Link expires in 7 days.
               </p>
             </div>
             <div className="flex justify-end gap-2 pt-1">

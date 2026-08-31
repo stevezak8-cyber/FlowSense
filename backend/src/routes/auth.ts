@@ -6,6 +6,8 @@ import { z } from "zod";
 import { requireAuth } from "../middleware/auth.js";
 import { stripe, getPriceId } from "../services/stripe.js";
 import { seedPricebook } from "../services/estimate-ai.js";
+import { sendEmail } from "../services/email.js";
+import { sendSms } from "../services/sms.js";
 
 export const authRouter = Router();
 
@@ -335,6 +337,7 @@ authRouter.post("/invite", requireAuth, async (req, res) => {
   const schema = z.object({
     email: z.string().email(),
     role: z.enum(["technician", "customer", "office"]),
+    phone: z.string().optional(),
     technicianId: z.string().optional(),
     customerId: z.string().optional(),
   });
@@ -344,7 +347,7 @@ authRouter.post("/invite", requireAuth, async (req, res) => {
     return res.status(400).json({ error: "Invalid data", details: parsed.error.flatten() });
   }
 
-  const { email, role, technicianId, customerId } = parsed.data;
+  const { email, role, phone, technicianId, customerId } = parsed.data;
   const organizationId = req.user!.organizationId;
 
   try {
@@ -387,6 +390,36 @@ authRouter.post("/invite", requireAuth, async (req, res) => {
       JWT_SECRET,
       { expiresIn: "7d" }
     );
+
+    const appUrl = process.env.APP_URL ?? "http://localhost:5173"
+    const inviteUrl = `${appUrl}/invite/${token}`
+
+    const org = await prisma.organization.findUnique({ where: { id: organizationId }, select: { name: true } })
+    const orgName = org?.name ?? "Your HVAC company"
+    const roleLabel = role === "technician" ? "Field Technician" : role === "customer" ? "Customer" : "Office Staff"
+
+    // Send email invite (fire-and-forget)
+    sendEmail({
+      to: email,
+      subject: `You've been invited to ${orgName} on Pneuros`,
+      html: `
+        <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+          <h2 style="color:#1a1a1a;">You've been invited</h2>
+          <p><strong>${orgName}</strong> has invited you to join Pneuros as <strong>${roleLabel}</strong>.</p>
+          <p>Click the link below to set your password and get started:</p>
+          <p><a href="${inviteUrl}" style="display:inline-block;background:#e63f2a;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;">Accept invite</a></p>
+          <p style="color:#888;font-size:13px;">This link expires in 7 days. If you weren't expecting this, you can ignore it.</p>
+        </div>
+      `,
+    }).catch((e) => console.error("[invite] Email delivery failed:", e))
+
+    // Send SMS invite if phone provided (fire-and-forget)
+    if (phone) {
+      sendSms(
+        phone,
+        `${orgName} has invited you to Pneuros as ${roleLabel}. Set up your account here: ${inviteUrl}`
+      ).catch((e) => console.error("[invite] SMS delivery failed:", e))
+    }
 
     res.json({ token });
   } catch (e) {
