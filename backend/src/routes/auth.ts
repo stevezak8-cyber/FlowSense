@@ -496,6 +496,52 @@ authRouter.post("/logout", (_req, res) => {
   res.json({ ok: true });
 });
 
+// POST /api/auth/demo — one-click demo login, returns JWT for seed account
+const DEMO_EMAILS: Record<string, string> = {
+  office: "office@flowsense.demo",
+  technician: "tech@flowsense.demo",
+  customer: "customer@flowsense.demo",
+};
+
+authRouter.post("/demo", async (req, res) => {
+  const role = req.body?.role as string | undefined;
+  const email = role ? DEMO_EMAILS[role] : undefined;
+  if (!email) {
+    return res.status(400).json({ error: "role must be one of: office, technician, customer" });
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true, email: true, name: true, role: true, organizationId: true, technicianId: true, customerId: true },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "Demo account not found — run db seed first" });
+    }
+
+    const token = jwt.sign(
+      {
+        userId: user.id,
+        role: user.role,
+        organizationId: user.organizationId,
+        ...(user.technicianId && { technicianId: user.technicianId }),
+        ...(user.customerId && { customerId: user.customerId }),
+      },
+      JWT_SECRET,
+      { expiresIn: "2h" }
+    );
+
+    res.json({
+      token,
+      user: { id: user.id, email: user.email, name: user.name, role: user.role, organizationId: user.organizationId },
+    });
+  } catch (e) {
+    console.error("[demo] error:", e);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // POST /api/auth/forgot-password — send a password reset email
 authRouter.post("/forgot-password", async (req, res) => {
   const { email } = req.body as { email?: string };

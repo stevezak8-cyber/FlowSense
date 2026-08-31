@@ -1,4 +1,4 @@
-import { useState } from "react"
+import React, { useState } from "react"
 import { Link, Navigate } from "react-router-dom"
 import { useAuth } from "@/auth/auth-context"
 import type { UserRole } from "@/auth/auth-context"
@@ -14,32 +14,14 @@ const roleHome: Record<UserRole, string> = {
   customer: "/customer",
 }
 
-const demoAccounts = [
-  {
-    label: "Office Manager",
-    email: "office@flowsense.demo",
-    password: "office123",
-    icon: Building2,
-    color: "bg-primary/10 text-primary",
-  },
-  {
-    label: "Technician",
-    email: "tech@flowsense.demo",
-    password: "tech123",
-    icon: Wrench,
-    color: "bg-success/10 text-success",
-  },
-  {
-    label: "Customer",
-    email: "customer@flowsense.demo",
-    password: "customer123",
-    icon: UserCircle,
-    color: "bg-chart-5/10 text-chart-5",
-  },
+const demoAccounts: { label: string; role: "office" | "technician" | "customer"; icon: React.ElementType; color: string }[] = [
+  { label: "Office Manager", role: "office", icon: Building2, color: "bg-primary/10 text-primary" },
+  { label: "Technician", role: "technician", icon: Wrench, color: "bg-success/10 text-success" },
+  { label: "Customer", role: "customer", icon: UserCircle, color: "bg-chart-5/10 text-chart-5" },
 ]
 
 export default function LoginPage() {
-  const { user, loading, login } = useAuth()
+  const { user, loading, login, demoLogin } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -64,15 +46,13 @@ export default function LoginPage() {
     }
   }
 
-  async function handleDemoLogin(demoEmail: string, demoPassword: string) {
-    setEmail(demoEmail)
-    setPassword(demoPassword)
+  async function handleDemoLogin(role: "office" | "technician" | "customer") {
     setSubmitting(true)
     setError(null)
     try {
-      await login(demoEmail, demoPassword)
+      await demoLogin(role)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed")
+      setError(err instanceof Error ? err.message : "Demo login failed")
     } finally {
       setSubmitting(false)
     }
@@ -183,10 +163,10 @@ export default function LoginPage() {
             <div className="grid grid-cols-3 gap-3">
               {demoAccounts.map((acct) => (
                 <button
-                  key={acct.email}
+                  key={acct.role}
                   type="button"
                   disabled={submitting}
-                  onClick={() => handleDemoLogin(acct.email, acct.password)}
+                  onClick={() => handleDemoLogin(acct.role)}
                   className="group medops-card flex flex-col items-center gap-2.5 p-4 transition-all hover:shadow-md disabled:opacity-50"
                 >
                   <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${acct.color}`}>

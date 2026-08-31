@@ -18,6 +18,7 @@ interface AuthContextValue {
   token: string | null
   loading: boolean
   login: (email: string, password: string) => Promise<void>
+  demoLogin: (role: "office" | "technician" | "customer") => Promise<void>
   logout: () => void
 }
 
@@ -84,6 +85,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user)
   }, [])
 
+  const demoLogin = useCallback(async (role: "office" | "technician" | "customer") => {
+    const res = await fetch("/api/auth/demo", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role }),
+    })
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Demo login failed" }))
+      throw new Error((err as { error?: string }).error ?? "Demo login failed")
+    }
+
+    const data = (await res.json()) as { token: string; user: AuthUser }
+    localStorage.setItem(TOKEN_KEY, data.token)
+    setToken(data.token)
+    setUser(data.user)
+  }, [])
+
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY)
     setToken(null)
@@ -101,7 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, demoLogin, logout }}>
       {children}
     </AuthContext.Provider>
   )

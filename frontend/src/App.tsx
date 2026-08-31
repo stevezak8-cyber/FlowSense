@@ -66,6 +66,9 @@ function App() {
       {/* Invite accept — public, no auth required */}
       <Route path="/invite/:token" element={<InvitePage />} />
 
+      {/* Signup alias */}
+      <Route path="/signup" element={<Navigate to="/register" replace />} />
+
       {/* Root redirects to login */}
       <Route path="/" element={<Navigate to="/login" replace />} />
 
