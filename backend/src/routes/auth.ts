@@ -70,8 +70,8 @@ authRouter.post("/register", async (req, res) => {
         })
         stripeCustomerId = customer.id
       } catch (e) {
-        console.error("[register] Failed to create Stripe customer:", e)
-        return res.status(503).json({ error: "Registration temporarily unavailable. Please try again." })
+        console.error("[register] Failed to create Stripe customer (non-fatal, continuing without):", e)
+        // Continue without Stripe — org is created in trial mode, payment can be set up later
       }
     }
 
@@ -143,13 +143,8 @@ authRouter.post("/register", async (req, res) => {
           user: { id: newUser.id, email: newUser.email, name: newUser.name, role: newUser.role, organizationId: org.id },
         })
       } catch (e) {
-        // Checkout session failed — clean up Stripe Customer and the DB records
-        if (stripeCustomerId && stripe) {
-          await stripe.customers.del(stripeCustomerId).catch(() => {})
-        }
-        await prisma.organization.delete({ where: { id: org.id } }).catch(() => {})
-        console.error("[register] Failed to create checkout session:", e)
-        return res.status(503).json({ error: "Registration temporarily unavailable. Please try again." })
+        console.error("[register] Failed to create checkout session (non-fatal, skipping):", e)
+        // Fall through — user is created, just skip the Stripe checkout
       }
     }
 
