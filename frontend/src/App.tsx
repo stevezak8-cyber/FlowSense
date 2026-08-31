@@ -8,6 +8,7 @@ import { initSyncManager } from "@/lib/sync-manager";
 
 // Pages
 import LoginPage from "./pages/LoginPage";
+import LandingPage from "./pages/LandingPage";
 import RegisterPage from "./pages/RegisterPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
@@ -69,8 +70,8 @@ function App() {
       {/* Signup alias */}
       <Route path="/signup" element={<Navigate to="/register" replace />} />
 
-      {/* Root redirects to login */}
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      {/* Landing page */}
+      <Route path="/" element={<LandingPage />} />
 
       {/* Office Dashboard — requires office role */}
       <Route
