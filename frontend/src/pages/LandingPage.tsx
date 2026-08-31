@@ -1,6 +1,7 @@
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { useState } from "react"
 import { ChevronDown } from "lucide-react"
+import { useAuth } from "@/auth/auth-context"
 
 const NAV_LINKS = [
   { label: "Roles", href: "#roles" },
@@ -114,7 +115,29 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   )
 }
 
+const ROLE_HOME: Record<string, string> = {
+  office: "/office",
+  technician: "/technician",
+  customer: "/customer",
+}
+
 export default function LandingPage() {
+  const { demoLogin } = useAuth()
+  const navigate = useNavigate()
+  const [demoLoading, setDemoLoading] = useState<string | null>(null)
+
+  async function handleDemo(role: "office" | "technician" | "customer") {
+    setDemoLoading(role)
+    try {
+      await demoLogin(role)
+      navigate(ROLE_HOME[role])
+    } catch {
+      navigate("/login")
+    } finally {
+      setDemoLoading(null)
+    }
+  }
+
   return (
     <div className="bg-white text-gray-900 font-sans">
       {/* Nav */}
@@ -152,7 +175,7 @@ export default function LandingPage() {
             </p>
             <div className="flex items-center gap-3 flex-wrap">
               <Link to="/register" className="rounded-full bg-[#e63f2a] px-7 py-3.5 text-sm font-bold text-white hover:bg-[#c73522] transition-colors">Start free trial</Link>
-              <Link to="/login" className="rounded-full border border-gray-300 px-7 py-3.5 text-sm font-bold text-gray-700 hover:border-gray-400 transition-colors">See the office dashboard</Link>
+              <button onClick={() => handleDemo("office")} disabled={!!demoLoading} className="rounded-full border border-gray-300 px-7 py-3.5 text-sm font-bold text-gray-700 hover:border-gray-400 transition-colors disabled:opacity-60">{demoLoading === "office" ? "Loading…" : "See the office dashboard"}</button>
             </div>
             <p className="mt-4 text-xs text-gray-400">
               <strong className="text-gray-600">Can I try it before signing up?</strong> Yes. The sign-in screen has one-click demo accounts for the office, technician and customer views.
@@ -483,9 +506,16 @@ export default function LandingPage() {
             <div className="flex items-center gap-2 text-sm font-semibold"><span className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center text-xs font-black">2</span>Invite office, techs and customers by email</div>
             <div className="flex items-center gap-2 text-sm font-semibold"><span className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center text-xs font-black">3</span>Dispatch your first job</div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
             <Link to="/register" className="rounded-full bg-white text-[#e63f2a] px-8 py-4 text-sm font-black hover:bg-red-50 transition-colors">Start free trial</Link>
-            <Link to="/login" className="rounded-full border-2 border-white/40 text-white px-8 py-4 text-sm font-black hover:border-white transition-colors">Try a demo account</Link>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-red-200 mr-1">Try a demo →</span>
+              {(["office","technician","customer"] as const).map(role => (
+                <button key={role} onClick={() => handleDemo(role)} disabled={!!demoLoading} className="rounded-full border-2 border-white/40 text-white px-5 py-4 text-sm font-black hover:border-white transition-colors disabled:opacity-60 capitalize">
+                  {demoLoading === role ? "…" : role}
+                </button>
+              ))}
+            </div>
           </div>
           <p className="mt-5 text-xs text-red-200">No card required to start. Month to month.</p>
         </div>
