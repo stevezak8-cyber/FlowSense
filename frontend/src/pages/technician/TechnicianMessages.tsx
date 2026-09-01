@@ -1,9 +1,23 @@
 import { useState, useEffect, useRef } from "react"
 import { api } from "@/api/client"
 import type { ApiConversation, ApiMessage } from "@/api/types"
-import { Loader2, Send, ChevronLeft, MessageSquare } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Loader2, Send, ChevronLeft, MessageSquare, Paperclip, Phone } from "lucide-react"
 import { useAuth } from "@/auth/auth-context"
+
+const font = "'Archivo', sans-serif"
+
+const T = {
+  bg: "#f3f2f2",
+  text: "#201e1d",
+  accent: "#ec3013",
+  accentLight: "#ae1800",
+  accentTint: "#fde8e4",
+  n300: "#d7d3d3",
+  n400: "#c4bfbf",
+  n500: "#a09b9b",
+  n600: "#706c6c",
+  n700: "#4a4646",
+}
 
 function timeLabel(iso: string) {
   const d = new Date(iso)
@@ -14,6 +28,14 @@ function timeLabel(iso: string) {
   return d.toLocaleDateString([], { month: "short", day: "numeric" })
 }
 
+function avatarBg(conv: ApiConversation) {
+  if (conv.unreadCount > 0 && conv.channel === "internal") return T.accent
+  if (conv.unreadCount > 0) return T.text
+  return T.n400
+}
+
+const QUICK_REPLIES = ["On my way", "Running 15 late", "Need the part"]
+
 export default function TechMessagesPage() {
   const { user } = useAuth()
   const [conversations, setConversations] = useState<ApiConversation[]>([])
@@ -22,6 +44,7 @@ export default function TechMessagesPage() {
   const [messages, setMessages] = useState<ApiMessage[]>([])
   const [draft, setDraft] = useState("")
   const [sending, setSending] = useState(false)
+  const [activeFilter, setActiveFilter] = useState("all")
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -42,12 +65,13 @@ export default function TechMessagesPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  async function send() {
-    if (!draft.trim() || !activeConv) return
+  async function send(text?: string) {
+    const content = (text ?? draft).trim()
+    if (!content || !activeConv) return
     setSending(true)
     try {
       const msg = await api.post<ApiMessage>(`/api/conversations/${activeConv.id}/messages`, {
-        content: draft.trim(),
+        content,
         sender: user?.name ?? "Technician",
         senderRole: "technician",
       })
@@ -58,63 +82,124 @@ export default function TechMessagesPage() {
     }
   }
 
+  const totalUnread = conversations.reduce((n, c) => n + (c.unreadCount ?? 0), 0)
+
+  const filters = [
+    { key: "all", label: `ALL ${conversations.length}` },
+    { key: "unread", label: `UNREAD ${totalUnread}` },
+    { key: "internal", label: `INTERNAL ${conversations.filter(c => c.channel === "internal").length}` },
+    { key: "sms", label: `SMS ${conversations.filter(c => c.channel === "sms").length}` },
+  ]
+
+  const filtered = activeFilter === "all" ? conversations
+    : activeFilter === "unread" ? conversations.filter(c => c.unreadCount > 0)
+    : conversations.filter(c => c.channel === activeFilter)
+
   // Thread view
   if (activeConv) {
     return (
-      <div className="flex flex-col h-[calc(100vh-8rem)]">
-        {/* Header */}
-        <div className="flex items-center gap-3 pb-3 border-b border-border/60">
-          <button onClick={() => setActiveConv(null)} className="p-1 -ml-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
-            <ChevronLeft className="h-5 w-5" />
+      <div style={{ margin: "-16px -16px 0", fontFamily: font, background: T.bg, color: T.text, display: "flex", flexDirection: "column", height: "calc(100vh - 60px)" }}>
+        {/* Thread header */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderBottom: `2px solid ${T.text}` }}>
+          <button onClick={() => setActiveConv(null)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex" }}>
+            <ChevronLeft style={{ width: 20, height: 20, color: T.text }} />
           </button>
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-foreground truncate">{activeConv.subject}</p>
-            <p className="text-[11px] text-muted-foreground capitalize">{activeConv.channel}</p>
+          <div style={{ width: 36, height: 36, borderRadius: 12, background: T.accent, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
+            {activeConv.subject.charAt(0).toUpperCase()}
           </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontWeight: 800, fontSize: 14, letterSpacing: "-0.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeConv.subject}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 2 }}>
+              <span style={{ width: 6, height: 6, borderRadius: 999, background: T.accent, display: "inline-block" }} />
+              <span style={{ fontSize: 10, letterSpacing: "0.1em", color: T.n600 }}>{activeConv.channel.toUpperCase()} · {activeConv.participants.length} ONLINE</span>
+            </div>
+          </div>
+          <Phone style={{ width: 18, height: 18, color: T.n600 }} />
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto py-3 space-y-3">
-          {messages.map(msg => {
+        <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 14, padding: "18px 16px 8px" }}>
+          {/* TODAY separator */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ flex: 1, height: 1, background: T.n300 }} />
+            <span style={{ fontSize: 9, letterSpacing: "0.14em", color: T.n500 }}>TODAY</span>
+            <div style={{ flex: 1, height: 1, background: T.n300 }} />
+          </div>
+
+          {messages.length === 0 && (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, padding: "40px 0", color: T.n500 }}>
+              <MessageSquare style={{ width: 28, height: 28, opacity: 0.4 }} />
+              <span style={{ fontSize: 12 }}>No messages yet</span>
+            </div>
+          )}
+
+          {messages.map((msg, i) => {
             const isMe = msg.senderRole === "technician"
+            const showSender = !isMe && (i === 0 || messages[i - 1].senderRole !== msg.senderRole)
             return (
-              <div key={msg.id} className={cn("flex flex-col gap-0.5", isMe ? "items-end" : "items-start")}>
-                {!isMe && (
-                  <p className="text-[10px] text-muted-foreground px-1">{msg.sender}</p>
+              <div key={msg.id} style={{ display: "flex", flexDirection: "column", gap: 3, alignItems: isMe ? "flex-end" : "flex-start" }}>
+                {showSender && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, paddingLeft: 2 }}>
+                    <div style={{ width: 18, height: 18, borderRadius: 6, background: T.text, color: T.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 700 }}>
+                      {msg.sender.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
+                    </div>
+                    <span style={{ fontSize: 10, color: T.n600 }}>{msg.sender}</span>
+                  </div>
                 )}
-                <div className={cn(
-                  "max-w-[78%] rounded-2xl px-3.5 py-2.5 text-sm",
-                  isMe
-                    ? "bg-primary text-primary-foreground rounded-br-sm"
-                    : "bg-muted text-foreground rounded-bl-sm"
-                )}>
+                <div style={{
+                  maxWidth: "78%",
+                  background: isMe ? T.accent : "#fff",
+                  color: isMe ? "#fff" : T.text,
+                  border: isMe ? "none" : `1px solid ${T.n300}`,
+                  borderRadius: isMe ? "18px 18px 6px 18px" : (showSender ? "18px 18px 18px 6px" : "6px 18px 18px 18px"),
+                  padding: "10px 13px",
+                  fontSize: 13,
+                  lineHeight: 1.45,
+                }}>
                   {msg.content}
                 </div>
-                <p className="text-[10px] text-muted-foreground/60 px-1">{timeLabel(msg.createdAt)}</p>
+                <div style={{ display: "flex", alignItems: "center", gap: 4, paddingRight: isMe ? 4 : 0, paddingLeft: isMe ? 0 : 4 }}>
+                  <span style={{ fontSize: 9, color: T.n500 }}>{timeLabel(msg.createdAt)}</span>
+                </div>
               </div>
             )
           })}
           <div ref={bottomRef} />
         </div>
 
+        {/* Quick replies */}
+        <div style={{ display: "flex", gap: 6, padding: "8px 16px 0", flexWrap: "wrap" }}>
+          {QUICK_REPLIES.map(reply => (
+            <button
+              key={reply}
+              onClick={() => send(reply)}
+              style={{ border: `1px solid ${T.text}`, borderRadius: 999, fontSize: 11, fontWeight: 600, padding: "5px 11px", background: "transparent", cursor: "pointer", fontFamily: font, color: T.text }}
+            >
+              {reply}
+            </button>
+          ))}
+        </div>
+
         {/* Input */}
-        <div className="flex items-end gap-2 pt-3 border-t border-border/60">
-          <textarea
-            className="flex-1 min-h-[44px] max-h-28 resize-none rounded-2xl border border-border/60 bg-muted/50 px-4 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-            placeholder="Message…"
-            rows={1}
-            value={draft}
-            onChange={e => setDraft(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send() }
-            }}
-          />
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 16px 16px" }}>
+          <div style={{ width: 40, height: 40, border: `2px solid ${T.text}`, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Paperclip style={{ width: 17, height: 17, color: T.text }} />
+          </div>
+          <div style={{ flex: 1, position: "relative" }}>
+            <input
+              value={draft}
+              onChange={e => setDraft(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); send() } }}
+              placeholder="Message…"
+              style={{ width: "100%", border: `2px solid ${T.text}`, borderRadius: 999, padding: "11px 16px", fontSize: 13, color: draft ? T.text : T.n500, background: "transparent", fontFamily: font, outline: "none", boxSizing: "border-box" }}
+            />
+          </div>
           <button
-            onClick={send}
+            onClick={() => send()}
             disabled={!draft.trim() || sending}
-            className="flex-shrink-0 flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-40 transition-opacity"
+            style={{ width: 40, height: 40, borderRadius: 999, background: T.accent, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, opacity: !draft.trim() || sending ? 0.5 : 1 }}
           >
-            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            {sending ? <Loader2 style={{ width: 17, height: 17, color: "#fff" }} className="animate-spin" /> : <Send style={{ width: 17, height: 17, color: "#fff" }} />}
           </button>
         </div>
       </div>
@@ -123,53 +208,119 @@ export default function TechMessagesPage() {
 
   // Conversation list
   return (
-    <div className="space-y-3">
-      <div>
-        <h1 className="text-lg font-semibold text-foreground">Messages</h1>
-        <p className="text-xs text-muted-foreground">Office &amp; dispatch</p>
+    <div style={{ margin: "-16px -16px 0", fontFamily: font, background: T.bg, color: T.text, display: "flex", flexDirection: "column" }}>
+
+      {/* Title */}
+      <div style={{ padding: "20px 16px 16px", display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12 }}>
+        <div>
+          <div style={{ fontSize: 10, letterSpacing: "0.16em", color: T.n600, textTransform: "uppercase" }}>Office &amp; dispatch</div>
+          <div style={{ fontWeight: 800, fontSize: 32, lineHeight: 1.02, letterSpacing: "-0.03em", marginTop: 6 }}>Messages</div>
+        </div>
+        {totalUnread > 0 && (
+          <div style={{ display: "flex", alignItems: "center", gap: 6, background: T.accent, color: "#fff", borderRadius: 999, padding: "5px 11px", marginBottom: 4 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.06em" }}>{totalUnread} UNREAD</span>
+          </div>
+        )}
       </div>
 
-      {loading ? (
-        <div className="flex items-center gap-2 text-muted-foreground py-8">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <span className="text-sm">Loading…</span>
+      {/* Search + filters */}
+      <div style={{ borderTop: `2px solid ${T.text}`, padding: "14px 16px 12px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, border: `2px solid ${T.text}`, borderRadius: 14, padding: "9px 12px" }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={T.n600} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <span style={{ fontSize: 13, color: T.n500 }}>Search conversations…</span>
         </div>
-      ) : conversations.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 py-16 text-muted-foreground">
-          <MessageSquare className="h-10 w-10 opacity-30" />
-          <p className="text-sm">No messages yet</p>
-        </div>
-      ) : (
-        <div className="space-y-1 -mx-4">
-          {conversations.map(conv => (
+        <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
+          {filters.map(f => (
             <button
-              key={conv.id}
-              onClick={() => setActiveConv(conv)}
-              className="w-full flex items-start gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors text-left"
+              key={f.key}
+              onClick={() => setActiveFilter(f.key)}
+              style={{
+                background: activeFilter === f.key ? T.text : "transparent",
+                color: activeFilter === f.key ? T.bg : T.n700,
+                border: `1px solid ${activeFilter === f.key ? T.text : T.n400}`,
+                borderRadius: 999,
+                fontSize: 10,
+                letterSpacing: "0.08em",
+                padding: "4px 10px",
+                cursor: "pointer",
+                fontFamily: font,
+                fontWeight: 600,
+              }}
             >
-              <div className="flex-shrink-0 mt-0.5 h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-bold">
-                {conv.subject.charAt(0).toUpperCase()}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <p className={cn("text-sm truncate", conv.unreadCount > 0 ? "font-bold text-foreground" : "font-medium text-foreground")}>
-                    {conv.subject}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground flex-shrink-0">{timeLabel(conv.lastMessageAt)}</p>
-                </div>
-                <div className="flex items-center justify-between gap-2 mt-0.5">
-                  <p className="text-xs text-muted-foreground truncate capitalize">{conv.channel} · {conv.participants.length} people</p>
-                  {conv.unreadCount > 0 && (
-                    <span className="flex-shrink-0 h-5 min-w-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center px-1.5">
-                      {conv.unreadCount > 9 ? "9+" : conv.unreadCount}
-                    </span>
-                  )}
-                </div>
-              </div>
+              {f.label}
             </button>
           ))}
         </div>
-      )}
+      </div>
+
+      {/* Conversation list */}
+      <div style={{ borderTop: `2px solid ${T.text}` }}>
+        {loading ? (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "40px 0", color: T.n500 }}>
+            <Loader2 style={{ width: 20, height: 20 }} className="animate-spin" />
+          </div>
+        ) : filtered.length === 0 ? (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, padding: "48px 0", color: T.n500 }}>
+            <MessageSquare style={{ width: 28, height: 28, opacity: 0.4 }} />
+            <span style={{ fontSize: 12 }}>No messages yet</span>
+          </div>
+        ) : (
+          filtered.map((conv, i) => {
+            const isUnread = conv.unreadCount > 0
+            const bg = isUnread && conv.channel === "internal" ? T.accentTint : "transparent"
+            const avatarColor = avatarBg(conv)
+            const initial = conv.subject.charAt(0).toUpperCase()
+
+            return (
+              <button
+                key={conv.id}
+                onClick={() => setActiveConv(conv)}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "38px 1fr",
+                  gap: 12,
+                  alignItems: "flex-start",
+                  padding: "14px 16px",
+                  borderTop: i === 0 ? "none" : `1px solid ${T.n300}`,
+                  borderLeft: "none",
+                  borderRight: "none",
+                  borderBottom: "none",
+                  background: bg,
+                  width: "100%",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  fontFamily: font,
+                }}
+              >
+                <div style={{ width: 38, height: 38, borderRadius: 12, background: avatarColor, color: avatarColor === T.n400 ? T.n700 : "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
+                  {initial}
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
+                    <div style={{ fontWeight: isUnread ? 800 : 600, fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{conv.subject}</div>
+                    <div style={{ fontSize: 10, color: T.n600, whiteSpace: "nowrap" }}>{timeLabel(conv.lastMessageAt)}</div>
+                  </div>
+                  <div style={{ fontSize: 12, color: T.n700, marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {conv.lastMessageAt ? new Date(conv.lastMessageAt).toLocaleDateString() : ""}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginTop: 6 }}>
+                    <span style={{ fontSize: 10, letterSpacing: "0.1em", color: T.n600 }}>
+                      {conv.channel.toUpperCase()} · {conv.participants.length} PEOPLE
+                    </span>
+                    {isUnread && (
+                      <span style={{ minWidth: 20, height: 20, borderRadius: 999, background: T.accent, color: "#fff", fontSize: 10, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 6px" }}>
+                        {conv.unreadCount > 9 ? "9+" : conv.unreadCount}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </button>
+            )
+          })
+        )}
+      </div>
     </div>
   )
 }
