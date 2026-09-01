@@ -4,12 +4,11 @@ import type { ApiJob, Estimate, Equipment } from "@/api/types"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import {
-  MapPin, Clock, ChevronRight, Navigation, AlertTriangle,
+  MapPin, Navigation, AlertTriangle,
   Wrench, CheckCircle2, Truck, User, Phone, Loader2, Sparkles, RefreshCw,
-  Zap, TrendingUp, Calendar, Search,
+  Zap, TrendingUp, ChevronRight,
 } from "lucide-react"
 import { toast } from "sonner"
-import { cn } from "@/lib/utils"
 import { CompletionDialog } from "@/components/jobs/completion-dialog"
 import { EstimateBuilder } from "@/components/estimates/estimate-builder"
 import { AiChatPanel } from "@/components/jobs/AiChatPanel"
@@ -19,39 +18,63 @@ import { JobPhotos } from "@/components/jobs/JobPhotos"
 type ApiStatus = ApiJob["status"]
 type TabType = "priority" | "active" | "completed" | "cancelled"
 
+const font = "'Archivo', sans-serif"
+
+const T = {
+  bg: "#f3f2f2",
+  text: "#201e1d",
+  accent: "#ec3013",
+  accentLight: "#ae1800",
+  n300: "#d7d3d3",
+  n400: "#c4bfbf",
+  n500: "#a09b9b",
+  n600: "#706c6c",
+}
+
 const statusFlow: Record<string, { next: ApiStatus; label: string; icon: typeof Wrench }> = {
   scheduled: { next: "en_route", label: "Start / En Route", icon: Truck },
   en_route: { next: "in_progress", label: "Arrived — Begin Work", icon: Wrench },
   in_progress: { next: "completed", label: "Mark Complete", icon: CheckCircle2 },
 }
 
-const statusConfig: Record<string, { label: string; pill: string; icon: typeof Clock }> = {
-  scheduled: { label: "Scheduled", pill: "bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300", icon: Clock },
-  en_route: { label: "En Route", pill: "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300", icon: Truck },
-  in_progress: { label: "In Progress", pill: "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300", icon: Wrench },
-  completed: { label: "Completed", pill: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300", icon: CheckCircle2 },
-  cancelled: { label: "Cancelled", pill: "bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400", icon: Clock },
-}
-
-const priorityDot: Record<string, string> = {
-  low: "bg-slate-400",
-  normal: "bg-violet-500",
-  high: "bg-amber-500",
-  urgent: "bg-rose-500",
-}
-
 function initials(name: string) {
   return name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()
 }
 
-function avatarColor(name: string) {
-  const colors = [
-    "bg-violet-500", "bg-blue-500", "bg-emerald-500",
-    "bg-amber-500", "bg-rose-500", "bg-indigo-500",
-  ]
-  let hash = 0
-  for (const c of name) hash = (hash * 31 + c.charCodeAt(0)) & 0xffff
-  return colors[hash % colors.length]
+function statusPillStyle(status: string): React.CSSProperties {
+  switch (status) {
+    case "en_route":
+      return { background: T.accent, color: "#fff", border: "none" }
+    case "in_progress":
+      return { background: "#fce8e4", color: "#6b1200", border: "none" }
+    case "scheduled":
+      return { background: "transparent", color: T.text, border: `1px solid ${T.text}` }
+    case "completed":
+    case "cancelled":
+    default:
+      return { background: "transparent", color: T.n600, border: `1px solid ${T.n300}` }
+  }
+}
+
+function statusLabel(status: string) {
+  const map: Record<string, string> = {
+    scheduled: "SCHEDULED",
+    en_route: "EN ROUTE",
+    in_progress: "IN PROGRESS",
+    completed: "COMPLETED",
+    cancelled: "CANCELLED",
+  }
+  return map[status] ?? status.toUpperCase()
+}
+
+function dotColor(status: string) {
+  if (status === "en_route" || status === "in_progress") return T.accent
+  if (status === "completed" || status === "cancelled") return T.n400
+  return T.n500
+}
+
+function avatarBg(status: string) {
+  return status === "completed" || status === "cancelled" ? T.n400 : T.text
 }
 
 export default function TechnicianJobsPage() {
@@ -63,7 +86,7 @@ export default function TechnicianJobsPage() {
   const [completingJob, setCompletingJob] = useState<ApiJob | null>(null)
   const [estimateJob, setEstimateJob] = useState<ApiJob | null>(null)
   const [askAiJob, setAskAiJob] = useState<ApiJob | null>(null)
-const [currentEstimate, setCurrentEstimate] = useState<Estimate | null>(null)
+  const [currentEstimate, setCurrentEstimate] = useState<Estimate | null>(null)
   const [generatingEstimate, setGeneratingEstimate] = useState(false)
   const [jobEquipment, setJobEquipment] = useState<Record<string, Equipment | null>>({})
 
@@ -78,7 +101,6 @@ const [currentEstimate, setCurrentEstimate] = useState<Estimate | null>(null)
 
   useEffect(() => { fetchJobs() }, [])
 
-  // Refresh jobs when SW replays a queued offline action
   useEffect(() => {
     function onSwMessage(e: MessageEvent) {
       if (e.data?.type === "SYNC_COMPLETE") fetchJobs()
@@ -105,8 +127,8 @@ const [currentEstimate, setCurrentEstimate] = useState<Estimate | null>(null)
   const progressPct = totalJobs > 0 ? Math.round((completedJobs.length / totalJobs) * 100) : 0
 
   const hour = new Date().getHours()
-  const firstName = "Jordan"
   const greeting = hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening"
+  const dateLabel = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })
 
   const tabJobs: Record<TabType, ApiJob[]> = {
     priority: priorityJobs.length > 0 ? priorityJobs : activeJobs,
@@ -116,10 +138,10 @@ const [currentEstimate, setCurrentEstimate] = useState<Estimate | null>(null)
   }
 
   const tabs: { key: TabType; label: string; count: number }[] = [
-    { key: "priority", label: "Priority", count: priorityJobs.length },
-    { key: "active", label: "Active", count: activeJobs.length },
-    { key: "completed", label: "Completed", count: completedJobs.length },
-    { key: "cancelled", label: "Cancelled", count: cancelledJobs.length },
+    { key: "priority", label: "PRIORITY", count: priorityJobs.length },
+    { key: "active", label: "ACTIVE", count: activeJobs.length },
+    { key: "completed", label: "COMPLETED", count: completedJobs.length },
+    { key: "cancelled", label: "CANCELLED", count: cancelledJobs.length },
   ]
 
   function handleStatusChange(jobId: string, newStatus: ApiStatus) {
@@ -148,7 +170,6 @@ const [currentEstimate, setCurrentEstimate] = useState<Estimate | null>(null)
     setExpandedId(null)
   }
 
-  // Job detail drawer
   function JobDetailDrawer({ job }: { job: ApiJob }) {
     const [regenerating, setRegenerating] = useState(false)
 
@@ -165,108 +186,100 @@ const [currentEstimate, setCurrentEstimate] = useState<Estimate | null>(null)
       }
     }
 
-    const status = statusConfig[job.status] ?? statusConfig.scheduled
     const nextAction = statusFlow[job.status]
     const eq = jobEquipment[job.id]
 
     return (
-      <div className="flex flex-col h-full bg-background overflow-y-auto">
-        {/* Header */}
-        <div className="px-5 pt-5 pb-4 border-b border-border/60">
-          <div className="flex items-start justify-between gap-3">
+      <div style={{ display: "flex", flexDirection: "column", height: "100%", background: T.bg, overflowY: "auto", fontFamily: font, color: T.text }}>
+        <div style={{ padding: "20px 20px 16px", borderBottom: `2px solid ${T.text}` }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
             <div>
-              <div className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold mb-2", status.pill)}>
-                <status.icon className="h-3 w-3" />{status.label}
+              <div style={{ ...statusPillStyle(job.status), display: "inline-flex", alignItems: "center", borderRadius: 999, padding: "3px 10px", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", marginBottom: 8 }}>
+                {statusLabel(job.status)}
               </div>
-              <h2 className="text-lg font-bold text-foreground">
+              <h2 style={{ fontSize: 18, fontWeight: 800, letterSpacing: "-0.01em", margin: 0 }}>
                 {job.equipmentType?.replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase()) ?? "Service Call"}
               </h2>
-              {job.symptomSummary && <p className="text-sm text-muted-foreground mt-0.5">{job.symptomSummary}</p>}
+              {job.symptomSummary && <p style={{ fontSize: 13, color: T.n600, marginTop: 4 }}>{job.symptomSummary}</p>}
             </div>
-            <button onClick={() => setExpandedId(null)} className="text-muted-foreground hover:text-foreground p-1">✕</button>
+            <button onClick={() => setExpandedId(null)} style={{ background: "none", border: "none", color: T.n600, cursor: "pointer", fontSize: 18, padding: 4 }}>✕</button>
           </div>
         </div>
 
-        <div className="flex-1 px-5 py-4 space-y-4">
-          {/* Location */}
-          <div className="flex items-center justify-between rounded-xl bg-muted/60 px-3 py-3">
-            <div className="flex items-center gap-2 text-sm">
-              <MapPin className="h-4 w-4 text-violet-500 flex-shrink-0" />
-              <span className="text-xs font-medium">{job.customer.address}</span>
+        <div style={{ flex: 1, padding: "16px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#fff", border: `1px solid ${T.n300}`, borderRadius: 12, padding: "10px 12px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
+              <MapPin style={{ width: 14, height: 14, color: T.accent, flexShrink: 0 }} />
+              <span>{job.customer.address}</span>
             </div>
             <Button size="sm" variant="outline"
-              className="h-7 gap-1 rounded-full border-violet-200 text-violet-600 hover:bg-violet-50 dark:border-violet-500/30 dark:text-violet-400 text-xs px-3"
+              style={{ height: 28, gap: 4, borderRadius: 999, border: `1px solid ${T.n300}`, fontSize: 11, padding: "0 10px" }}
               onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(job.customer.address)}`, "_blank")}>
-              <Navigation className="h-3 w-3" />Navigate
+              <Navigation style={{ width: 12, height: 12 }} />Navigate
             </Button>
           </div>
 
-          {/* Customer */}
-          <div className="rounded-xl bg-muted/60 px-3 py-3 space-y-1.5">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Customer</p>
-            <div className="flex items-center gap-2 text-sm font-medium"><User className="h-3.5 w-3.5 text-muted-foreground" />{job.customer.name}</div>
+          <div style={{ background: "#fff", border: `1px solid ${T.n300}`, borderRadius: 12, padding: "10px 12px", display: "flex", flexDirection: "column", gap: 6 }}>
+            <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", color: T.n600 }}>CUSTOMER</p>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600 }}><User style={{ width: 14, height: 14, color: T.n500 }} />{job.customer.name}</div>
             {job.customer.phone && (
-              <div className="flex items-center gap-2 text-sm">
-                <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                <a href={`tel:${job.customer.phone}`} className="text-violet-600 dark:text-violet-400 hover:underline font-medium">{job.customer.phone}</a>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
+                <Phone style={{ width: 14, height: 14, color: T.n500 }} />
+                <a href={`tel:${job.customer.phone}`} style={{ color: T.accentLight, fontWeight: 600 }}>{job.customer.phone}</a>
               </div>
             )}
           </div>
 
-          {/* Notes */}
           {job.symptomSummary && (
-            <div className="rounded-xl bg-muted/60 px-3 py-3 space-y-1">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Notes</p>
-              <p className="text-sm text-foreground leading-relaxed">{job.symptomSummary}</p>
+            <div style={{ background: "#fff", border: `1px solid ${T.n300}`, borderRadius: 12, padding: "10px 12px" }}>
+              <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", color: T.n600, marginBottom: 6 }}>NOTES</p>
+              <p style={{ fontSize: 13, lineHeight: 1.5 }}>{job.symptomSummary}</p>
             </div>
           )}
 
-          {/* Equipment */}
           {eq && (
-            <div className="rounded-xl bg-muted/60 px-3 py-3 space-y-1">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Equipment</p>
-              <p className="text-sm font-medium">{[eq.make, eq.model].filter(Boolean).join(" ") || eq.equipmentType}</p>
-              {eq.serialNumber && <p className="text-xs text-muted-foreground">S/N: {eq.serialNumber}</p>}
+            <div style={{ background: "#fff", border: `1px solid ${T.n300}`, borderRadius: 12, padding: "10px 12px" }}>
+              <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", color: T.n600, marginBottom: 6 }}>EQUIPMENT</p>
+              <p style={{ fontSize: 13, fontWeight: 600 }}>{[eq.make, eq.model].filter(Boolean).join(" ") || eq.equipmentType}</p>
+              {eq.serialNumber && <p style={{ fontSize: 11, color: T.n600 }}>S/N: {eq.serialNumber}</p>}
             </div>
           )}
 
-          {/* AI Briefing */}
           {job.preArrivalNotes && (
-            <div className="rounded-xl border border-violet-200/60 bg-violet-50/60 dark:border-violet-500/20 dark:bg-violet-500/5 px-3 py-3">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-1.5">
-                  <Sparkles className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400">AI Briefing</span>
+            <div style={{ background: "#fff", border: `1px solid ${T.accent}`, borderRadius: 12, padding: "10px 12px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <Sparkles style={{ width: 13, height: 13, color: T.accent }} />
+                  <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", color: T.accent }}>AI BRIEFING</span>
                 </div>
-                <Button size="sm" variant="ghost" className="h-6 gap-1 px-2 text-[10px] text-muted-foreground"
+                <Button size="sm" variant="ghost" style={{ height: 24, gap: 4, padding: "0 8px", fontSize: 10, color: T.n600 }}
                   onClick={handleRegenerate} disabled={regenerating}>
-                  {regenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}Regenerate
+                  {regenerating ? <Loader2 style={{ width: 12, height: 12 }} className="animate-spin" /> : <RefreshCw style={{ width: 12, height: 12 }} />}Regenerate
                 </Button>
               </div>
-              <p className="text-xs text-foreground leading-relaxed">{job.preArrivalNotes}</p>
+              <p style={{ fontSize: 12, lineHeight: 1.5 }}>{job.preArrivalNotes}</p>
               {job.suggestedParts.length > 0 && (
-                <div className="mt-2.5">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Parts</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {job.suggestedParts.map(p => <span key={p} className="rounded-full bg-card border border-border px-2.5 py-0.5 text-[10px] font-medium">{p}</span>)}
+                <div style={{ marginTop: 10 }}>
+                  <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", color: T.n600, marginBottom: 6 }}>PARTS</p>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {job.suggestedParts.map(p => <span key={p} style={{ border: `1px solid ${T.n300}`, borderRadius: 999, padding: "2px 8px", fontSize: 10, fontWeight: 600 }}>{p}</span>)}
                   </div>
                 </div>
               )}
               {job.riskFlags.length > 0 && (
-                <div className="mt-2.5 rounded-lg border border-amber-200 bg-amber-50/80 dark:border-amber-500/20 dark:bg-amber-500/5 px-2.5 py-2">
-                  <div className="flex items-center gap-1 mb-1">
-                    <AlertTriangle className="h-3 w-3 text-amber-500" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Risk Flags</span>
+                <div style={{ marginTop: 10, border: `1px solid #f5c842`, background: "#fffbeb", borderRadius: 8, padding: "8px 10px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                    <AlertTriangle style={{ width: 12, height: 12, color: "#d97706" }} />
+                    <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", color: "#92400e" }}>RISK FLAGS</span>
                   </div>
-                  {job.riskFlags.map(f => <p key={f} className="text-xs text-amber-700 dark:text-amber-400">{f}</p>)}
+                  {job.riskFlags.map(f => <p key={f} style={{ fontSize: 12, color: "#92400e" }}>{f}</p>)}
                 </div>
               )}
             </div>
           )}
 
-          {/* Photos */}
-          <div className="rounded-xl border border-border/60 bg-card px-3 py-3">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Photos</p>
+          <div style={{ background: "#fff", border: `1px solid ${T.n300}`, borderRadius: 12, padding: "10px 12px" }}>
+            <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", color: T.n600, marginBottom: 8 }}>PHOTOS</p>
             <JobPhotos jobId={job.id} photos={job.photos ?? []} canUpload={true}
               onPhotosChange={(photos) => setJobs((prev) => prev.map((j) => (j.id === job.id ? { ...j, photos } : j)))} />
           </div>
@@ -276,28 +289,34 @@ const [currentEstimate, setCurrentEstimate] = useState<Estimate | null>(null)
           )}
         </div>
 
-        {/* Actions */}
-        <div className="px-5 pb-6 pt-2 space-y-2 border-t border-border/60">
+        <div style={{ padding: "12px 20px 24px", borderTop: `2px solid ${T.text}`, display: "flex", flexDirection: "column", gap: 8 }}>
           {(job.status === "scheduled" || job.status === "en_route" || job.status === "in_progress") && (
-            <div className="grid grid-cols-2 gap-2">
-              <Button variant="outline" className="gap-1.5 rounded-xl border-violet-200 text-violet-600 hover:bg-violet-50 dark:border-violet-500/30 dark:text-violet-400"
-                onClick={() => { setAskAiJob(job); setExpandedId(null) }}>
-                <Sparkles className="h-3.5 w-3.5" />Ask AI
-              </Button>
-              <Button variant="outline" className="gap-1.5 rounded-xl"
-                onClick={() => handleCreateEstimate(job)} disabled={generatingEstimate && estimateJob?.id === job.id}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <button
+                onClick={() => { setAskAiJob(job); setExpandedId(null) }}
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, border: `2px solid ${T.text}`, borderRadius: 12, padding: "10px", background: "transparent", cursor: "pointer", fontFamily: font, fontWeight: 700, fontSize: 13, color: T.text }}
+              >
+                <Sparkles style={{ width: 14, height: 14 }} />Ask AI
+              </button>
+              <button
+                onClick={() => handleCreateEstimate(job)}
+                disabled={generatingEstimate && estimateJob?.id === job.id}
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, border: `2px solid ${T.text}`, borderRadius: 12, padding: "10px", background: "transparent", cursor: "pointer", fontFamily: font, fontWeight: 700, fontSize: 13, color: T.text }}
+              >
                 {generatingEstimate && estimateJob?.id === job.id
-                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  : <Zap className="h-3.5 w-3.5 text-violet-500" />}
+                  ? <Loader2 style={{ width: 14, height: 14 }} className="animate-spin" />
+                  : <Zap style={{ width: 14, height: 14 }} />}
                 Estimate
-              </Button>
+              </button>
             </div>
           )}
           {nextAction && (
-            <Button className="w-full gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white"
-              onClick={() => nextAction.next === "completed" ? setCompletingJob(job) : handleStatusChange(job.id, nextAction.next)}>
-              <nextAction.icon className="h-4 w-4" />{nextAction.label}
-            </Button>
+            <button
+              onClick={() => nextAction.next === "completed" ? setCompletingJob(job) : handleStatusChange(job.id, nextAction.next)}
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: T.accent, color: "#fff", border: "none", borderRadius: 12, padding: "12px", cursor: "pointer", fontFamily: font, fontWeight: 800, fontSize: 14, letterSpacing: "-0.01em" }}
+            >
+              <nextAction.icon style={{ width: 16, height: 16 }} />{nextAction.label}
+            </button>
           )}
         </div>
       </div>
@@ -306,18 +325,20 @@ const [currentEstimate, setCurrentEstimate] = useState<Estimate | null>(null)
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "60vh", fontFamily: font }}>
+        <Loader2 style={{ width: 24, height: 24, color: T.n500 }} className="animate-spin" />
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center gap-3 py-16 text-center">
-        <AlertTriangle className="h-8 w-8 text-destructive" />
-        <p className="text-sm text-muted-foreground">{error}</p>
-        <Button size="sm" variant="outline" onClick={fetchJobs}><RefreshCw className="h-4 w-4 mr-2" />Retry</Button>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: "64px 16px", textAlign: "center", fontFamily: font }}>
+        <AlertTriangle style={{ width: 32, height: 32, color: T.accent }} />
+        <p style={{ fontSize: 13, color: T.n600 }}>{error}</p>
+        <button onClick={fetchJobs} style={{ display: "flex", alignItems: "center", gap: 8, border: `2px solid ${T.text}`, borderRadius: 8, padding: "8px 14px", background: "transparent", cursor: "pointer", fontFamily: font, fontWeight: 700, fontSize: 12 }}>
+          <RefreshCw style={{ width: 14, height: 14 }} />Retry
+        </button>
       </div>
     )
   }
@@ -325,207 +346,157 @@ const [currentEstimate, setCurrentEstimate] = useState<Estimate | null>(null)
   const visibleJobs = tabJobs[activeTab]
 
   return (
-    <div className="space-y-5">
+    <div style={{ margin: "-16px -16px 0", fontFamily: font, background: T.bg, color: T.text, display: "flex", flexDirection: "column" }}>
+
       {/* Greeting */}
-      <div>
-        <p className="text-sm text-muted-foreground">
-          {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
-        </p>
-        <h1 className="text-2xl font-bold text-foreground mt-0.5">
-          Good {greeting}, {firstName} 👋
-        </h1>
-      </div>
-
-      {/* Stat cards — LoopAI style */}
-      <div className="grid grid-cols-3 gap-3">
-        {/* Total jobs */}
-        <div className="rounded-2xl bg-card shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:shadow-none dark:border dark:border-border p-3">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-semibold text-muted-foreground">Jobs</p>
-            <span className="inline-flex items-center gap-0.5 rounded-full bg-violet-100 dark:bg-violet-500/20 px-1.5 py-0.5 text-[10px] font-bold text-violet-700 dark:text-violet-300">
-              <TrendingUp className="h-2.5 w-2.5" />{totalJobs}
-            </span>
-          </div>
-          <p className="text-3xl font-extrabold text-foreground leading-none">{totalJobs}</p>
-          <p className="text-[10px] text-muted-foreground mt-1">Today's schedule</p>
-        </div>
-
-        {/* Active */}
-        <div className="rounded-2xl bg-card shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:shadow-none dark:border dark:border-border p-3">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-semibold text-muted-foreground">Active</p>
-            {activeJobs.length > 0 && (
-              <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
-                <TrendingUp className="h-2.5 w-2.5" />{activeJobs.length}
-              </span>
-            )}
-          </div>
-          <p className="text-3xl font-extrabold text-violet-600 dark:text-violet-400 leading-none">{activeJobs.length}</p>
-          <p className="text-[10px] text-muted-foreground mt-1">In progress</p>
-        </div>
-
-        {/* Done */}
-        <div className="rounded-2xl bg-card shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:shadow-none dark:border dark:border-border p-3">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-semibold text-muted-foreground">Done</p>
-            {completedJobs.length > 0 && (
-              <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
-                +{completedJobs.length}
-              </span>
-            )}
-          </div>
-          <p className="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 leading-none">{completedJobs.length}</p>
-          <p className="text-[10px] text-muted-foreground mt-1">{progressPct}% complete</p>
+      <div style={{ padding: "20px 16px 16px" }}>
+        <div style={{ fontSize: 10, letterSpacing: "0.16em", color: T.n600, textTransform: "uppercase" }}>{dateLabel}</div>
+        <div style={{ fontWeight: 800, fontSize: 30, lineHeight: 1.05, letterSpacing: "-0.03em", marginTop: 6 }}>
+          Good {greeting},<br />Jordan
         </div>
       </div>
 
-      {/* Progress bar */}
-      {totalJobs > 0 && (
-        <div className="space-y-1.5">
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>Day progress</span>
-            <span className="font-semibold text-foreground">{progressPct}%</span>
-          </div>
-          <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-            <div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-emerald-500 transition-all duration-700" style={{ width: `${progressPct}%` }} />
-          </div>
+      {/* Stats row */}
+      <div style={{ borderTop: `2px solid ${T.text}`, display: "grid", gridTemplateColumns: "repeat(3, 1fr)" }}>
+        <div style={{ padding: "14px 16px", borderRight: `1px solid ${T.n300}` }}>
+          <div style={{ fontWeight: 800, fontSize: 30, lineHeight: 1, letterSpacing: "-0.03em" }}>{totalJobs}</div>
+          <div style={{ fontSize: 9, letterSpacing: "0.12em", color: T.n600, marginTop: 6 }}>JOBS · TODAY</div>
         </div>
-      )}
-
-      {/* Manage Jobs — LoopAI style */}
-      <div className="rounded-2xl bg-card shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-none dark:border dark:border-border overflow-hidden">
-        {/* Section header */}
-        <div className="flex items-center justify-between px-4 pt-4 pb-3">
-          <h2 className="text-sm font-bold text-foreground">Manage Jobs</h2>
-          <button className="text-muted-foreground hover:text-foreground">
-            <Search className="h-4 w-4" />
-          </button>
+        <div style={{ padding: "14px 16px", borderRight: `1px solid ${T.n300}` }}>
+          <div style={{ fontWeight: 800, fontSize: 30, lineHeight: 1, letterSpacing: "-0.03em", color: T.accent }}>{activeJobs.length}</div>
+          <div style={{ fontSize: 9, letterSpacing: "0.12em", color: T.n600, marginTop: 6 }}>ACTIVE</div>
         </div>
-
-        {/* Tabs — like LoopAI */}
-        <div className="px-4 pb-2">
-          <div className="flex gap-1 overflow-x-auto no-scrollbar">
-            {tabs.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={cn(
-                  "flex-shrink-0 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all",
-                  activeTab === tab.key
-                    ? "bg-violet-600 text-white shadow-sm"
-                    : "bg-muted text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {tab.label}
-                {tab.count > 0 && (
-                  <span className={cn(
-                    "rounded-full px-1.5 py-0.5 text-[9px] font-bold leading-none",
-                    activeTab === tab.key ? "bg-white/20 text-white" : "bg-background text-foreground"
-                  )}>{tab.count}</span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Column headers */}
-        <div className="grid grid-cols-[auto_1fr_auto] gap-2 px-4 py-2 border-t border-border/60">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Customer</span>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Task</span>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Status</span>
-        </div>
-
-        {/* Job rows */}
-        <div className="divide-y divide-border/60">
-          {visibleJobs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 text-center">
-              <Wrench className="h-7 w-7 text-muted-foreground/30" />
-              <p className="mt-2 text-xs text-muted-foreground">No jobs in this category</p>
-            </div>
-          ) : (
-            visibleJobs.map((job) => {
-              const status = statusConfig[job.status] ?? statusConfig.scheduled
-              const dot = priorityDot[job.priority] ?? priorityDot.normal
-              const equipmentLabel = job.equipmentType
-                ? job.equipmentType.replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase())
-                : "Service Call"
-              const scheduled = new Date(job.scheduledAt)
-              const color = avatarColor(job.customer.name)
-
-              return (
-                <button
-                  key={job.id}
-                  onClick={() => setExpandedId(job.id)}
-                  className="w-full grid grid-cols-[auto_1fr_auto] gap-3 items-center px-4 py-3 hover:bg-muted/40 transition-colors text-left"
-                >
-                  {/* Avatar */}
-                  <div className={cn("h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0", color)}>
-                    <span className="text-[10px] font-bold text-white">{initials(job.customer.name)}</span>
-                  </div>
-
-                  {/* Task info */}
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold text-foreground truncate">{job.customer.name}</p>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className={cn("h-1.5 w-1.5 rounded-full flex-shrink-0", dot)} />
-                      <p className="text-[10px] text-muted-foreground truncate">{equipmentLabel}</p>
-                      <span className="text-[10px] text-muted-foreground flex-shrink-0">·</span>
-                      <div className="flex items-center gap-0.5 text-[10px] text-muted-foreground flex-shrink-0">
-                        <Calendar className="h-2.5 w-2.5" />
-                        {scheduled.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Status pill + arrow */}
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold", status.pill)}>
-                      {status.label}
-                    </span>
-                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-                  </div>
-                </button>
-              )
-            })
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="border-t border-border/60 px-4 py-3">
-          <button className="text-xs font-semibold text-violet-600 dark:text-violet-400 hover:underline">
-            See all jobs →
-          </button>
+        <div style={{ padding: "14px 16px" }}>
+          <div style={{ fontWeight: 800, fontSize: 30, lineHeight: 1, letterSpacing: "-0.03em" }}>{completedJobs.length}</div>
+          <div style={{ fontSize: 9, letterSpacing: "0.12em", color: T.n600, marginTop: 6 }}>DONE</div>
         </div>
       </div>
 
-      {/* AI panel — LoopAI style */}
-      <div className="rounded-2xl bg-gradient-to-br from-violet-50 to-indigo-50 dark:from-violet-500/10 dark:to-indigo-500/10 border border-violet-100 dark:border-violet-500/20 shadow-[0_2px_16px_rgba(0,0,0,0.06)] p-4">
-        <p className="text-xs text-violet-600 dark:text-violet-400 font-medium">Hi, {firstName} 👋</p>
-        <p className="text-base font-bold text-foreground mt-0.5 mb-3">How can I help you?</p>
-        <div className="grid grid-cols-2 gap-2">
-          {[
-            { icon: Sparkles, label: "Ask about a job", color: "text-violet-600 bg-violet-100 dark:bg-violet-500/20 dark:text-violet-300" },
-            { icon: Zap, label: "Generate estimate", color: "text-amber-600 bg-amber-100 dark:bg-amber-500/20 dark:text-amber-300" },
-            { icon: Wrench, label: "Troubleshoot issue", color: "text-emerald-600 bg-emerald-100 dark:bg-emerald-500/20 dark:text-emerald-300" },
-            { icon: TrendingUp, label: "Day summary", color: "text-blue-600 bg-blue-100 dark:bg-blue-500/20 dark:text-blue-300" },
-          ].map(({ icon: Icon, label, color }) => (
+      {/* Day progress */}
+      <div style={{ borderTop: `1px solid ${T.n300}`, padding: "14px 16px" }}>
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+          <div style={{ fontSize: 10, letterSpacing: "0.14em", color: T.n600 }}>DAY PROGRESS</div>
+          <div style={{ fontWeight: 800, fontSize: 14 }}>{progressPct}%</div>
+        </div>
+        <div style={{ height: 8, borderRadius: 999, background: T.n300, marginTop: 10, overflow: "hidden" }}>
+          <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: 999, background: T.accent, transition: "width 0.7s" }} />
+        </div>
+      </div>
+
+      {/* Manage jobs */}
+      <div style={{ borderTop: `2px solid ${T.text}`, padding: "14px 16px 0" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ fontWeight: 800, fontSize: 16, letterSpacing: "-0.01em" }}>Manage jobs</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, border: `1px solid ${T.text}`, borderRadius: 10, padding: "5px 9px", cursor: "pointer" }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={T.text} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em" }}>SEARCH</span>
+          </div>
+        </div>
+
+        {/* Filter chips */}
+        <div style={{ display: "flex", gap: 6, marginTop: 12, flexWrap: "wrap" }}>
+          {tabs.map((tab) => (
             <button
-              key={label}
-              onClick={() => {
-                if (activeJobs[0]) setAskAiJob(activeJobs[0])
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              style={{
+                background: activeTab === tab.key ? T.text : "transparent",
+                color: activeTab === tab.key ? T.bg : T.n600,
+                border: `1px solid ${activeTab === tab.key ? T.text : T.n400}`,
+                borderRadius: 999,
+                fontSize: 10,
+                letterSpacing: "0.08em",
+                padding: "4px 10px",
+                cursor: "pointer",
+                fontFamily: font,
+                fontWeight: 600,
               }}
-              className="flex flex-col items-start gap-2 rounded-xl bg-card border border-border/60 shadow-sm px-3 py-3 hover:border-violet-300 dark:hover:border-violet-500/40 transition-colors"
             >
-              <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center", color)}>
-                <Icon className="h-4 w-4" />
-              </div>
-              <span className="text-xs font-semibold text-foreground leading-tight">{label}</span>
+              {tab.label} {tab.count}
             </button>
           ))}
         </div>
-        <div className="mt-3 flex items-center gap-2 rounded-xl bg-card border border-border/60 px-3 py-2.5">
-          <Sparkles className="h-3.5 w-3.5 text-violet-500 flex-shrink-0" />
-          <span className="text-xs text-muted-foreground flex-1">Ask something...</span>
+
+        {/* Column headers */}
+        <div style={{ display: "grid", gridTemplateColumns: "32px 1fr auto", gap: 10, marginTop: 14, padding: "8px 0", borderTop: `1px solid ${T.n300}`, fontSize: 9, letterSpacing: "0.12em", color: T.n600 }}>
+          <span></span><span>CUSTOMER · TASK</span><span>STATUS</span>
+        </div>
+      </div>
+
+      {/* Job rows */}
+      <div style={{ padding: "0 16px" }}>
+        {visibleJobs.length === 0 ? (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 0", textAlign: "center" }}>
+            <Wrench style={{ width: 28, height: 28, color: T.n400 }} />
+            <p style={{ marginTop: 8, fontSize: 12, color: T.n600 }}>No jobs in this category</p>
+          </div>
+        ) : (
+          visibleJobs.map((job) => {
+            const equipmentLabel = job.equipmentType
+              ? job.equipmentType.replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase())
+              : "Service Call"
+            const scheduled = new Date(job.scheduledAt)
+
+            return (
+              <button
+                key={job.id}
+                onClick={() => setExpandedId(job.id)}
+                style={{ display: "grid", gridTemplateColumns: "32px 1fr auto", gap: 10, alignItems: "center", padding: "12px 0", borderTop: `1px solid ${T.n300}`, borderLeft: "none", borderRight: "none", borderBottom: "none", width: "100%", background: "transparent", cursor: "pointer", textAlign: "left", fontFamily: font }}
+              >
+                <div style={{ width: 32, height: 32, borderRadius: 10, background: avatarBg(job.status), color: T.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, flexShrink: 0 }}>
+                  {initials(job.customer.name)}
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, fontSize: 13, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{job.customer.name}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3 }}>
+                    <span style={{ width: 6, height: 6, borderRadius: 999, background: dotColor(job.status), flexShrink: 0, display: "inline-block" }} />
+                    <span style={{ fontSize: 10, color: T.n600 }}>{equipmentLabel} · {scheduled.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                  <span style={{ ...statusPillStyle(job.status), borderRadius: 999, fontSize: 9, letterSpacing: "0.1em", padding: "3px 8px", whiteSpace: "nowrap", fontWeight: 700 }}>
+                    {statusLabel(job.status)}
+                  </span>
+                  <ChevronRight style={{ width: 14, height: 14, color: T.n500 }} />
+                </div>
+              </button>
+            )
+          })
+        )}
+
+        <div style={{ borderTop: `1px solid ${T.n300}`, padding: "12px 0 16px" }}>
+          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: T.accentLight }}>SEE ALL JOBS →</span>
+        </div>
+      </div>
+
+      {/* AI Assistant */}
+      <div style={{ borderTop: `2px solid ${T.text}`, padding: 16 }}>
+        <div style={{ fontSize: 10, letterSpacing: "0.14em", color: T.n600 }}>ASSISTANT</div>
+        <div style={{ fontWeight: 800, fontSize: 18, letterSpacing: "-0.01em", marginTop: 6 }}>How can I help you?</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 12 }}>
+          {[
+            { icon: Sparkles, label: "Ask about a job", iconColor: T.accent },
+            { icon: Zap, label: "Generate estimate", iconColor: T.text },
+            { icon: Wrench, label: "Troubleshoot issue", iconColor: T.text },
+            { icon: TrendingUp, label: "Day summary", iconColor: T.text },
+          ].map(({ icon: Icon, label, iconColor }) => (
+            <button
+              key={label}
+              onClick={() => { if (activeJobs[0]) setAskAiJob(activeJobs[0]) }}
+              style={{ border: `1px solid ${T.n300}`, borderRadius: 16, background: "#fff", padding: 12, cursor: "pointer", textAlign: "left", fontFamily: font }}
+            >
+              <Icon style={{ width: 16, height: 16, color: iconColor }} />
+              <div style={{ fontWeight: 700, fontSize: 12, marginTop: 10, color: T.text }}>{label}</div>
+            </button>
+          ))}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, border: `2px solid ${T.text}`, borderRadius: 14, padding: "9px 12px", marginTop: 12 }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={T.n600} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          <span style={{ fontSize: 13, color: T.n500 }}>Ask something…</span>
         </div>
       </div>
 
