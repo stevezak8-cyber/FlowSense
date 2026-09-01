@@ -1,4 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom"
+import { useState, useEffect } from "react"
 import { OnboardingChecklist } from "@/components/office/onboarding-checklist"
 import { useOnboarding } from "@/components/office/onboarding-context"
 import {
@@ -14,6 +15,8 @@ import {
   CreditCard,
   ShieldCheck,
   ClipboardList,
+  Menu,
+  X,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { PneurosLogo } from "@/components/brand"
@@ -48,11 +51,28 @@ async function openBillingPortal() {
   if (data.url) window.location.href = data.url
 }
 
+export function MobileMenuButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex md:hidden items-center justify-center h-9 w-9 rounded-xl text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors"
+      aria-label="Open menu"
+    >
+      <Menu className="h-5 w-5" />
+    </button>
+  )
+}
+
 export function AppSidebar() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const { refreshKey } = useOnboarding()
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  // Close on route change
+  useEffect(() => { setMobileOpen(false) }, [pathname])
 
   function handleLogout() {
     logout()
@@ -60,10 +80,41 @@ export function AppSidebar() {
   }
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 flex w-[220px] flex-col bg-sidebar shadow-[1px_0_8px_rgba(0,0,0,0.04)] dark:border-r dark:border-sidebar-border dark:shadow-none">
-      {/* Logo */}
-      <div className="flex h-[68px] items-center px-5">
+    <>
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 md:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Mobile open button — rendered inside TopHeader via MobileMenuButton, exposed here for wiring */}
+      <button
+        type="button"
+        onClick={() => setMobileOpen(true)}
+        className="fixed top-4 left-4 z-30 flex md:hidden items-center justify-center h-9 w-9 rounded-xl bg-background border border-border shadow-sm text-muted-foreground hover:text-foreground transition-colors"
+        aria-label="Open menu"
+      >
+        <Menu className="h-5 w-5" />
+      </button>
+
+    <aside className={cn(
+      "fixed inset-y-0 left-0 z-50 flex w-[220px] flex-col bg-sidebar shadow-[1px_0_8px_rgba(0,0,0,0.04)] dark:border-r dark:border-sidebar-border dark:shadow-none transition-transform duration-200",
+      "md:translate-x-0",
+      mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+    )}>
+      {/* Logo + mobile close */}
+      <div className="flex h-[68px] items-center justify-between px-5">
         <PneurosLogo size="sm" />
+        <button
+          type="button"
+          onClick={() => setMobileOpen(false)}
+          className="flex md:hidden items-center justify-center h-8 w-8 rounded-lg text-muted-foreground hover:bg-sidebar-accent transition-colors"
+          aria-label="Close menu"
+        >
+          <X className="h-4 w-4" />
+        </button>
       </div>
 
       {/* Nav Items */}
@@ -137,5 +188,6 @@ export function AppSidebar() {
         </button>
       </div>
     </aside>
+    </>
   )
 }
