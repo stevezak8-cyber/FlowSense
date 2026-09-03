@@ -146,6 +146,66 @@
   }
 }
 
+/* ─── Office: modernist palette (matches technician app's warm neutral + burnt-orange accent) ───
+   Scoped override, not a redesign — office keeps its existing layout/components, only recolored.
+   Deliberately leaves --destructive/--success/--warning/--chart-* untouched: those stay semantic
+   (red/green/amber) for status legibility across jobs/invoices/compliance, inherited from :root/.dark. */
+.office-theme {
+  --background: #f3f2f2;
+  --foreground: #201e1d;
+  --card: #fbfaf9;
+  --card-foreground: #201e1d;
+  --popover: #fbfaf9;
+  --popover-foreground: #201e1d;
+  --primary: #ec3013;
+  --primary-foreground: #fdf6f4;
+  --secondary: #eae9e9;
+  --secondary-foreground: #201e1d;
+  --muted: #eae7e7;
+  --muted-foreground: #7d7979;
+  --accent: #ec3013;
+  --accent-foreground: #fdf6f4;
+  --border: #d7d3d3;
+  --input: #eae7e7;
+  --ring: #ec3013;
+  --sidebar: #fbfaf9;
+  --sidebar-foreground: #201e1d;
+  --sidebar-primary: #ec3013;
+  --sidebar-primary-foreground: #ec3013;
+  --sidebar-accent: #eae7e7;
+  --sidebar-accent-foreground: #201e1d;
+  --sidebar-border: #d7d3d3;
+  --sidebar-ring: #ec3013;
+}
+
+.dark .office-theme {
+  --background: #1a1817;
+  --foreground: #f3f2f2;
+  --card: #242220;
+  --card-foreground: #f3f2f2;
+  --popover: #242220;
+  --popover-foreground: #f3f2f2;
+  --primary: #ec3013;
+  --primary-foreground: #fdf6f4;
+  --secondary: #2e2b29;
+  --secondary-foreground: #f3f2f2;
+  --muted: #2e2b29;
+  --muted-foreground: #9b9797;
+  --accent: #ec3013;
+  --accent-foreground: #fdf6f4;
+  --border: #3a3735;
+  --input: #2e2b29;
+  --ring: #ec3013;
+  --sidebar: #242220;
+  --sidebar-foreground: #f3f2f2;
+  --sidebar-primary: #ec3013;
+  --sidebar-primary-foreground: #ec3013;
+  --sidebar-accent: #2e2b29;
+  --sidebar-accent-foreground: #f3f2f2;
+  --sidebar-border: #3a3735;
+  --sidebar-ring: #ec3013;
+}
+
 /* ─── MedOps Card Style ─── */
 @layer components {
   .medops-card {
