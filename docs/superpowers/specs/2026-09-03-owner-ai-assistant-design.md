@@ -61,7 +61,7 @@ The existing `voice-transcribe.ts` pattern (record → Whisper transcribe → pr
 | `get_job_status(jobIdOrDescription)` | Status, technician, timing for one job |
 | `get_business_health` | Reuses existing analytics service — revenue trend, forecast, at-risk customers, AI narrative |
 | `get_inventory_status` | Stock levels vs. upcoming jobs' needed parts |
-| `get_ad_performance` | Spend, clicks, leads per active campaign |
+| `get_ad_performance` | Spend, clicks, leads per active/paused campaign |
 
 **Draft tools** — execute immediately, but only ever touch a `draft`-status row with no real-world effect. No confirmation needed, because there's nothing yet to confirm:
 
@@ -192,10 +192,12 @@ model AdCampaign {
   name               String
   headline           String
   body               String
-  imagePrompt        String?
+  imagePrompt        String?      // reserved for a future image-generation follow-up; unset by any flow in this spec
   budgetDailyCents   Int
   targeting          Json         // { radiusMiles, zipCodes?, serviceType }
   status             String       @default("draft") // draft | pending_confirmation | active | paused | ended | failed
+  // "failed" here means an async post-publish platform error (e.g. the platform rejects the campaign after acceptance);
+  // a failed *publish attempt itself* reverts status to "draft" per the Confirmation flow, it never reaches "failed"
   createdByAssistant Boolean      @default(true)
   createdAt          DateTime     @default(now())
 
