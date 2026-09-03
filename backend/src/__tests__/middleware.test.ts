@@ -28,7 +28,7 @@ function makeRes() {
 
 describe("requireSubscription", () => {
   it("calls next() when plan is active", async () => {
-    vi.mocked(prisma.organization.findUnique).mockResolvedValue({ plan: "entry" } as never)
+    vi.mocked(prisma.organization.findUnique).mockResolvedValue({ plan: "shop" } as never)
     const next = vi.fn() as unknown as NextFunction
     await requireSubscription(makeReq(), makeRes(), next)
     expect(next).toHaveBeenCalled()

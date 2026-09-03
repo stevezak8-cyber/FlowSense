@@ -18,7 +18,7 @@ This is the first feature in the codebase to actually enforce a plan gate (`Orga
 
 ## Feature Gating & Access
 
-- **Plan gate:** restricted to the org's top tier. **Prerequisite, not a footnote:** the Stripe billing spec's `plan` enum (`trial/entry/core/premium/cancelled`) reflects an older pricing structure (Premium = $697/mo) that the landing page has since replaced with `Shop/Fleet/Enterprise` (Enterprise = $2,999/mo). Before this feature can be implemented, `Organization.plan` must be migrated to a `trial/shop/fleet/enterprise/cancelled` enum (or equivalent) matching current pricing — this is a blocking dependency for the entire Feature Gating section, and by extension every route in this spec. The gate itself is then a plain `organization.plan === "enterprise"` check.
+- **Plan gate:** restricted to the org's top tier. **Resolved 2026-09-03:** `Organization.plan` now uses `trial/shop/fleet/enterprise/cancelled/payment_failed`, matching the landing page's current `Shop/Fleet/Enterprise` pricing — the enum drift that previously blocked this section is fixed (see the superseded-naming note on the Stripe billing spec). The gate is a plain `organization.plan === "enterprise"` check.
 - **Role gate:** stacked on top of the plan gate — `user.role === "admin"` only. Office staff without admin do not see the assistant, even on an Enterprise org.
 - Middleware: `requireEnterprisePlan` (new) + existing `requireAuth`, applied to all `/api/owner-assistant/*` and `/api/ad-accounts/*` routes.
 

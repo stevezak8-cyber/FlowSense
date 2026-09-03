@@ -3,6 +3,8 @@
 **Date:** 2026-07-13
 **Status:** Approved
 
+> **Naming superseded 2026-09-03:** the tier names and prices below (`Entry $297 / Core $497 / Premium $697`, `plan` enum `entry/core/premium`) reflect the pricing structure at the time this spec was written. Live pricing has since moved to `Shop $799 / Fleet $1,499 / Enterprise $2,999`, and the code now uses the matching `plan` enum `trial/shop/fleet/enterprise/cancelled/payment_failed`. This document is kept as-is for historical record of the original billing architecture (webhook flow, checkout flow, Customer Portal integration), which is otherwise still accurate — only the tier names/prices below are stale.
+
 ---
 
 ## Overview

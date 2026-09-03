@@ -46,6 +46,10 @@ billingRouter.post("/upgrade", async (req, res) => {
     return res.status(403).json({ error: "Admin access required" });
   }
 
+  if (!["shop", "fleet", "enterprise"].includes(plan)) {
+    return res.status(400).json({ error: "plan must be one of: shop, fleet, enterprise" });
+  }
+
   const org = await prisma.organization.findUnique({ where: { id: organizationId } });
 
   if (!stripe) {

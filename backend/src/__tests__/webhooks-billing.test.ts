@@ -81,7 +81,7 @@ describe("Stripe webhook — subscription events", () => {
       id: "sub_123",
       customer: "cus_abc",
       trial_end: trialEnd,
-      items: { data: [{ price: { id: "price_entry_test" } }] },
+      items: { data: [{ price: { id: "price_shop_test" } }] },
       status: "trialing",
     })
 
@@ -99,7 +99,7 @@ describe("Stripe webhook — subscription events", () => {
   })
 
   it("sets plan=cancelled on customer.subscription.deleted", async () => {
-    vi.mocked(prisma.organization.findFirst).mockResolvedValue({ id: "org-1", plan: "entry" } as never)
+    vi.mocked(prisma.organization.findFirst).mockResolvedValue({ id: "org-1", plan: "shop" } as never)
     vi.mocked(prisma.organization.update).mockResolvedValue({} as never)
 
     const event = makeEvent("customer.subscription.deleted", {
@@ -119,19 +119,19 @@ describe("Stripe webhook — subscription events", () => {
     vi.mocked(prisma.organization.findFirst).mockResolvedValue({ id: "org-1", plan: "trial" } as never)
     vi.mocked(prisma.organization.update).mockResolvedValue({} as never)
 
-    process.env.STRIPE_PRICE_ID_ENTRY = "price_entry_test"
+    process.env.STRIPE_PRICE_ID_SHOP = "price_shop_test"
     const event = makeEvent("invoice.payment_succeeded", {
       customer: "cus_abc",
       subscription: "sub_123",
       billing_reason: "subscription_cycle",
-      lines: { data: [{ price: { id: "price_entry_test" } }] },
+      lines: { data: [{ price: { id: "price_shop_test" } }] },
     })
 
     const app = makeApp()
     const res = await request(app).post("/webhooks/stripe").send(event)
     expect(res.status).toBe(200)
     expect(prisma.organization.update).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ plan: "entry" }) })
+      expect.objectContaining({ data: expect.objectContaining({ plan: "shop" }) })
     )
   })
 })

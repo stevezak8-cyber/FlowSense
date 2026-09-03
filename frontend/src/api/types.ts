@@ -264,7 +264,7 @@ export interface ApiOrganization {
   address: string | null
   notificationPreferences: NotificationPreferences | null
   createdAt: string
-  plan: "trial" | "entry" | "core" | "premium" | "cancelled"
+  plan: "trial" | "shop" | "fleet" | "enterprise" | "cancelled" | "payment_failed"
   trialEndsAt: string | null
   estimateDepositThreshold: number
   estimateDepositPercent: number

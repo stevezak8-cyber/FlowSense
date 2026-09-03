@@ -163,9 +163,9 @@ webhooksRouter.post("/stripe", async (req: Request, res: Response) => {
 
       const priceId = sub.items.data[0]?.price?.id;
       let plan: string = org.plan;
-      if (priceId === process.env.STRIPE_PRICE_ID_ENTRY) plan = sub.status === "trialing" ? "trial" : "entry";
-      else if (priceId === process.env.STRIPE_PRICE_ID_CORE) plan = "core";
-      else if (priceId === process.env.STRIPE_PRICE_ID_PREMIUM) plan = "premium";
+      if (priceId === process.env.STRIPE_PRICE_ID_SHOP) plan = sub.status === "trialing" ? "trial" : "shop";
+      else if (priceId === process.env.STRIPE_PRICE_ID_FLEET) plan = "fleet";
+      else if (priceId === process.env.STRIPE_PRICE_ID_ENTERPRISE) plan = "enterprise";
 
       const trialEnd = sub.trial_end ? new Date(sub.trial_end * 1000) : null;
 
@@ -201,9 +201,9 @@ webhooksRouter.post("/stripe", async (req: Request, res: Response) => {
 
       const priceId = (inv.lines?.data[0] as { price?: { id: string } })?.price?.id;
       let plan = org.plan;
-      if (priceId === process.env.STRIPE_PRICE_ID_ENTRY) plan = "entry";
-      else if (priceId === process.env.STRIPE_PRICE_ID_CORE) plan = "core";
-      else if (priceId === process.env.STRIPE_PRICE_ID_PREMIUM) plan = "premium";
+      if (priceId === process.env.STRIPE_PRICE_ID_SHOP) plan = "shop";
+      else if (priceId === process.env.STRIPE_PRICE_ID_FLEET) plan = "fleet";
+      else if (priceId === process.env.STRIPE_PRICE_ID_ENTERPRISE) plan = "enterprise";
 
       if (plan !== org.plan) {
         await prisma.organization.update({ where: { id: org.id }, data: { plan } });

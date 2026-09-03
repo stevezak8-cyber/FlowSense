@@ -6,22 +6,22 @@ describe("getPriceId", () => {
     vi.resetModules()
   })
 
-  it("returns entry price ID for 'entry' plan", async () => {
-    process.env.STRIPE_PRICE_ID_ENTRY = "price_entry_test"
-    process.env.STRIPE_PRICE_ID_CORE = "price_core_test"
-    process.env.STRIPE_PRICE_ID_PREMIUM = "price_premium_test"
+  it("returns shop price ID for 'shop' plan", async () => {
+    process.env.STRIPE_PRICE_ID_SHOP = "price_shop_test"
+    process.env.STRIPE_PRICE_ID_FLEET = "price_fleet_test"
+    process.env.STRIPE_PRICE_ID_ENTERPRISE = "price_enterprise_test"
     const { getPriceId } = await import("../services/stripe.js")
-    expect(getPriceId("entry")).toBe("price_entry_test")
+    expect(getPriceId("shop")).toBe("price_shop_test")
   })
 
-  it("returns core price ID for 'core' plan", async () => {
+  it("returns fleet price ID for 'fleet' plan", async () => {
     const { getPriceId } = await import("../services/stripe.js")
-    expect(getPriceId("core")).toBe("price_core_test")
+    expect(getPriceId("fleet")).toBe("price_fleet_test")
   })
 
-  it("returns premium price ID for 'premium' plan", async () => {
+  it("returns enterprise price ID for 'enterprise' plan", async () => {
     const { getPriceId } = await import("../services/stripe.js")
-    expect(getPriceId("premium")).toBe("price_premium_test")
+    expect(getPriceId("enterprise")).toBe("price_enterprise_test")
   })
 
   it("throws for unknown plan", async () => {

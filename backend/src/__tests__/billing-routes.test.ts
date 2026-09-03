@@ -82,7 +82,7 @@ describe("POST /billing/upgrade", () => {
   it("returns 403 when user is not admin", async () => {
     const res = await request(buildApp("office"))
       .post("/billing/upgrade")
-      .send({ organizationId: "org-1", plan: "core" });
+      .send({ organizationId: "org-1", plan: "fleet" });
     expect(res.status).toBe(403);
   });
 });

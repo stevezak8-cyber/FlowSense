@@ -132,7 +132,7 @@ authRouter.post("/register", async (req, res) => {
         const session = await stripe.checkout.sessions.create({
           mode: "subscription",
           customer: stripeCustomerId,
-          line_items: [{ price: getPriceId("entry"), quantity: 1 }],
+          line_items: [{ price: getPriceId("shop"), quantity: 1 }],
           subscription_data: { trial_period_days: 30 },
           payment_method_collection: "always",
           success_url: `${appUrl}/office?checkout=success`,

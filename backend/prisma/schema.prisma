@@ -33,7 +33,7 @@ model Organization {
 
   stripeCustomerId      String?
   stripeSubscriptionId  String?
-  plan                  String    @default("trial")
+  plan                  String    @default("trial") // trial | shop | fleet | enterprise | cancelled | payment_failed
   trialEndsAt           DateTime?
   onboardingDismissed   Boolean   @default(false)
   stripeConnectAccountId  String?
