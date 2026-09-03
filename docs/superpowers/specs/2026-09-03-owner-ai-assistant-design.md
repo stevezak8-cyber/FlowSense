@@ -46,7 +46,7 @@ The existing `voice-transcribe.ts` pattern (record → Whisper transcribe → pr
 1. Owner opens the widget or `/office/assistant` page → frontend calls `POST /api/owner-assistant/session`.
 2. Backend verifies plan + role, builds the system prompt (org data, today's date, `AssistantMemory.notes`, queued proactive briefing items) and the tool schema, requests an ephemeral client token from OpenAI's Realtime session endpoint, returns it to the frontend.
 3. Frontend opens a WebRTC connection directly to OpenAI using that token. Mic audio streams up, speech/text streams down. The backend is never in the audio path — only in the tool-call path, to keep voice latency low.
-4. Tool calls arrive over the WebRTC data channel → frontend forwards to `POST /api/owner-assistant/tools/:toolName` → backend executes (read) or stages (write) → result is fed back into the session so the model continues talking.
+4. Tool calls arrive over the WebRTC data channel → frontend forwards to `POST /api/owner-assistant/tools/:toolName` → backend executes immediately (`read` and `draft` tools) or stages a `PendingAction` (`action` tools) → result is fed back into the session so the model continues talking.
 5. Session ends on panel close or after 15 minutes with no audio or text activity. Backend summarizes the transcript into durable facts/preferences via a Claude call and merges into `AssistantMemory.notes`.
 
 ---
@@ -69,14 +69,16 @@ The existing `voice-transcribe.ts` pattern (record → Whisper transcribe → pr
 |---|---|
 | `draft_ad_creative(platform, goal, budget)` | Claude-generated headline/body. Creates an `AdCampaign` row with `status: "draft"` on first call; a follow-up call in the same conversation ("make it punchier") updates that same row rather than creating a new one, keyed off the campaign the owner is actively iterating on in-session. |
 
-**Action tools** — always staged via `PendingAction`, never execute on first call:
+**Action tools** — always staged via `PendingAction`, never execute on first call. This table is the exhaustive list of every domain tool in this category:
 
 | Tool | Effect |
 |---|---|
 | `book_job` / `reschedule_job` / `cancel_job` | Job CRUD |
 | `send_email(to, subject, body)` | Via existing `email.ts` |
 | `send_sms(to, body)` | Via existing `sms.ts` |
-| `publish_ad_campaign(adCampaignId, budget, targeting)` | Highest-risk tool — real ad spend. Transitions the draft `AdCampaign` row to `pending_confirmation` then `active` |
+| `publish_ad_campaign(adCampaignId, budgetDailyCents?, targeting?)` | Highest-risk tool — real ad spend. Transitions the draft `AdCampaign` row to `pending_confirmation` then `active`. If `budgetDailyCents`/`targeting` are omitted, the values already set on the draft by `draft_ad_creative` are used; if provided, they overwrite the draft's values before publishing — there is only ever one live value per campaign, never a separate "draft budget" vs. "publish budget." |
+| `pause_ad_campaign(adCampaignId)` | Same shape as `publish_ad_campaign` — pauses a live campaign via the platform API, `AdCampaign.status → "paused"` |
+| `end_ad_campaign(adCampaignId)` | Same shape — ends a campaign permanently, `AdCampaign.status → "ended"` |
 
 **Confirmation flow:**
 
@@ -85,6 +87,8 @@ The existing `voice-transcribe.ts` pattern (record → Whisper transcribe → pr
 3. **Confirm:** via the model calling `confirm_pending_action(id)` (parsed from a spoken yes) or the button — executes the real side effect; backend reports success/failure back into the session, `PendingAction.status → "confirmed"`.
 4. **Cancel:** via the model calling `cancel_pending_action(id)` (parsed from a spoken no) or the button — no side effect runs, `PendingAction.status → "cancelled"`, the model acknowledges and drops it.
 5. Unconfirmed, unrejected actions expire after 10 minutes of no response and are marked `expired`.
+
+`confirm_pending_action` and `cancel_pending_action` are generic control tools, not domain tools — they operate on whatever `PendingAction` is currently awaiting a response rather than on business data directly, which is why they're listed here rather than in either domain table above.
 
 ---
 
@@ -226,7 +230,7 @@ Set by the owner in Settings — never adjustable by the assistant itself.
 
 **Platform abstraction:** one `AdPlatformClient` interface (`createCampaign`, `pauseCampaign`, `getPerformance`) with per-platform implementations (`google-ads.ts`, `meta-ads.ts`, `nextdoor-ads.ts`), so the assistant's tools stay platform-agnostic. Each platform requires the owner to already have a funded ad account with a payment method on file there — FlowSense creates and manages campaigns via their API, it does not handle ad billing itself.
 
-**Flow:** `draft_ad_creative` (Claude-generated headline/body, iterable conversationally — "make it punchier," "mention the $99 tune-up") creates/updates a `draft`-status `AdCampaign` row, no confirmation needed. Once the owner is happy, `publish_ad_campaign` runs the budget-cap check → stages a `PendingAction` with a full preview card (platform, budget, targeting, creative) → explicit confirm → real API call creates and activates the campaign → `AdCampaign.status → "active"`. Pausing/ending a campaign follows the same staged-confirmation pattern (a `pause_ad_campaign` / `end_ad_campaign` action tool, same shape as `publish_ad_campaign`).
+**Flow:** `draft_ad_creative` (Claude-generated headline/body, iterable conversationally — "make it punchier," "mention the $99 tune-up") creates/updates a `draft`-status `AdCampaign` row, no confirmation needed. Once the owner is happy, `publish_ad_campaign` runs the budget-cap check → stages a `PendingAction` with a full preview card (platform, budget, targeting, creative) → explicit confirm → real API call creates and activates the campaign → `AdCampaign.status → "active"`. Pausing/ending a campaign follows the same staged-confirmation pattern via `pause_ad_campaign` / `end_ad_campaign` (see Tool Catalog).
 
 ---
 
