@@ -67,7 +67,7 @@ The existing `voice-transcribe.ts` pattern (record → Whisper transcribe → pr
 
 | Tool | Effect |
 |---|---|
-| `draft_ad_creative(platform, goal, budget)` | Claude-generated headline/body. Creates an `AdCampaign` row with `status: "draft"` on first call; a follow-up call in the same conversation ("make it punchier") updates that same row rather than creating a new one, keyed off the campaign the owner is actively iterating on in-session. |
+| `draft_ad_creative(platform, goal, budgetDailyCents, targeting, name?)` | Claude-generated headline/body. `targeting` is `{ radiusMiles, zipCodes?, serviceType }` — the model fills this from what the owner says conversationally ("focus on AC repair within 15 miles of the shop"), defaulting `radiusMiles` to the org's existing service area if the owner doesn't specify one. `name` is optional and auto-generated as `"{platform} — {serviceType} — {Month Year}"` when omitted. Creates an `AdCampaign` row with `status: "draft"` on first call; a follow-up call in the same conversation ("make it punchier") updates that same row rather than creating a new one, keyed off the campaign the owner is actively iterating on in-session. |
 
 **Action tools** — always staged via `PendingAction`, never execute on first call. This table is the exhaustive list of every domain tool in this category:
 
@@ -79,6 +79,8 @@ The existing `voice-transcribe.ts` pattern (record → Whisper transcribe → pr
 | `publish_ad_campaign(adCampaignId, budgetDailyCents?, targeting?)` | Highest-risk tool — real ad spend. Transitions the draft `AdCampaign` row to `pending_confirmation` then `active`. If `budgetDailyCents`/`targeting` are omitted, the values already set on the draft by `draft_ad_creative` are used; if provided, they overwrite the draft's values before publishing — there is only ever one live value per campaign, never a separate "draft budget" vs. "publish budget." |
 | `pause_ad_campaign(adCampaignId)` | Same shape as `publish_ad_campaign` — pauses a live campaign via the platform API, `AdCampaign.status → "paused"` |
 | `end_ad_campaign(adCampaignId)` | Same shape — ends a campaign permanently, `AdCampaign.status → "ended"` |
+
+Every dollar-figure parameter above (`draft_ad_creative`'s `budgetDailyCents`, `publish_ad_campaign`'s override) is spoken and reasoned about by the model in plain dollars ("fifty dollars a day," not "5000 cents") — the tool layer converts to cents at the boundary, before ever touching `AdCampaign`.
 
 **Confirmation flow:**
 
@@ -226,7 +228,7 @@ Set by the owner in Settings — never adjustable by the assistant itself.
 
 **Connecting an account** happens on a normal Settings page, not inside the assistant — OAuth is a browser-redirect flow. "Connect Google Ads / Meta Ads / Nextdoor Ads" buttons, standard OAuth callback, tokens stored in `AdAccountConnection`. If the owner asks the assistant to publish on an unconnected platform, it says so and points them to Settings.
 
-**Budget guardrails:** `publish_ad_campaign` validates the proposed daily budget against `maxDailySpendPerCampaignCents` directly. For `maxMonthlySpendCents`, it sums month-to-date spend across the org's `active`/`paused` `AdCampaign` rows — pulled live via each platform's `getPerformance` call (the same call `get_ad_performance` uses), not tracked as a separately-maintained running total — and rejects if the new campaign's daily budget × remaining days in the month would push the total over the cap. Over-cap requests get a spoken "that's above your $50/day limit — want me to lower it, or raise the cap in Settings first?" — never a silent bypass. This check runs *before* staging a `PendingAction`.
+**Budget guardrails:** `publish_ad_campaign` validates the proposed daily budget against `maxDailySpendPerCampaignCents` directly. For `maxMonthlySpendCents`, it sums month-to-date spend across the org's `active`/`paused` `AdCampaign` rows — pulled live via each platform's `getPerformance` call (the same call `get_ad_performance` uses), not tracked as a separately-maintained running total — and rejects if the *new* campaign's own remaining-month projected spend (its daily budget × remaining days in the month) would push that total over the cap. This is a deliberate v1 approximation: it checks the new campaign in isolation against current actuals, not the combined projected spend of all active campaigns through month-end, so the cap can still be exceeded by the combination even when each individual publish passes. Tightening that is a natural follow-up once real usage shows it matters. Over-cap requests get a spoken "that's above your $50/day limit — want me to lower it, or raise the cap in Settings first?" — never a silent bypass. This check runs *before* staging a `PendingAction`.
 
 **Platform abstraction:** one `AdPlatformClient` interface (`createCampaign`, `pauseCampaign`, `getPerformance`) with per-platform implementations (`google-ads.ts`, `meta-ads.ts`, `nextdoor-ads.ts`), so the assistant's tools stay platform-agnostic. Each platform requires the owner to already have a funded ad account with a payment method on file there — FlowSense creates and manages campaigns via their API, it does not handle ad billing itself.
 
@@ -264,7 +266,7 @@ Follows the codebase's existing silent-skip pattern for unconfigured AI (e.g. `A
 
 - Business logic independent of the voice transport (booking/rescheduling validation, budget-cap enforcement, `PendingAction` lifecycle, inventory decrement matching, memory summarization) is unit-tested the normal way.
 - Tool-schema and system-prompt construction get integration tests against a mocked Realtime session-creation call.
-- The live voice conversation itself is not meaningfully unit-testable. Manual QA script covers: book/reschedule/cancel end-to-end with confirmation, a full ad-campaign flow (draft → confirm → publish) against **sandbox ad accounts only** (Google Ads and Meta both offer test/sandbox modes — never test against real spend), a proactive alert firing mid-session, and interrupting the assistant mid-sentence.
+- The live voice conversation itself is not meaningfully unit-testable. Manual QA script covers: book/reschedule/cancel end-to-end with confirmation, a full ad-campaign flow (draft → confirm → publish) against **sandbox ad accounts only** for Google Ads and Meta (both offer test/sandbox modes — never test against real spend on these). Nextdoor Ads has no equivalent sandbox as of this writing — its publish flow is validated by code review plus one minimum-budget real campaign that the developer publishes and immediately pauses under the client's own account, with the client's explicit sign-off beforehand; it is not exercised in routine QA the way Google/Meta are. A proactive alert firing mid-session and interrupting the assistant mid-sentence round out the script.
 
 ---
 
