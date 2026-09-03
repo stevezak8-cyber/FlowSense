@@ -1141,7 +1141,7 @@ In `frontend/src/pages/office/OfficeSettings.tsx`, add the import next to the `P
 import { InventorySettings } from "@/components/inventory/inventory-settings"
 ```
 
-Then add a new `Card` section right after the Pricebook card closes (after the `</Card>` that follows the `<PricebookSettings />` block, currently around line 458, before the `{/* Payment Collection */}` comment):
+Then add a new `Card` section right after the Pricebook card closes (after the `</Card>` that follows the `<PricebookSettings />` block, currently line 459, before the `{/* Payment Collection */}` comment):
 
 ```tsx
       {/* Inventory */}
@@ -1221,11 +1221,12 @@ In the same file, inside the `{isExpanded && (...)}` block (starts around line 2
 
 - [ ] **Step 3: Manually verify**
 
-With the dev server running (from Task 7 Step 5), completing a job is a **technician** action, not an office one — `partsUsed` is only ever set via `frontend/src/components/jobs/completion-dialog.tsx`, wired up from `frontend/src/pages/technician/TechnicianJobs.tsx`. To exercise this end to end:
-1. Log in as a technician (or use the demo technician login from `/login`) and find (or create, via the office view, then assign/move it to `in_progress`) a job in `in_progress` status.
-2. Open that job in the technician app, complete it via the completion dialog, and in the parts-used field enter something that won't match any inventory item you created in Task 7 Step 5 (e.g. "Thermostat", assuming no such inventory item exists).
-3. Log back in as office (or switch demo accounts), go to `/office/jobs`, find that job, and expand its row.
-4. Confirm the amber warning appears listing "Thermostat".
+With the dev server running (from Task 7 Step 5), completing a job is a **technician** action, not an office one — `partsUsed` is only ever set via `frontend/src/components/jobs/completion-dialog.tsx`, wired up from `frontend/src/pages/technician/TechnicianJobs.tsx`. The office app can only create a job (default status `scheduled`) and assign a technician — it has no control to advance status. To exercise this end to end:
+1. As office, create a job (or use an existing one with status `scheduled`) and assign it to a technician.
+2. Log in as that technician (or use the demo technician login from `/login`) and open the job. Advance its status by tapping the technician app's status action button twice — first "Start / En Route" (`scheduled` → `en_route`), then "Arrived — Begin Work" (`en_route` → `in_progress`) — until "Mark Complete" appears.
+3. Tap "Mark Complete" to open the completion dialog, and in the parts-used field enter something that won't match any inventory item you created in Task 7 Step 5 (e.g. "Thermostat", assuming no such inventory item exists). Submit.
+4. Log back in as office (or switch demo accounts), go to `/office/jobs`, find that job, and expand its row.
+5. Confirm the amber warning appears listing "Thermostat".
 
 - [ ] **Step 4: Typecheck**
 
