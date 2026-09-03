@@ -64,6 +64,35 @@ const activityConfig: Record<string, { icon: typeof CheckCircle2; color: string;
   scheduled: { icon: CalendarClock, color: "text-chart-5", message: (j) => `Job scheduled for ${j.customer.name}` },
 }
 
+// Mirrors the exact date-window definitions backend/src/routes/dashboard.ts uses for
+// `completedToday` and `scheduledThisWeek`, shifted back one day/week, so the "previous"
+// counts are genuinely comparable to the "current" values already in `stats`.
+function computeWeekOverWeek(jobs: ApiJob[]) {
+  const now = new Date()
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000)
+  const weekStart = new Date(todayStart)
+  weekStart.setDate(weekStart.getDate() - weekStart.getDay()) // Sunday
+
+  const lastWeekTodayStart = new Date(todayStart.getTime() - 7 * 24 * 60 * 60 * 1000)
+  const lastWeekTodayEnd = new Date(todayEnd.getTime() - 7 * 24 * 60 * 60 * 1000)
+  const lastWeekStart = new Date(weekStart.getTime() - 7 * 24 * 60 * 60 * 1000)
+  const lastWeekEnd = weekStart
+
+  let completedSameDayLastWeek = 0
+  let scheduledLastWeek = 0
+  for (const job of jobs) {
+    if (job.status === "completed" && job.completedAt) {
+      const c = new Date(job.completedAt)
+      if (c >= lastWeekTodayStart && c < lastWeekTodayEnd) completedSameDayLastWeek++
+    }
+    const s = new Date(job.scheduledAt)
+    if (s >= lastWeekStart && s < lastWeekEnd) scheduledLastWeek++
+  }
+
+  return { completedSameDayLastWeek, scheduledLastWeek }
+}
+
 const flagStyles: Record<string, string> = {
   overdue_service: "border-amber-500/40 text-amber-700 dark:text-amber-400",
   warranty_expiring: "border-primary/40 text-primary",
@@ -94,6 +123,8 @@ export default function OfficeDashboardPage() {
   const chartColors = isDark
     ? { grid: "rgba(243,242,242,0.07)", tick: "rgba(243,242,242,0.45)", primary: "#ec3013", secondary: "#7d7979" }
     : { grid: "rgba(32,30,29,0.06)", tick: "rgba(32,30,29,0.45)", primary: "#ec3013", secondary: "#9b9797" }
+
+  const { completedSameDayLastWeek, scheduledLastWeek } = computeWeekOverWeek(jobs)
 
   const recentActivity = [...jobs]
     .filter((j) => j.status in activityConfig)
@@ -163,7 +194,14 @@ export default function OfficeDashboardPage() {
         </div>
       </header>
 
-      <StatCards stats={stats} loading={loading} />
+      <StatCards
+        stats={stats}
+        loading={loading}
+        weekOverWeek={{
+          completedToday: stats ? { current: stats.completedToday, previous: completedSameDayLastWeek } : undefined,
+          scheduledWeek: stats ? { current: stats.scheduledThisWeek, previous: scheduledLastWeek } : undefined,
+        }}
+      />
 
       <section aria-labelledby="plan-ahead-heading" className="flex flex-col gap-4">
         <div>
