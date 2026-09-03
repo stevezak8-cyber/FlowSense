@@ -1,13 +1,7 @@
 import type { ApiJob } from "@/api/types"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import {
-  ArrowUpRight,
-  Wrench,
-  Settings,
-  ClipboardCheck,
-  Loader2,
-} from "lucide-react"
+import { ArrowUpRight, Wrench, Loader2 } from "lucide-react"
 import { Link } from "react-router-dom"
 
 const statusStyles: Record<string, string> = {
@@ -31,12 +25,6 @@ const priorityStyles: Record<string, string> = {
   normal: "text-chart-5",
   high: "text-accent",
   urgent: "text-destructive",
-}
-
-const equipmentIcons: Record<string, React.ElementType> = {
-  furnace: Settings,
-  ac: Wrench,
-  "heat-pump": ClipboardCheck,
 }
 
 interface RecentJobsProps {
@@ -77,61 +65,57 @@ export function RecentJobs({ jobs, loading }: RecentJobsProps) {
           <ArrowUpRight className="h-3 w-3" />
         </Link>
       </div>
-      <div className="divide-y divide-border">
-        {recentJobs.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-10 text-center">
-            <Wrench className="h-6 w-6 text-muted-foreground/40" />
-            <p className="mt-2 text-sm text-muted-foreground">No jobs yet</p>
-          </div>
-        )}
-        {recentJobs.map((job) => {
-          const TypeIcon = equipmentIcons[job.equipmentType ?? ""] || Wrench
-          return (
-            <div
-              key={job.id}
-              className="flex items-center gap-4 px-6 py-4 transition-colors hover:bg-secondary/60"
-            >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                <TypeIcon className="h-4 w-4 text-primary" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="truncate text-sm font-semibold text-card-foreground">
-                    {job.equipmentType
-                      ? job.equipmentType.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())
-                      : "Service"}
-                    {job.symptomSummary ? ` — ${job.symptomSummary}` : ""}
-                  </span>
-                </div>
-                <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                  <span>{job.customer.name}</span>
-                  <span className="text-border">|</span>
-                  <span>{job.technician?.name ?? "Unassigned"}</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <span
-                  className={cn(
-                    "text-[10px] font-medium uppercase tracking-wider",
-                    priorityStyles[job.priority]
-                  )}
-                >
-                  {job.priority}
-                </span>
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "rounded-full px-2.5 py-0.5 text-[10px] font-medium border",
-                    statusStyles[job.status]
-                  )}
-                >
-                  {statusLabels[job.status]}
-                </Badge>
-              </div>
-            </div>
-          )
-        })}
-      </div>
+
+      {recentJobs.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-10 text-center">
+          <Wrench className="h-6 w-6 text-muted-foreground/40" />
+          <p className="mt-2 text-sm text-muted-foreground">No jobs yet</p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                <th className="px-6 py-3 font-bold">Customer</th>
+                <th className="px-3 py-3 font-bold">Service</th>
+                <th className="px-3 py-3 font-bold">Technician</th>
+                <th className="px-3 py-3 font-bold">Priority</th>
+                <th className="px-6 py-3 text-right font-bold">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {recentJobs.map((job) => (
+                <tr key={job.id} className="transition-colors hover:bg-secondary/60">
+                  <td className="px-6 py-4 font-semibold text-card-foreground">{job.customer.name}</td>
+                  <td className="max-w-[240px] px-3 py-4 text-muted-foreground">
+                    <span className="line-clamp-1">
+                      {job.equipmentType
+                        ? job.equipmentType.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())
+                        : "Service"}
+                      {job.symptomSummary ? ` — ${job.symptomSummary}` : ""}
+                    </span>
+                  </td>
+                  <td className="px-3 py-4 text-muted-foreground">{job.technician?.name ?? "Unassigned"}</td>
+                  <td className={cn("px-3 py-4 text-[10px] font-medium uppercase tracking-wider", priorityStyles[job.priority])}>
+                    {job.priority}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "rounded-full px-2.5 py-0.5 text-[10px] font-medium border",
+                        statusStyles[job.status]
+                      )}
+                    >
+                      {statusLabels[job.status]}
+                    </Badge>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }

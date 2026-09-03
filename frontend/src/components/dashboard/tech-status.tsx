@@ -24,6 +24,22 @@ const badgeLabels: Record<Availability, string> = {
   off_duty: "Off Duty",
 }
 
+// Deterministic per-technician avatar gradient, kept within the warm accent family.
+const avatarGradients = [
+  "from-[#ec3013] to-[#ae1800]",
+  "from-[#d97706] to-[#92400e]",
+  "from-[#78716c] to-[#44403c]",
+  "from-[#dc2626] to-[#7f1d1d]",
+  "from-[#a16207] to-[#422006]",
+  "from-[#57534e] to-[#292524]",
+]
+
+function gradientFor(id: string) {
+  let hash = 0
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0
+  return avatarGradients[hash % avatarGradients.length]
+}
+
 interface TechStatusProps {
   technicians: ApiTechnician[]
   jobs?: ApiJob[]
@@ -66,6 +82,17 @@ export function TechStatus({ technicians, jobs, loading }: TechStatusProps) {
 
     return map
   }, [technicians, jobs])
+
+  const assignedCountMap = useMemo(() => {
+    const map = new Map<string, number>()
+    if (!jobs) return map
+    for (const job of jobs) {
+      if (!job.technicianId) continue
+      if (job.status === "completed" || job.status === "cancelled") continue
+      map.set(job.technicianId, (map.get(job.technicianId) ?? 0) + 1)
+    }
+    return map
+  }, [jobs])
 
   if (loading) {
     return (
@@ -112,6 +139,7 @@ export function TechStatus({ technicians, jobs, loading }: TechStatusProps) {
             .toUpperCase()
             .slice(0, 2)
           const availability = availabilityMap.get(tech.id) ?? "off_duty"
+          const assigned = assignedCountMap.get(tech.id) ?? 0
           return (
             <div
               key={tech.id}
@@ -119,7 +147,7 @@ export function TechStatus({ technicians, jobs, loading }: TechStatusProps) {
             >
               <div className="relative">
                 <Avatar className="h-10 w-10 border-2 border-foreground/10">
-                  <AvatarFallback className="bg-primary/8 text-xs text-primary font-semibold">
+                  <AvatarFallback className={`bg-gradient-to-br ${gradientFor(tech.id)} text-xs text-white font-bold`}>
                     {initials}
                   </AvatarFallback>
                 </Avatar>
@@ -139,10 +167,14 @@ export function TechStatus({ technicians, jobs, loading }: TechStatusProps) {
                     </span>
                   )}
                 </div>
-                <div className="mt-0.5 text-xs text-muted-foreground capitalize">
-                  {tech.skills.length > 0
-                    ? tech.skills.join(", ").replace(/-/g, " ")
-                    : "General"}
+                <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  {jobs && <span>{assigned} assigned</span>}
+                  {jobs && (tech.vehicle || tech.skills.length > 0) && <span className="text-border">·</span>}
+                  <span className="capitalize">
+                    {tech.skills.length > 0
+                      ? tech.skills.join(", ").replace(/-/g, " ")
+                      : "General"}
+                  </span>
                 </div>
               </div>
               <div className="flex flex-col items-end gap-1">
