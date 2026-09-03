@@ -12,13 +12,13 @@ A live, voice-first AI assistant for the owner/admin of an Enterprise-tier ($2,9
 
 This is the first feature in the codebase to actually enforce a plan gate (`Organization.plan`) — every other AI feature today is available to all plans.
 
-**Core design principle (human-in-the-loop by default):** the assistant defaults to read-only. Every tool is explicitly tagged `read` or `write`. Read tools execute immediately. Write tools always stage a `PendingAction` and require explicit confirmation — spoken or tapped — before anything actually happens. This is non-negotiable for money-moving or customer-facing actions (ad spend, cancellations, outbound email/SMS).
+**Core design principle (human-in-the-loop by default):** the assistant defaults to read-only. Every tool is explicitly tagged one of three categories — `read`, `draft`, or `action` (see Tool Catalog). Only `action` tools touch anything with real-world consequence, and those always stage a `PendingAction` requiring explicit confirmation — spoken or tapped — before anything actually happens. This is non-negotiable for money-moving or customer-facing actions (ad spend, cancellations, outbound email/SMS).
 
 ---
 
 ## Feature Gating & Access
 
-- **Plan gate:** restricted to the org's top tier. The Stripe billing spec's `plan` enum (`trial/entry/core/premium/cancelled`) has drifted from the landing page's current tier names (`Shop/Fleet/Enterprise`) — this needs reconciling before implementation. For this spec, the gate is `organization.plan === "enterprise"` (or whatever value the reconciled enum uses for the $2,999/mo tier).
+- **Plan gate:** restricted to the org's top tier. **Prerequisite, not a footnote:** the Stripe billing spec's `plan` enum (`trial/entry/core/premium/cancelled`) reflects an older pricing structure (Premium = $697/mo) that the landing page has since replaced with `Shop/Fleet/Enterprise` (Enterprise = $2,999/mo). Before this feature can be implemented, `Organization.plan` must be migrated to a `trial/shop/fleet/enterprise/cancelled` enum (or equivalent) matching current pricing — this is a blocking dependency for the entire Feature Gating section, and by extension every route in this spec. The gate itself is then a plain `organization.plan === "enterprise"` check.
 - **Role gate:** stacked on top of the plan gate — `user.role === "admin"` only. Office staff without admin do not see the assistant, even on an Enterprise org.
 - Middleware: `requireEnterprisePlan` (new) + existing `requireAuth`, applied to all `/api/owner-assistant/*` and `/api/ad-accounts/*` routes.
 
@@ -47,7 +47,7 @@ The existing `voice-transcribe.ts` pattern (record → Whisper transcribe → pr
 2. Backend verifies plan + role, builds the system prompt (org data, today's date, `AssistantMemory.notes`, queued proactive briefing items) and the tool schema, requests an ephemeral client token from OpenAI's Realtime session endpoint, returns it to the frontend.
 3. Frontend opens a WebRTC connection directly to OpenAI using that token. Mic audio streams up, speech/text streams down. The backend is never in the audio path — only in the tool-call path, to keep voice latency low.
 4. Tool calls arrive over the WebRTC data channel → frontend forwards to `POST /api/owner-assistant/tools/:toolName` → backend executes (read) or stages (write) → result is fed back into the session so the model continues talking.
-5. Session ends on panel close or idle timeout. Backend summarizes the transcript into durable facts/preferences via a Claude call and merges into `AssistantMemory.notes`.
+5. Session ends on panel close or after 15 minutes with no audio or text activity. Backend summarizes the transcript into durable facts/preferences via a Claude call and merges into `AssistantMemory.notes`.
 
 ---
 
@@ -63,22 +63,28 @@ The existing `voice-transcribe.ts` pattern (record → Whisper transcribe → pr
 | `get_inventory_status` | Stock levels vs. upcoming jobs' needed parts |
 | `get_ad_performance` | Spend, clicks, leads per active campaign |
 
-**Write tools** — always staged via `PendingAction`, never execute on first call:
+**Draft tools** — execute immediately, but only ever touch a `draft`-status row with no real-world effect. No confirmation needed, because there's nothing yet to confirm:
+
+| Tool | Effect |
+|---|---|
+| `draft_ad_creative(platform, goal, budget)` | Claude-generated headline/body. Creates an `AdCampaign` row with `status: "draft"` on first call; a follow-up call in the same conversation ("make it punchier") updates that same row rather than creating a new one, keyed off the campaign the owner is actively iterating on in-session. |
+
+**Action tools** — always staged via `PendingAction`, never execute on first call:
 
 | Tool | Effect |
 |---|---|
 | `book_job` / `reschedule_job` / `cancel_job` | Job CRUD |
 | `send_email(to, subject, body)` | Via existing `email.ts` |
 | `send_sms(to, body)` | Via existing `sms.ts` |
-| `draft_ad_creative(platform, goal, budget)` | Claude-generated copy — content only, not itself a spend action, no confirmation needed |
-| `publish_ad_campaign(platform, creative, budget, targeting)` | Highest-risk tool — real ad spend |
+| `publish_ad_campaign(adCampaignId, budget, targeting)` | Highest-risk tool — real ad spend. Transitions the draft `AdCampaign` row to `pending_confirmation` then `active` |
 
 **Confirmation flow:**
 
-1. A write tool call creates a `PendingAction` row and returns its details to the model, which states the proposed action back to the owner in its own words and asks for a yes/no.
+1. An action tool call creates a `PendingAction` row and returns its details to the model, which states the proposed action back to the owner in its own words and asks for a yes/no.
 2. The frontend renders a visible **action card** in the transcript (e.g. "Reschedule Chen job → Thursday 2pm — needs your OK") with Confirm/Cancel buttons — confirmation isn't voice-only, since a misheard "yeah" should never trigger a real ad spend.
-3. Confirming (via the model calling `confirm_pending_action(id)`, parsed from a spoken yes, or the button) executes the real side effect; backend reports success/failure back into the session.
-4. Unconfirmed actions expire after 10 minutes and are silently discarded.
+3. **Confirm:** via the model calling `confirm_pending_action(id)` (parsed from a spoken yes) or the button — executes the real side effect; backend reports success/failure back into the session, `PendingAction.status → "confirmed"`.
+4. **Cancel:** via the model calling `cancel_pending_action(id)` (parsed from a spoken no) or the button — no side effect runs, `PendingAction.status → "cancelled"`, the model acknowledges and drops it.
+5. Unconfirmed, unrejected actions expire after 10 minutes of no response and are marked `expired`.
 
 ---
 
@@ -197,7 +203,18 @@ maxMonthlySpendCents           Int?
 ```
 Set by the owner in Settings — never adjustable by the assistant itself.
 
-`InventoryItem` is manually maintained: office staff set/adjust quantities via a small inventory page (stock count, receiving). Job completion optionally matches `partsUsed` free text against inventory item names to decrement stock. No barcode scanning or supplier integration in this design.
+---
+
+## Inventory Tracking Subsystem
+
+**Maintenance:** `InventoryItem` is manually maintained, not synced from any external system. A new Settings-adjacent inventory page lets office staff list items, set/edit `quantityOnHand` and `reorderThreshold`, and log receiving (stock added) or manual counts (stock corrected to an exact number). No barcode scanning or supplier integration in this design — see Out of Scope.
+
+**Auto-decrement on job completion:** when a job is marked complete with non-empty `partsUsed` entries, each entry is matched against the org's `InventoryItem.name` list using a case-insensitive exact match first, then a substring match if no exact match is found.
+- **Exactly one match:** decrement `quantityOnHand` by 1 per occurrence of that part in `partsUsed`, floored at 0 (never negative — a decrement that would go below 0 clamps to 0 and logs a warning rather than erroring the job completion).
+- **Zero or multiple matches:** no automatic decrement. The ambiguous/unmatched part name is surfaced on the job's detail view for office staff to reconcile manually — this auto-match is a convenience, not an authoritative inventory system, so it fails toward "do nothing" rather than guessing.
+- **Audit trail:** the job record itself (`Job.id`, `partsUsed`, `completedAt`) is the audit trail for every automatic decrement — no separate ledger table. A manual stock adjustment (receiving/recount) is logged as a simple `InventoryItem.updatedAt` bump; if finer-grained history is needed later, that's a natural follow-up, not required for this spec.
+
+**Feeding the assistant:** `get_inventory_status` (read tool) surfaces current stock against parts needed for upcoming scheduled jobs (cross-referencing `Job.suggestedParts` for the next 1-2 days against `InventoryItem`). The proactive trigger checker (see Proactive Updates) uses the same low-stock condition — `quantityOnHand <= reorderThreshold` — to queue a briefing item or interrupt a live session.
 
 ---
 
@@ -205,11 +222,11 @@ Set by the owner in Settings — never adjustable by the assistant itself.
 
 **Connecting an account** happens on a normal Settings page, not inside the assistant — OAuth is a browser-redirect flow. "Connect Google Ads / Meta Ads / Nextdoor Ads" buttons, standard OAuth callback, tokens stored in `AdAccountConnection`. If the owner asks the assistant to publish on an unconnected platform, it says so and points them to Settings.
 
-**Budget guardrails:** `publish_ad_campaign` validates the proposed budget against `maxDailySpendPerCampaignCents` / `maxMonthlySpendCents` *before* staging a `PendingAction`. Over-cap requests get a spoken "that's above your $50/day limit — want me to lower it, or raise the cap in Settings first?" — never a silent bypass.
+**Budget guardrails:** `publish_ad_campaign` validates the proposed daily budget against `maxDailySpendPerCampaignCents` directly. For `maxMonthlySpendCents`, it sums month-to-date spend across the org's `active`/`paused` `AdCampaign` rows — pulled live via each platform's `getPerformance` call (the same call `get_ad_performance` uses), not tracked as a separately-maintained running total — and rejects if the new campaign's daily budget × remaining days in the month would push the total over the cap. Over-cap requests get a spoken "that's above your $50/day limit — want me to lower it, or raise the cap in Settings first?" — never a silent bypass. This check runs *before* staging a `PendingAction`.
 
 **Platform abstraction:** one `AdPlatformClient` interface (`createCampaign`, `pauseCampaign`, `getPerformance`) with per-platform implementations (`google-ads.ts`, `meta-ads.ts`, `nextdoor-ads.ts`), so the assistant's tools stay platform-agnostic. Each platform requires the owner to already have a funded ad account with a payment method on file there — FlowSense creates and manages campaigns via their API, it does not handle ad billing itself.
 
-**Flow:** `draft_ad_creative` (Claude-generated headline/body, iterable conversationally — "make it punchier," "mention the $99 tune-up") → owner reviews/adjusts → `publish_ad_campaign` runs the budget-cap check → stages a `PendingAction` with a full preview card (platform, budget, targeting, creative) → explicit confirm → real API call creates and activates the campaign → `AdCampaign` row persisted. Pausing/ending a campaign follows the same staged-confirmation pattern.
+**Flow:** `draft_ad_creative` (Claude-generated headline/body, iterable conversationally — "make it punchier," "mention the $99 tune-up") creates/updates a `draft`-status `AdCampaign` row, no confirmation needed. Once the owner is happy, `publish_ad_campaign` runs the budget-cap check → stages a `PendingAction` with a full preview card (platform, budget, targeting, creative) → explicit confirm → real API call creates and activates the campaign → `AdCampaign.status → "active"`. Pausing/ending a campaign follows the same staged-confirmation pattern (a `pause_ad_campaign` / `end_ad_campaign` action tool, same shape as `publish_ad_campaign`).
 
 ---
 
@@ -221,7 +238,7 @@ Set by the owner in Settings — never adjustable by the assistant itself.
 
 **Visual states:** idle → listening (waveform while mic captures) → thinking (brief indicator during a tool call) → speaking (waveform during TTS playback) → error/reconnecting.
 
-**Transcript:** text bubbles for both sides even in voice mode, so the owner can scroll back and read what was said. Action cards render inline wherever a write tool proposes something.
+**Transcript:** text bubbles for both sides even in voice mode, so the owner can scroll back and read what was said. Action cards render inline wherever an action tool proposes something.
 
 **Text fallback:** if mic access is denied, or the owner just prefers typing, text input is simply another way to send a turn into the same Realtime session — not a separate mode.
 
