@@ -69,7 +69,7 @@ export function TechStatus({ technicians, jobs, loading }: TechStatusProps) {
 
   if (loading) {
     return (
-      <div className="medops-card">
+      <div className="rounded-2xl border-2 border-foreground bg-card">
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           <span className="ml-2 text-sm text-muted-foreground">Loading...</span>
@@ -79,25 +79,25 @@ export function TechStatus({ technicians, jobs, loading }: TechStatusProps) {
   }
 
   return (
-    <div className="medops-card">
-      <div className="flex items-center justify-between px-6 py-5">
+    <div className="overflow-hidden rounded-2xl border-2 border-foreground bg-card">
+      <div className="flex items-center justify-between border-b-2 border-foreground px-6 py-4">
         <div>
-          <h3 className="text-base font-bold text-card-foreground">
+          <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
             Technician Roster
           </h3>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="mt-1 text-sm font-semibold text-card-foreground">
             {technicians.length} technician{technicians.length !== 1 ? "s" : ""}
           </p>
         </div>
         <Link
           to="/office/technicians"
-          className="flex items-center gap-1 text-xs font-medium text-success hover:text-success/80 transition-colors"
+          className="flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-[11px] font-semibold text-card-foreground transition-colors hover:border-primary hover:text-primary"
         >
           View all
-          <ArrowUpRight className="h-3.5 w-3.5" />
+          <ArrowUpRight className="h-3 w-3" />
         </Link>
       </div>
-      <div className="divide-y divide-border/50">
+      <div className="divide-y divide-border">
         {technicians.length === 0 && (
           <div className="flex flex-col items-center justify-center py-10 text-center">
             <Briefcase className="h-6 w-6 text-muted-foreground/40" />
@@ -115,10 +115,10 @@ export function TechStatus({ technicians, jobs, loading }: TechStatusProps) {
           return (
             <div
               key={tech.id}
-              className="flex items-center gap-3 px-6 py-4 transition-colors hover:bg-secondary/40"
+              className="flex items-center gap-3 px-6 py-4 transition-colors hover:bg-secondary/60"
             >
               <div className="relative">
-                <Avatar className="h-10 w-10 border-2 border-primary/15">
+                <Avatar className="h-10 w-10 border-2 border-foreground/10">
                   <AvatarFallback className="bg-primary/8 text-xs text-primary font-semibold">
                     {initials}
                   </AvatarFallback>

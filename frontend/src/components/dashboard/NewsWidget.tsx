@@ -73,7 +73,7 @@ export function NewsWidget() {
   const general = articles.filter(a => a.category === "general")
 
   return (
-    <div className="rounded-2xl border border-border/60 bg-card shadow-sm p-5 space-y-4">
+    <div className="rounded-2xl border-2 border-foreground bg-card p-5 space-y-4">
       {/* Tab switcher */}
       <div className="flex items-center gap-1 rounded-xl bg-muted/50 p-1">
         <button

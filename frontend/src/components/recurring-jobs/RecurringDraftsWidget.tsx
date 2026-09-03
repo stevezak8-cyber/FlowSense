@@ -2,7 +2,6 @@ import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import type { RecurringDraft } from "@/api/types"
 import { api } from "@/api/client"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { RefreshCw } from "lucide-react"
 
 export function RecurringDraftsWidget() {
@@ -19,14 +18,14 @@ export function RecurringDraftsWidget() {
   const visible = drafts.slice(0, 5)
 
   return (
-    <Card className="border-border bg-card">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-xs font-mono uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+    <div className="overflow-hidden rounded-2xl border-2 border-foreground bg-card">
+      <div className="border-b-2 border-foreground px-6 py-4">
+        <span className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
           <RefreshCw className="h-4 w-4" />
           Recurring Jobs to Confirm ({drafts.length})
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2">
+        </span>
+      </div>
+      <div className="divide-y divide-border">
         {visible.map((draft) => {
           const days = Math.ceil(
             (new Date(draft.recurringJob.nextDueAt).getTime() - Date.now()) / 86400000
@@ -37,9 +36,9 @@ export function RecurringDraftsWidget() {
             : (draft.equipmentType ?? "")
 
           return (
-            <div key={draft.id} className="flex items-center justify-between text-sm">
+            <div key={draft.id} className="flex items-center justify-between px-6 py-3 text-sm">
               <div className="min-w-0">
-                <span className="font-medium">{draft.customer.name}</span>
+                <span className="font-medium text-card-foreground">{draft.customer.name}</span>
                 {draft.serviceType && (
                   <span className="text-muted-foreground text-xs ml-2">· {draft.serviceType}</span>
                 )}
@@ -47,21 +46,21 @@ export function RecurringDraftsWidget() {
                   <span className="text-muted-foreground text-xs ml-2">· {equipmentLabel}</span>
                 )}
               </div>
-              <span className={`text-xs flex-shrink-0 ml-3 ${days < 0 ? "text-red-500" : "text-muted-foreground"}`}>
+              <span className={`text-xs flex-shrink-0 ml-3 ${days < 0 ? "text-destructive" : "text-muted-foreground"}`}>
                 {days < 0 ? "overdue" : `${days}d away`}
               </span>
             </div>
           )
         })}
-        <div className="pt-1">
+        <div className="px-6 py-3">
           <Link
             to="/office/jobs"
-            className="text-xs font-medium text-primary hover:underline"
+            className="text-xs font-semibold text-primary hover:underline"
           >
             Review jobs →
           </Link>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

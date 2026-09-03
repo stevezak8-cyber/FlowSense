@@ -23,35 +23,35 @@ export function JobChart({ data, loading }: JobChartProps) {
 
   const colors = isDark
     ? {
-        grid: "rgba(255,255,255,0.06)",
-        tick: "rgba(255,255,255,0.40)",
-        tooltipBg: "#1e2030",
-        tooltipBorder: "rgba(255,255,255,0.08)",
-        tooltipText: "#e0e0e8",
-        completedStroke: "#7c8aff",
-        completedFillStart: "rgba(124,138,255,0.35)",
-        completedFillEnd: "rgba(124,138,255,0.02)",
-        scheduledStroke: "rgba(124,138,255,0.45)",
-        scheduledFillStart: "rgba(124,138,255,0.12)",
-        scheduledFillEnd: "rgba(124,138,255,0.01)",
+        grid: "rgba(243,242,242,0.07)",
+        tick: "rgba(243,242,242,0.45)",
+        tooltipBg: "#242220",
+        tooltipBorder: "#3a3735",
+        tooltipText: "#f3f2f2",
+        completedStroke: "#ec3013",
+        completedFillStart: "rgba(236,48,19,0.30)",
+        completedFillEnd: "rgba(236,48,19,0.02)",
+        scheduledStroke: "#7d7979",
+        scheduledFillStart: "rgba(125,121,121,0.20)",
+        scheduledFillEnd: "rgba(125,121,121,0.01)",
       }
     : {
-        grid: "rgba(0,0,0,0.04)",
-        tick: "rgba(0,0,0,0.35)",
-        tooltipBg: "#ffffff",
-        tooltipBorder: "rgba(0,0,0,0.06)",
-        tooltipText: "#1a1a2e",
-        completedStroke: "#4361ee",
-        completedFillStart: "rgba(67,97,238,0.25)",
-        completedFillEnd: "rgba(67,97,238,0.01)",
-        scheduledStroke: "rgba(67,97,238,0.35)",
-        scheduledFillStart: "rgba(67,97,238,0.10)",
-        scheduledFillEnd: "rgba(67,97,238,0.01)",
+        grid: "rgba(32,30,29,0.06)",
+        tick: "rgba(32,30,29,0.45)",
+        tooltipBg: "#fbfaf9",
+        tooltipBorder: "#d7d3d3",
+        tooltipText: "#201e1d",
+        completedStroke: "#ec3013",
+        completedFillStart: "rgba(236,48,19,0.25)",
+        completedFillEnd: "rgba(236,48,19,0.02)",
+        scheduledStroke: "#9b9797",
+        scheduledFillStart: "rgba(155,151,151,0.18)",
+        scheduledFillEnd: "rgba(155,151,151,0.01)",
       }
 
   if (loading) {
     return (
-      <div className="medops-card p-6">
+      <div className="rounded-2xl border-2 border-foreground bg-card p-6">
         <div className="flex items-center justify-center py-16">
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           <span className="ml-2 text-sm text-muted-foreground">Loading chart...</span>
@@ -61,12 +61,12 @@ export function JobChart({ data, loading }: JobChartProps) {
   }
 
   return (
-    <div className="medops-card p-6">
+    <div className="rounded-2xl border-2 border-foreground bg-card p-6">
       <div className="mb-5">
-        <h3 className="text-base font-bold text-card-foreground">
+        <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
           Weekly Job Volume
         </h3>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <p className="mt-1 text-sm font-semibold text-card-foreground">
           Completed vs scheduled this week
         </p>
       </div>

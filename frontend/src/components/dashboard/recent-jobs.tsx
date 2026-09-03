@@ -49,7 +49,7 @@ export function RecentJobs({ jobs, loading }: RecentJobsProps) {
 
   if (loading) {
     return (
-      <div className="medops-card">
+      <div className="rounded-2xl border-2 border-foreground bg-card">
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           <span className="ml-2 text-sm text-muted-foreground">Loading recent jobs...</span>
@@ -59,25 +59,25 @@ export function RecentJobs({ jobs, loading }: RecentJobsProps) {
   }
 
   return (
-    <div className="medops-card">
-      <div className="flex items-center justify-between px-6 py-5">
+    <div className="overflow-hidden rounded-2xl border-2 border-foreground bg-card">
+      <div className="flex items-center justify-between border-b-2 border-foreground px-6 py-4">
         <div>
-          <h3 className="text-base font-bold text-card-foreground">
+          <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
             Recent Jobs
           </h3>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="mt-1 text-sm font-semibold text-card-foreground">
             {jobs.length} total jobs tracked
           </p>
         </div>
         <Link
           to="/office/jobs"
-          className="flex items-center gap-1 text-xs font-medium text-success hover:text-success/80 transition-colors"
+          className="flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-[11px] font-semibold text-card-foreground transition-colors hover:border-primary hover:text-primary"
         >
           View all
-          <ArrowUpRight className="h-3.5 w-3.5" />
+          <ArrowUpRight className="h-3 w-3" />
         </Link>
       </div>
-      <div className="divide-y divide-border/50">
+      <div className="divide-y divide-border">
         {recentJobs.length === 0 && (
           <div className="flex flex-col items-center justify-center py-10 text-center">
             <Wrench className="h-6 w-6 text-muted-foreground/40" />
@@ -89,9 +89,9 @@ export function RecentJobs({ jobs, loading }: RecentJobsProps) {
           return (
             <div
               key={job.id}
-              className="flex items-center gap-4 px-6 py-4 transition-colors hover:bg-secondary/40"
+              className="flex items-center gap-4 px-6 py-4 transition-colors hover:bg-secondary/60"
             >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/8">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
                 <TypeIcon className="h-4 w-4 text-primary" />
               </div>
               <div className="min-w-0 flex-1">

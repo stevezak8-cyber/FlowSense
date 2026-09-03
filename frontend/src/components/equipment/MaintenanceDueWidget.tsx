@@ -2,7 +2,6 @@ import { useState, useEffect } from "react"
 import type { Equipment } from "@/api/types"
 import { api } from "@/api/client"
 import { toast } from "sonner"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Wrench, Loader2 } from "lucide-react"
@@ -47,35 +46,35 @@ export function MaintenanceDueWidget() {
   if (loading || items.length === 0) return null
 
   return (
-    <Card className="border-border bg-card">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-xs font-mono uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+    <div className="overflow-hidden rounded-2xl border-2 border-foreground bg-card">
+      <div className="flex items-center justify-between border-b-2 border-foreground px-6 py-4">
+        <span className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
           <Wrench className="h-4 w-4" />
           Maintenance Due ({items.length})
-        </CardTitle>
-        <Button size="sm" variant="outline" onClick={handleCreateJobs} disabled={creating}>
+        </span>
+        <Button size="sm" variant="outline" className="rounded-full" onClick={handleCreateJobs} disabled={creating}>
           {creating && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
           Create draft jobs
         </Button>
-      </CardHeader>
-      <CardContent className="space-y-2">
+      </div>
+      <div className="divide-y divide-border">
         {items.map((eq) => (
-          <div key={eq.id} className="flex items-center justify-between text-sm">
+          <div key={eq.id} className="flex items-center justify-between px-6 py-3 text-sm">
             <div className="min-w-0">
-              <span className="font-medium">{[eq.make, eq.model].filter(Boolean).join(" ") || eq.equipmentType}</span>
+              <span className="font-medium text-card-foreground">{[eq.make, eq.model].filter(Boolean).join(" ") || eq.equipmentType}</span>
               <span className="text-muted-foreground text-xs ml-2">· {eq.customer?.name ?? ""} · {eq.equipmentType}</span>
             </div>
             {eq.nextDueAt && (
               <Badge
                 variant={new Date(eq.nextDueAt) < new Date() ? "destructive" : "outline"}
-                className="text-xs flex-shrink-0 ml-3"
+                className="text-xs flex-shrink-0 ml-3 rounded-full"
               >
                 {daysLabel(eq.nextDueAt)}
               </Badge>
             )}
           </div>
         ))}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

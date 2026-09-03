@@ -17,7 +17,8 @@ import { NewsWidget } from "@/components/dashboard/NewsWidget"
 import { PageError } from "@/components/page-error"
 import { Button } from "@/components/ui/button"
 import { Link } from "react-router-dom"
-import { Loader2, Wrench, UserX, TrendingUp, TrendingDown } from "lucide-react"
+import { Loader2, Wrench, UserX, TrendingUp, TrendingDown, Sparkles } from "lucide-react"
+import { useTheme } from "@/theme/theme-context"
 import {
   LineChart,
   Line,
@@ -29,6 +30,18 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts"
+
+const flagStyles: Record<string, string> = {
+  overdue_service: "border-amber-500/40 text-amber-700 dark:text-amber-400",
+  warranty_expiring: "border-primary/40 text-primary",
+  no_recent_job: "border-chart-5/40 text-chart-5",
+}
+
+const flagLabels: Record<string, string> = {
+  overdue_service: "overdue service",
+  warranty_expiring: "warranty expiring",
+  no_recent_job: "no recent job",
+}
 
 export default function OfficeDashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
@@ -42,6 +55,12 @@ export default function OfficeDashboardPage() {
   const [analyticsLoading, setAnalyticsLoading] = useState(true)
   const [narrative, setNarrative] = useState<string | null | undefined>(undefined)
   const fetchIdRef = useRef(0)
+  const { theme } = useTheme()
+  const isDark = theme === "dark"
+
+  const chartColors = isDark
+    ? { grid: "rgba(243,242,242,0.07)", tick: "rgba(243,242,242,0.45)", primary: "#ec3013", secondary: "#7d7979" }
+    : { grid: "rgba(32,30,29,0.06)", tick: "rgba(32,30,29,0.45)", primary: "#ec3013", secondary: "#9b9797" }
 
   const fetchAll = useCallback(() => {
     setLoading(true)
@@ -85,10 +104,10 @@ export default function OfficeDashboardPage() {
   if (error) return <PageError message={error} onRetry={fetchAll} />
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-6" style={{ fontFamily: "'Archivo', system-ui, sans-serif" }}>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="text-[28px] font-extrabold tracking-tight text-foreground">
             Office Dashboard
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -96,7 +115,7 @@ export default function OfficeDashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button size="sm" className="rounded-xl" onClick={() => setJobDialogOpen(true)}>
+          <Button size="sm" className="rounded-full" onClick={() => setJobDialogOpen(true)}>
             <Wrench className="h-4 w-4" />
             New Job
           </Button>
@@ -122,16 +141,16 @@ export default function OfficeDashboardPage() {
         const unassigned = jobs.filter((j) => j.status === "pending" && !j.technicianId)
         if (!unassigned.length) return null
         return (
-          <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-500/30 bg-amber-500/8 px-4 py-3">
+          <div className="flex items-center justify-between gap-3 rounded-2xl border-2 border-amber-500/50 bg-amber-500/8 px-5 py-4">
             <div className="flex items-center gap-2.5">
               <UserX className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
-              <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
+              <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">
                 {unassigned.length} job{unassigned.length !== 1 ? "s" : ""} need{unassigned.length === 1 ? "s" : ""} a technician assigned
               </p>
             </div>
             <Link
               to="/office/jobs"
-              className="shrink-0 rounded-lg bg-amber-500/20 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-500/30 transition-colors dark:text-amber-300"
+              className="shrink-0 rounded-full border border-amber-500/40 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-500/15 transition-colors dark:text-amber-300"
             >
               Review jobs →
             </Link>
@@ -139,7 +158,7 @@ export default function OfficeDashboardPage() {
         )
       })()}
 
-      <div className="grid gap-7 lg:grid-cols-5">
+      <div className="grid gap-6 lg:grid-cols-5">
         <div className="lg:col-span-3">
           <JobChart data={chartData} loading={loading} />
         </div>
@@ -151,33 +170,35 @@ export default function OfficeDashboardPage() {
       <RecentJobs jobs={jobs} loading={loading} />
 
       {/* ── Revenue & Job Trends ── */}
-      <div className="rounded-xl border bg-card p-5">
-        <h2 className="mb-4 text-base font-semibold">Revenue & Job Trends (Last 6 Months)</h2>
+      <div className="rounded-2xl border-2 border-foreground bg-card p-6">
+        <h2 className="mb-5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+          Revenue &amp; Job Trends — Last 6 Months
+        </h2>
         {analyticsLoading ? (
           <div className="h-40 bg-muted rounded animate-pulse" />
         ) : (
           <div className="grid gap-6 md:grid-cols-2">
             <div>
-              <p className="mb-2 text-sm text-muted-foreground">Revenue</p>
+              <p className="mb-2 text-xs font-semibold text-card-foreground">Revenue</p>
               <ResponsiveContainer width="100%" height={180}>
                 <LineChart data={analyticsData?.revenueTrend ?? []}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} vertical={false} />
+                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: chartColors.tick, fontSize: 11 }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: chartColors.tick, fontSize: 11 }} tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`} />
                   <Tooltip formatter={(v) => [typeof v === "number" ? `$${v.toFixed(2)}` : v, "Revenue"]} />
-                  <Line type="monotone" dataKey="revenue" stroke="#0d9488" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="revenue" stroke={chartColors.primary} strokeWidth={2.5} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
             <div>
-              <p className="mb-2 text-sm text-muted-foreground">Jobs Completed</p>
+              <p className="mb-2 text-xs font-semibold text-card-foreground">Jobs Completed</p>
               <ResponsiveContainer width="100%" height={180}>
                 <LineChart data={analyticsData?.jobTrend ?? []}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} vertical={false} />
+                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: chartColors.tick, fontSize: 11 }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: chartColors.tick, fontSize: 11 }} allowDecimals={false} />
                   <Tooltip formatter={(v) => [v, "Jobs"]} />
-                  <Line type="monotone" dataKey="jobs" stroke="#6366f1" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="jobs" stroke={chartColors.secondary} strokeWidth={2.5} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -191,20 +212,20 @@ export default function OfficeDashboardPage() {
           const projectedRevenue = analyticsData.forecast.projectedRevenue
           const forecastUp = projectedRevenue >= currentMonthRevenue
           return (
-            <div className="mt-4 flex items-center gap-3 rounded-lg border bg-muted/40 px-4 py-3">
+            <div className="mt-5 flex items-center gap-3 rounded-xl border border-border bg-secondary/50 px-4 py-3">
               {forecastUp ? (
-                <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
+                <TrendingUp className="h-4 w-4 text-success" />
               ) : (
-                <TrendingDown className="h-4 w-4 text-red-500 dark:text-red-400" />
+                <TrendingDown className="h-4 w-4 text-destructive" />
               )}
               <div>
-                <p className="text-sm font-medium">
+                <p className="text-sm font-semibold text-card-foreground">
                   Next Month Forecast ({analyticsData.forecast.month})
                 </p>
                 <p className="text-xs text-muted-foreground">
                   ${projectedRevenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} projected revenue
                   {" "}
-                  <span className={forecastUp ? "text-green-600 dark:text-green-400" : "text-red-500 dark:text-red-400"}>
+                  <span className={forecastUp ? "text-success" : "text-destructive"}>
                     ({forecastUp ? "▲" : "▼"} vs this month)
                   </span>
                 </p>
@@ -215,8 +236,10 @@ export default function OfficeDashboardPage() {
       </div>
 
       {/* ── Equipment Type Breakdown ── */}
-      <div className="rounded-xl border bg-card p-5">
-        <h2 className="mb-4 text-base font-semibold">Top Equipment Types</h2>
+      <div className="rounded-2xl border-2 border-foreground bg-card p-6">
+        <h2 className="mb-5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+          Top Equipment Types
+        </h2>
         {analyticsLoading ? (
           <div className="h-40 bg-muted rounded animate-pulse" />
         ) : (analyticsData?.equipmentBreakdown.length ?? 0) === 0 ? (
@@ -228,20 +251,20 @@ export default function OfficeDashboardPage() {
               layout="vertical"
               margin={{ left: 16 }}
             >
-              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-              <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
-              <YAxis type="category" dataKey="type" tick={{ fontSize: 11 }} width={90} />
+              <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} horizontal={false} />
+              <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: chartColors.tick, fontSize: 11 }} allowDecimals={false} />
+              <YAxis type="category" dataKey="type" axisLine={false} tickLine={false} tick={{ fill: chartColors.tick, fontSize: 11 }} width={90} />
               <Tooltip formatter={(v) => [v, "Jobs"]} />
-              <Bar dataKey="count" fill="#0d9488" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="count" fill={chartColors.primary} radius={[0, 6, 6, 0]} />
             </BarChart>
           </ResponsiveContainer>
         )}
       </div>
 
       {/* ── AI Insights ── */}
-      <div className="rounded-xl border bg-card p-5">
-        <h2 className="mb-3 flex items-center gap-2 text-base font-semibold">
-          <span>✦</span> AI Insights
+      <div className="rounded-2xl border-2 border-foreground bg-card p-6">
+        <h2 className="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+          <Sparkles className="h-3.5 w-3.5 text-primary" /> AI Insights
         </h2>
         {narrative === undefined ? (
           <div className="space-y-2">
@@ -258,57 +281,43 @@ export default function OfficeDashboardPage() {
       </div>
 
       {/* ── At-Risk Customers ── */}
-      <div className="rounded-xl border bg-card p-5">
-        <h2 className="mb-4 text-base font-semibold">At-Risk Customers</h2>
+      <div className="overflow-hidden rounded-2xl border-2 border-foreground bg-card">
+        <h2 className="border-b-2 border-foreground px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+          At-Risk Customers
+        </h2>
         {analyticsLoading ? (
-          <div className="space-y-2">
+          <div className="space-y-2 p-6">
             {[0, 1, 2].map((i) => (
               <div key={i} className="h-8 bg-muted rounded animate-pulse" />
             ))}
           </div>
         ) : (analyticsData?.atRisk.length ?? 0) === 0 ? (
-          <p className="text-sm text-muted-foreground">No at-risk customers identified.</p>
+          <p className="p-6 text-sm text-muted-foreground">No at-risk customers identified.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-xs text-muted-foreground">
-                  <th className="pb-2 pr-4 font-medium">Customer</th>
-                  <th className="pb-2 pr-4 font-medium">Address</th>
-                  <th className="pb-2 font-medium">Flags / AI Reason</th>
-                </tr>
-              </thead>
-              <tbody>
-                {analyticsData?.atRisk.map((c) => (
-                  <tr key={c.customerId} className="border-b last:border-0">
-                    <td className="py-2.5 pr-4 font-medium">{c.name}</td>
-                    <td className="py-2.5 pr-4 text-muted-foreground">{c.address}</td>
-                    <td className="py-2.5">
-                      <div className="flex flex-wrap gap-1 mb-1">
-                        {c.flags.includes("overdue_service") && (
-                          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-                            overdue service
-                          </span>
-                        )}
-                        {c.flags.includes("warranty_expiring") && (
-                          <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-800 dark:bg-orange-900/40 dark:text-orange-300">
-                            warranty expiring
-                          </span>
-                        )}
-                        {c.flags.includes("no_recent_job") && (
-                          <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">
-                            no recent job
-                          </span>
-                        )}
-                      </div>
-                      {c.aiReason && (
-                        <p className="text-xs text-muted-foreground">{c.aiReason}</p>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="divide-y divide-border">
+            {analyticsData?.atRisk.map((c) => (
+              <div key={c.customerId} className="flex flex-col gap-2 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-card-foreground">{c.name}</p>
+                  <p className="text-xs text-muted-foreground">{c.address}</p>
+                </div>
+                <div className="flex flex-1 flex-col items-start gap-1.5 sm:items-end">
+                  <div className="flex flex-wrap gap-1.5">
+                    {c.flags.map((flag) => (
+                      <span
+                        key={flag}
+                        className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${flagStyles[flag] ?? "border-border text-muted-foreground"}`}
+                      >
+                        {flagLabels[flag] ?? flag}
+                      </span>
+                    ))}
+                  </div>
+                  {c.aiReason && (
+                    <p className="text-xs text-muted-foreground sm:text-right">{c.aiReason}</p>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
