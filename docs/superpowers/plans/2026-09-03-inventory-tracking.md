@@ -45,6 +45,8 @@ model InventoryItem {
 }
 ```
 
+Note: this intentionally deviates from the exact field defaults shown in the spec's Data Model section (`quantityOnHand Int` with no default, `reorderThreshold Int?` nullable, `unit String @default("unit")`) in favor of matching this codebase's existing `PricebookItem` conventions — `unit` as a plain nullable `String?` (no default string), and `reorderThreshold` defaulting to `0` rather than being nullable, so the low-stock comparison (`quantityOnHand <= reorderThreshold`) used later in this chunk's UI and in the future `get_inventory_status` tool never has to special-case `null`. This is a deliberate, equivalent choice, not an oversight.
+
 - [ ] **Step 2: Generate the migration**
 
 Run from `backend/`:
@@ -403,6 +405,13 @@ describe("matchPartsToInventory", () => {
     expect(result.unmatched).toEqual(["Thermostat"])
   })
 
+  it("leaves a part unmatched when there are multiple exact matches", () => {
+    const duplicateNameItems = [{ id: "inv-6", name: "Filter" }, { id: "inv-7", name: "Filter" }]
+    const result = matchPartsToInventory(["Filter"], duplicateNameItems)
+    expect(result.decrements).toEqual([])
+    expect(result.unmatched).toEqual(["Filter"])
+  })
+
   it("leaves a part unmatched when substring matching is ambiguous", () => {
     const ambiguousItems = [{ id: "inv-4", name: "Filter 16x20" }, { id: "inv-5", name: "Filter 20x25" }]
     const result = matchPartsToInventory(["Filter"], ambiguousItems)
@@ -487,7 +496,7 @@ export function matchPartsToInventory(
 ```bash
 npx vitest run src/__tests__/inventory-match.test.ts
 ```
-Expected: PASS — 8 tests.
+Expected: PASS — 9 tests.
 
 - [ ] **Step 5: Commit**
 
@@ -501,12 +510,12 @@ git commit -m "feat: add matchPartsToInventory matching function"
 ### Task 5: Wire the decrement into job completion
 
 **Files:**
-- Modify: `backend/src/routes/jobs.ts:1-24` (imports), `:415-462` (completion transaction)
+- Modify: `backend/src/routes/jobs.ts:1-24` (imports), `:426-462` (completion transaction)
 - Test: `backend/src/__tests__/jobs-completion-inventory.test.ts`
 
 - [ ] **Step 1: Write the failing test file**
 
-Create `backend/src/__tests__/jobs-completion-inventory.test.ts`. This mocks every service `jobs.ts` imports (required for the module to load at all) plus `prisma.$transaction`, so it can drive the real `PATCH /:id` handler through supertest:
+Create `backend/src/__tests__/jobs-completion-inventory.test.ts`. This mocks the services `jobs.ts` imports that have side effects (email/SMS/push/notification sends) plus `prisma.$transaction`, so it can drive the real `PATCH /:id` handler through supertest without actually sending anything. It does *not* mock `../services/job-status.js` or `../templates/booking-confirmation.js` — both are side-effect-free at import time (pure functions/a template, no client init), so they don't need it, same as the precedent in `jobs-cancel.test.ts`, which mocks only `prisma` and `org-notifications.js` out of jobs.ts's full import list:
 
 ```ts
 import { describe, it, expect, vi, beforeEach } from "vitest"
@@ -594,8 +603,9 @@ describe("PATCH /:id — inventory decrement on completion", () => {
     )
   })
 
-  it("floors quantityOnHand at 0 instead of going negative", async () => {
+  it("floors quantityOnHand at 0 and logs a warning instead of going negative", async () => {
     vi.mocked(prisma.job.findFirst).mockResolvedValue({ id: "job-1", status: "in_progress", organizationId: "org-1" } as any)
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
 
     const mockTx = {
       inventoryItem: {
@@ -622,6 +632,8 @@ describe("PATCH /:id — inventory decrement on completion", () => {
       where: { id: "inv-1" },
       data: { quantityOnHand: 0 },
     })
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("Capacitor 45/5"))
+    warnSpy.mockRestore()
   })
 
   it("skips inventory lookup entirely when partsUsed is empty", async () => {
@@ -678,9 +690,15 @@ Then modify the completion transaction (currently `jobs.ts:426-462`) to compute 
           const { decrements, unmatched } = matchPartsToInventory(partsUsed, inventoryItems);
           for (const { itemId, count } of decrements) {
             const item = inventoryItems.find((i) => i.id === itemId)!;
+            const newQuantity = item.quantityOnHand - count;
+            if (newQuantity < 0) {
+              console.warn(
+                `[Inventory] ${item.name} (${itemId}) would go negative (${newQuantity}) on job ${req.params.id} — clamped to 0`
+              );
+            }
             await tx.inventoryItem.update({
               where: { id: itemId },
-              data: { quantityOnHand: Math.max(0, item.quantityOnHand - count) },
+              data: { quantityOnHand: Math.max(0, newQuantity) },
             });
           }
           data.unmatchedInventoryParts = unmatched;
@@ -796,7 +814,6 @@ Create `frontend/src/components/inventory/inventory-table.tsx`:
 import { useState } from "react"
 import { InventoryItem } from "@/api/types"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { AlertTriangle, Pencil, Trash2 } from "lucide-react"
 
@@ -1118,7 +1135,7 @@ export function InventorySettings() {
 
 - [ ] **Step 4: Wire into Office Settings**
 
-In `frontend/src/pages/office/OfficeSettings.tsx`, add the import next to the `PricebookSettings` import (around line 13):
+In `frontend/src/pages/office/OfficeSettings.tsx`, add the import next to the `PricebookSettings` import (line 14):
 
 ```tsx
 import { InventorySettings } from "@/components/inventory/inventory-settings"
@@ -1141,7 +1158,7 @@ Then add a new `Card` section right after the Pricebook card closes (after the `
       </Card>
 ```
 
-Add `Boxes` to the existing `lucide-react` import list at the top of the file (the same import that already includes `BookOpen`, `CreditCard`, etc., around line 12).
+Add `Boxes` to the existing `lucide-react` import list at the top of the file (the same import that already includes `BookOpen`, `CreditCard`, etc., line 13).
 
 - [ ] **Step 5: Manually verify in the browser**
 
@@ -1204,7 +1221,11 @@ In the same file, inside the `{isExpanded && (...)}` block (starts around line 2
 
 - [ ] **Step 3: Manually verify**
 
-With the dev server running (from Task 7 Step 5), complete a job whose parts include something that won't match any inventory item you created (e.g. type "Thermostat" as a used part if no such inventory item exists). Expand that job's row in `/office/jobs` and confirm the amber warning appears listing "Thermostat".
+With the dev server running (from Task 7 Step 5), completing a job is a **technician** action, not an office one — `partsUsed` is only ever set via `frontend/src/components/jobs/completion-dialog.tsx`, wired up from `frontend/src/pages/technician/TechnicianJobs.tsx`. To exercise this end to end:
+1. Log in as a technician (or use the demo technician login from `/login`) and find (or create, via the office view, then assign/move it to `in_progress`) a job in `in_progress` status.
+2. Open that job in the technician app, complete it via the completion dialog, and in the parts-used field enter something that won't match any inventory item you created in Task 7 Step 5 (e.g. "Thermostat", assuming no such inventory item exists).
+3. Log back in as office (or switch demo accounts), go to `/office/jobs`, find that job, and expand its row.
+4. Confirm the amber warning appears listing "Thermostat".
 
 - [ ] **Step 4: Typecheck**
 
