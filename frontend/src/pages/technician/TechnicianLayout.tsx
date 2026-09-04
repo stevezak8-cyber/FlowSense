@@ -107,7 +107,7 @@ export default function TechnicianLayout() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <AuroraBackdrop tone="warm" />
-      <header className="sticky top-0 z-30 flex h-[60px] items-center justify-between bg-card px-4 shadow-[0_1px_4px_rgba(0,0,0,0.04)] dark:border-b dark:border-border dark:shadow-none">
+      <header className="sticky top-4 z-30 mx-4 flex h-[56px] items-center justify-between rounded-2xl border border-border bg-card px-4 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.5),0_14px_30px_-18px_rgba(0,0,0,0.25)] dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_14px_30px_-18px_rgba(0,0,0,0.5)]">
         <PneurosLogo size="sm" />
         <div className="flex items-center gap-3">
           {user && (
@@ -196,11 +196,11 @@ export default function TechnicianLayout() {
         </div>
       )}
 
-      <main className="flex-1 px-4 py-4 pb-20">
+      <main className="flex-1 px-4 py-4 pb-24">
         <Outlet />
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-around bg-card py-2.5 shadow-[0_-1px_4px_rgba(0,0,0,0.04)] dark:border-t dark:border-border dark:shadow-none">
+      <nav className="fixed inset-x-4 bottom-4 z-30 flex items-center justify-around rounded-2xl border border-border bg-card py-2.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.5),0_14px_30px_-18px_rgba(0,0,0,0.25)] dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_14px_30px_-18px_rgba(0,0,0,0.5)]">
         {navItems.map((item) => {
           const isActive =
             item.href === "/technician"

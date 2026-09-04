@@ -190,7 +190,7 @@ export default function TechnicianJobsPage() {
     const eq = jobEquipment[job.id]
 
     return (
-      <div style={{ display: "flex", flexDirection: "column", height: "100%", background: T.bg, overflowY: "auto", fontFamily: font, color: T.text }}>
+      <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "rgba(255,255,255,0.55)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", overflowY: "auto", fontFamily: font, color: T.text }}>
         <div style={{ padding: "20px 20px 16px", borderBottom: `2px solid ${T.text}` }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
             <div>
