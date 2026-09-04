@@ -84,6 +84,7 @@ import { reviewsRouter } from "./routes/reviews.js"
 import { voiceRouter } from "./routes/voice.js"
 import { conciergeRouter } from "./routes/concierge.js"
 import { notificationsRouter } from "./routes/notifications.js"
+import { createDemoLimiter } from "./middleware/rate-limits.js";
 import { setupWebSocket } from "./services/notifications.js";
 import { startInvoiceScheduler } from "./services/invoice-scheduler.js";
 import cron from "node-cron";
@@ -114,6 +115,7 @@ const authLimiter = rateLimit({
   message: { error: "Too many requests — please try again in 15 minutes" },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.path === "/demo",
 });
 // General API: generous limit to allow normal app use
 const apiLimiter = rateLimit({
@@ -126,6 +128,7 @@ const apiLimiter = rateLimit({
 
 // Public routes (no auth required)
 app.use("/health", healthRouter);
+app.use("/api/auth/demo", createDemoLimiter());
 app.use("/api/auth", authLimiter, authRouter);
 
 // Public Stripe Connect callback — no auth (Stripe browser redirect from OAuth)
