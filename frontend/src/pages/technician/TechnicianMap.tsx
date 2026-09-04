@@ -7,10 +7,11 @@ import { Navigation, AlertTriangle, Loader2, ExternalLink, MapPin } from "lucide
 import { MapContainer, TileLayer, Marker, Polyline, useMap } from "react-leaflet"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
+import { useTheme } from "@/theme/theme-context"
 
 const font = "'Archivo', sans-serif"
 
-const T = {
+const LIGHT_T = {
   bg: "#f3f2f2",
   text: "#201e1d",
   accent: "#ec3013",
@@ -21,6 +22,27 @@ const T = {
   n500: "#a09b9b",
   n600: "#706c6c",
   n700: "#4a4646",
+}
+
+const DARK_T = {
+  bg: "#1a1817",
+  text: "#f3f2f2",
+  accent: "#ec3013",
+  accentLight: "#ff6b47",
+  accentTint: "#3a1712",
+  n300: "#3a3634",
+  n400: "#524d4a",
+  n500: "#726c69",
+  n600: "#948e8a",
+  n700: "#b8b2ae",
+}
+
+const T = { ...LIGHT_T }
+
+function glassPanel(isDark: boolean): React.CSSProperties {
+  return isDark
+    ? { background: "rgba(32,29,28,0.6)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.08), inset 1px 0 0 0 rgba(255,255,255,0.05), 0 20px 40px -20px rgba(0,0,0,0.5)" }
+    : { background: "rgba(255,255,255,0.55)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", border: "1px solid rgba(255,255,255,0.55)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.6), inset 1px 0 0 0 rgba(255,255,255,0.39), 0 20px 40px -20px rgba(0,0,0,0.25)" }
 }
 
 function isIOS(): boolean {
@@ -84,10 +106,10 @@ function MapBoundsController({ points, selectedIdx }: { points: GeocodedJob[]; s
   return null
 }
 
-function statusPill(status: string): React.CSSProperties {
+function statusPill(status: string, isDark: boolean): React.CSSProperties {
   switch (status) {
     case "en_route": return { background: T.accent, color: "#fff", border: "none" }
-    case "in_progress": return { background: T.accentTint, color: "#6b1200", border: "none" }
+    case "in_progress": return { background: T.accentTint, color: isDark ? "#ff9d80" : "#6b1200", border: "none" }
     case "scheduled": return { background: "transparent", color: T.text, border: `1px solid ${T.text}` }
     default: return { background: "transparent", color: T.n600, border: `1px solid ${T.n300}` }
   }
@@ -99,6 +121,10 @@ function statusLabel(status: string) {
 }
 
 export default function TechMapPage() {
+  const { theme } = useTheme()
+  const isDark = theme === "dark"
+  Object.assign(T, isDark ? DARK_T : LIGHT_T)
+  const panel = glassPanel(isDark)
   const [jobs, setJobs] = useState<ApiJob[]>([])
   const [geocoded, setGeocoded] = useState<GeocodedJob[]>([])
   const [geocodingTotal, setGeocodingTotal] = useState(0)
@@ -158,7 +184,7 @@ export default function TechMapPage() {
   }
 
   return (
-    <div style={{ margin: 8, borderRadius: 28, overflow: "hidden", fontFamily: font, background: "rgba(255,255,255,0.55)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", border: "1px solid rgba(255,255,255,0.55)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.6), inset 1px 0 0 0 rgba(255,255,255,0.39), 0 20px 40px -20px rgba(0,0,0,0.25)", color: T.text, display: "flex", flexDirection: "column" }}>
+    <div style={{ margin: 8, borderRadius: 28, overflow: "hidden", fontFamily: font, ...panel, color: T.text, display: "flex", flexDirection: "column" }}>
 
       {/* Title */}
       <div style={{ padding: "20px 16px 16px", display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12 }}>
@@ -193,7 +219,9 @@ export default function TechMapPage() {
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
               url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            <style>{`.leaflet-tile-pane { filter: grayscale(1) contrast(1.05); }`}</style>
+            <style>{isDark
+              ? `.leaflet-tile-pane { filter: grayscale(1) invert(1) contrast(0.9) brightness(0.85); }`
+              : `.leaflet-tile-pane { filter: grayscale(1) contrast(1.05); }`}</style>
             <MapBoundsController points={geocoded} selectedIdx={selectedIdx} />
             {routePolyline.length > 1 && (
               <Polyline
@@ -302,7 +330,7 @@ export default function TechMapPage() {
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 6 }}>
                     <span style={{ fontSize: 10, color: T.n600 }}>{job.customer.name}</span>
                     <span style={{ fontSize: 10, color: T.n600 }}>{scheduled.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
-                    <span style={{ ...statusPill(job.status), borderRadius: 999, fontSize: 9, letterSpacing: "0.1em", padding: "2px 7px", fontWeight: 700 }}>
+                    <span style={{ ...statusPill(job.status, isDark), borderRadius: 999, fontSize: 9, letterSpacing: "0.1em", padding: "2px 7px", fontWeight: 700 }}>
                       {statusLabel(job.status)}
                     </span>
                   </div>

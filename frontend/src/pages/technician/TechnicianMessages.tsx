@@ -3,10 +3,11 @@ import { api } from "@/api/client"
 import type { ApiConversation, ApiMessage } from "@/api/types"
 import { Loader2, Send, ChevronLeft, MessageSquare, Paperclip, Phone } from "lucide-react"
 import { useAuth } from "@/auth/auth-context"
+import { useTheme } from "@/theme/theme-context"
 
 const font = "'Archivo', sans-serif"
 
-const T = {
+const LIGHT_T = {
   bg: "#f3f2f2",
   text: "#201e1d",
   accent: "#ec3013",
@@ -17,6 +18,27 @@ const T = {
   n500: "#a09b9b",
   n600: "#706c6c",
   n700: "#4a4646",
+}
+
+const DARK_T = {
+  bg: "#1a1817",
+  text: "#f3f2f2",
+  accent: "#ec3013",
+  accentLight: "#ff6b47",
+  accentTint: "#3a1712",
+  n300: "#3a3634",
+  n400: "#524d4a",
+  n500: "#726c69",
+  n600: "#948e8a",
+  n700: "#b8b2ae",
+}
+
+const T = { ...LIGHT_T }
+
+function glassPanel(isDark: boolean): React.CSSProperties {
+  return isDark
+    ? { background: "rgba(32,29,28,0.6)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.08), inset 1px 0 0 0 rgba(255,255,255,0.05), 0 20px 40px -20px rgba(0,0,0,0.5)" }
+    : { background: "rgba(255,255,255,0.55)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", border: "1px solid rgba(255,255,255,0.55)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.6), inset 1px 0 0 0 rgba(255,255,255,0.39), 0 20px 40px -20px rgba(0,0,0,0.25)" }
 }
 
 function timeLabel(iso: string) {
@@ -37,6 +59,10 @@ function avatarBg(conv: ApiConversation) {
 const QUICK_REPLIES = ["On my way", "Running 15 late", "Need the part"]
 
 export default function TechMessagesPage() {
+  const { theme } = useTheme()
+  const isDark = theme === "dark"
+  Object.assign(T, isDark ? DARK_T : LIGHT_T)
+  const panel = glassPanel(isDark)
   const { user } = useAuth()
   const [conversations, setConversations] = useState<ApiConversation[]>([])
   const [loading, setLoading] = useState(true)
@@ -98,7 +124,7 @@ export default function TechMessagesPage() {
   // Thread view
   if (activeConv) {
     return (
-      <div style={{ margin: 8, borderRadius: 28, overflow: "hidden", fontFamily: font, background: "rgba(255,255,255,0.55)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", border: "1px solid rgba(255,255,255,0.55)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.6), inset 1px 0 0 0 rgba(255,255,255,0.39), 0 20px 40px -20px rgba(0,0,0,0.25)", color: T.text, display: "flex", flexDirection: "column", height: "calc(100% - 16px)" }}>
+      <div style={{ margin: 8, borderRadius: 28, overflow: "hidden", fontFamily: font, ...panel, color: T.text, display: "flex", flexDirection: "column", height: "calc(100% - 16px)" }}>
         {/* Thread header */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderBottom: `2px solid ${T.text}` }}>
           <button onClick={() => setActiveConv(null)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex" }}>
@@ -148,7 +174,7 @@ export default function TechMessagesPage() {
                 )}
                 <div style={{
                   maxWidth: "78%",
-                  background: isMe ? T.accent : "#fff",
+                  background: isMe ? T.accent : (isDark ? "rgba(255,255,255,0.06)" : "#fff"),
                   color: isMe ? "#fff" : T.text,
                   border: isMe ? "none" : `1px solid ${T.n300}`,
                   borderRadius: isMe ? "18px 18px 6px 18px" : (showSender ? "18px 18px 18px 6px" : "6px 18px 18px 18px"),
@@ -208,7 +234,7 @@ export default function TechMessagesPage() {
 
   // Conversation list
   return (
-    <div style={{ margin: 8, borderRadius: 28, overflow: "hidden", fontFamily: font, background: "rgba(255,255,255,0.55)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", border: "1px solid rgba(255,255,255,0.55)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.6), inset 1px 0 0 0 rgba(255,255,255,0.39), 0 20px 40px -20px rgba(0,0,0,0.25)", color: T.text, display: "flex", flexDirection: "column" }}>
+    <div style={{ margin: 8, borderRadius: 28, overflow: "hidden", fontFamily: font, ...panel, color: T.text, display: "flex", flexDirection: "column" }}>
 
       {/* Title */}
       <div style={{ padding: "20px 16px 16px", display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12 }}>

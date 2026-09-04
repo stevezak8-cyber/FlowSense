@@ -14,13 +14,14 @@ import { EstimateBuilder } from "@/components/estimates/estimate-builder"
 import { AiChatPanel } from "@/components/jobs/AiChatPanel"
 import { ComplianceForm } from "@/components/compliance/ComplianceForm"
 import { JobPhotos } from "@/components/jobs/JobPhotos"
+import { useTheme } from "@/theme/theme-context"
 
 type ApiStatus = ApiJob["status"]
 type TabType = "priority" | "active" | "completed" | "cancelled"
 
 const font = "'Archivo', sans-serif"
 
-const T = {
+const LIGHT_T = {
   bg: "#f3f2f2",
   text: "#201e1d",
   accent: "#ec3013",
@@ -29,6 +30,31 @@ const T = {
   n400: "#c4bfbf",
   n500: "#a09b9b",
   n600: "#706c6c",
+}
+
+const DARK_T = {
+  bg: "#1a1817",
+  text: "#f3f2f2",
+  accent: "#ec3013",
+  accentLight: "#ff6b47",
+  n300: "#3a3634",
+  n400: "#524d4a",
+  n500: "#726c69",
+  n600: "#948e8a",
+}
+
+const T = { ...LIGHT_T }
+
+function glassCard(isDark: boolean): React.CSSProperties {
+  return isDark
+    ? { background: "rgba(50,46,44,0.55)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.08), inset 1px 0 0 0 rgba(255,255,255,0.05), 0 6px 14px -6px rgba(0,0,0,0.4)" }
+    : { background: "rgba(255,255,255,0.45)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.75), inset 1px 0 0 0 rgba(255,255,255,0.488), 0 6px 14px -6px rgba(32,30,29,0.18)" }
+}
+
+function glassPanel(isDark: boolean): React.CSSProperties {
+  return isDark
+    ? { background: "rgba(32,29,28,0.6)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.08), inset 1px 0 0 0 rgba(255,255,255,0.05), 0 20px 40px -20px rgba(0,0,0,0.5)" }
+    : { background: "rgba(255,255,255,0.55)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", border: "1px solid rgba(255,255,255,0.55)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.6), inset 1px 0 0 0 rgba(255,255,255,0.39), 0 20px 40px -20px rgba(0,0,0,0.25)" }
 }
 
 const statusFlow: Record<string, { next: ApiStatus; label: string; icon: typeof Wrench }> = {
@@ -41,12 +67,14 @@ function initials(name: string) {
   return name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()
 }
 
-function statusPillStyle(status: string): React.CSSProperties {
+function statusPillStyle(status: string, isDark: boolean): React.CSSProperties {
   switch (status) {
     case "en_route":
       return { background: T.accent, color: "#fff", border: "none" }
     case "in_progress":
-      return { background: "#fce8e4", color: "#6b1200", border: "none" }
+      return isDark
+        ? { background: "rgba(236,48,19,0.22)", color: "#ff9d80", border: "none" }
+        : { background: "#fce8e4", color: "#6b1200", border: "none" }
     case "scheduled":
       return { background: "transparent", color: T.text, border: `1px solid ${T.text}` }
     case "completed":
@@ -78,6 +106,11 @@ function avatarBg(status: string) {
 }
 
 export default function TechnicianJobsPage() {
+  const { theme } = useTheme()
+  const isDark = theme === "dark"
+  Object.assign(T, isDark ? DARK_T : LIGHT_T)
+  const card = glassCard(isDark)
+  const panel = glassPanel(isDark)
   const [jobs, setJobs] = useState<ApiJob[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -190,11 +223,11 @@ export default function TechnicianJobsPage() {
     const eq = jobEquipment[job.id]
 
     return (
-      <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "rgba(255,255,255,0.45)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.75), inset 1px 0 0 0 rgba(255,255,255,0.488), 0 6px 14px -6px rgba(32,30,29,0.18)", overflowY: "auto", fontFamily: font, color: T.text }}>
+      <div style={{ display: "flex", flexDirection: "column", height: "100%", ...card, overflowY: "auto", fontFamily: font, color: T.text }}>
         <div style={{ padding: "20px 20px 16px", borderBottom: `2px solid ${T.text}` }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
             <div>
-              <div style={{ ...statusPillStyle(job.status), display: "inline-flex", alignItems: "center", borderRadius: 999, padding: "3px 10px", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", marginBottom: 8 }}>
+              <div style={{ ...statusPillStyle(job.status, isDark), display: "inline-flex", alignItems: "center", borderRadius: 999, padding: "3px 10px", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", marginBottom: 8 }}>
                 {statusLabel(job.status)}
               </div>
               <h2 style={{ fontSize: 18, fontWeight: 800, letterSpacing: "-0.01em", margin: 0 }}>
@@ -207,7 +240,7 @@ export default function TechnicianJobsPage() {
         </div>
 
         <div style={{ flex: 1, padding: "16px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.45)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.75), inset 1px 0 0 0 rgba(255,255,255,0.488), 0 6px 14px -6px rgba(32,30,29,0.18)", border: `1px solid ${T.n300}`, borderRadius: 12, padding: "10px 12px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", ...card, border: `1px solid ${T.n300}`, borderRadius: 12, padding: "10px 12px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
               <MapPin style={{ width: 14, height: 14, color: T.accent, flexShrink: 0 }} />
               <span>{job.customer.address}</span>
@@ -219,7 +252,7 @@ export default function TechnicianJobsPage() {
             </Button>
           </div>
 
-          <div style={{ background: "rgba(255,255,255,0.45)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.75), inset 1px 0 0 0 rgba(255,255,255,0.488), 0 6px 14px -6px rgba(32,30,29,0.18)", border: `1px solid ${T.n300}`, borderRadius: 12, padding: "10px 12px", display: "flex", flexDirection: "column", gap: 6 }}>
+          <div style={{ ...card, border: `1px solid ${T.n300}`, borderRadius: 12, padding: "10px 12px", display: "flex", flexDirection: "column", gap: 6 }}>
             <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", color: T.n600 }}>CUSTOMER</p>
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600 }}><User style={{ width: 14, height: 14, color: T.n500 }} />{job.customer.name}</div>
             {job.customer.phone && (
@@ -231,14 +264,14 @@ export default function TechnicianJobsPage() {
           </div>
 
           {job.symptomSummary && (
-            <div style={{ background: "rgba(255,255,255,0.45)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.75), inset 1px 0 0 0 rgba(255,255,255,0.488), 0 6px 14px -6px rgba(32,30,29,0.18)", border: `1px solid ${T.n300}`, borderRadius: 12, padding: "10px 12px" }}>
+            <div style={{ ...card, border: `1px solid ${T.n300}`, borderRadius: 12, padding: "10px 12px" }}>
               <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", color: T.n600, marginBottom: 6 }}>NOTES</p>
               <p style={{ fontSize: 13, lineHeight: 1.5 }}>{job.symptomSummary}</p>
             </div>
           )}
 
           {eq && (
-            <div style={{ background: "rgba(255,255,255,0.45)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.75), inset 1px 0 0 0 rgba(255,255,255,0.488), 0 6px 14px -6px rgba(32,30,29,0.18)", border: `1px solid ${T.n300}`, borderRadius: 12, padding: "10px 12px" }}>
+            <div style={{ ...card, border: `1px solid ${T.n300}`, borderRadius: 12, padding: "10px 12px" }}>
               <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", color: T.n600, marginBottom: 6 }}>EQUIPMENT</p>
               <p style={{ fontSize: 13, fontWeight: 600 }}>{[eq.make, eq.model].filter(Boolean).join(" ") || eq.equipmentType}</p>
               {eq.serialNumber && <p style={{ fontSize: 11, color: T.n600 }}>S/N: {eq.serialNumber}</p>}
@@ -246,7 +279,7 @@ export default function TechnicianJobsPage() {
           )}
 
           {job.preArrivalNotes && (
-            <div style={{ background: "rgba(255,255,255,0.45)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.75), inset 1px 0 0 0 rgba(255,255,255,0.488), 0 6px 14px -6px rgba(32,30,29,0.18)", border: `1px solid ${T.accent}`, borderRadius: 12, padding: "10px 12px" }}>
+            <div style={{ ...card, border: `1px solid ${T.accent}`, borderRadius: 12, padding: "10px 12px" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <Sparkles style={{ width: 13, height: 13, color: T.accent }} />
@@ -267,18 +300,18 @@ export default function TechnicianJobsPage() {
                 </div>
               )}
               {job.riskFlags.length > 0 && (
-                <div style={{ marginTop: 10, border: `1px solid #f5c842`, background: "#fffbeb", borderRadius: 8, padding: "8px 10px" }}>
+                <div style={{ marginTop: 10, border: isDark ? "1px solid #7a5a12" : "1px solid #f5c842", background: isDark ? "rgba(245,200,66,0.12)" : "#fffbeb", borderRadius: 8, padding: "8px 10px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-                    <AlertTriangle style={{ width: 12, height: 12, color: "#d97706" }} />
-                    <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", color: "#92400e" }}>RISK FLAGS</span>
+                    <AlertTriangle style={{ width: 12, height: 12, color: isDark ? "#f0b429" : "#d97706" }} />
+                    <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", color: isDark ? "#f0c869" : "#92400e" }}>RISK FLAGS</span>
                   </div>
-                  {job.riskFlags.map(f => <p key={f} style={{ fontSize: 12, color: "#92400e" }}>{f}</p>)}
+                  {job.riskFlags.map(f => <p key={f} style={{ fontSize: 12, color: isDark ? "#f0c869" : "#92400e" }}>{f}</p>)}
                 </div>
               )}
             </div>
           )}
 
-          <div style={{ background: "rgba(255,255,255,0.45)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.75), inset 1px 0 0 0 rgba(255,255,255,0.488), 0 6px 14px -6px rgba(32,30,29,0.18)", border: `1px solid ${T.n300}`, borderRadius: 12, padding: "10px 12px" }}>
+          <div style={{ ...card, border: `1px solid ${T.n300}`, borderRadius: 12, padding: "10px 12px" }}>
             <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", color: T.n600, marginBottom: 8 }}>PHOTOS</p>
             <JobPhotos jobId={job.id} photos={job.photos ?? []} canUpload={true}
               onPhotosChange={(photos) => setJobs((prev) => prev.map((j) => (j.id === job.id ? { ...j, photos } : j)))} />
@@ -346,7 +379,7 @@ export default function TechnicianJobsPage() {
   const visibleJobs = tabJobs[activeTab]
 
   return (
-    <div style={{ margin: 8, borderRadius: 28, overflow: "hidden", fontFamily: font, background: "rgba(255,255,255,0.55)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", border: "1px solid rgba(255,255,255,0.55)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.6), inset 1px 0 0 0 rgba(255,255,255,0.39), 0 20px 40px -20px rgba(0,0,0,0.25)", color: T.text, display: "flex", flexDirection: "column" }}>
+    <div style={{ margin: 8, borderRadius: 28, overflow: "hidden", fontFamily: font, ...panel, color: T.text, display: "flex", flexDirection: "column" }}>
 
       {/* Greeting */}
       <div style={{ padding: "20px 16px 16px" }}>
@@ -456,7 +489,7 @@ export default function TechnicianJobsPage() {
                   </div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-                  <span style={{ ...statusPillStyle(job.status), borderRadius: 999, fontSize: 9, letterSpacing: "0.1em", padding: "3px 8px", whiteSpace: "nowrap", fontWeight: 700 }}>
+                  <span style={{ ...statusPillStyle(job.status, isDark), borderRadius: 999, fontSize: 9, letterSpacing: "0.1em", padding: "3px 8px", whiteSpace: "nowrap", fontWeight: 700 }}>
                     {statusLabel(job.status)}
                   </span>
                   <ChevronRight style={{ width: 14, height: 14, color: T.n500 }} />
@@ -485,7 +518,7 @@ export default function TechnicianJobsPage() {
             <button
               key={label}
               onClick={() => { if (activeJobs[0]) setAskAiJob(activeJobs[0]) }}
-              style={{ border: `1px solid ${T.n300}`, borderRadius: 16, background: "rgba(255,255,255,0.45)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.75), inset 1px 0 0 0 rgba(255,255,255,0.488), 0 6px 14px -6px rgba(32,30,29,0.18)", padding: 12, cursor: "pointer", textAlign: "left", fontFamily: font }}
+              style={{ border: `1px solid ${T.n300}`, borderRadius: 16, ...card, padding: 12, cursor: "pointer", textAlign: "left", fontFamily: font }}
             >
               <Icon style={{ width: 16, height: 16, color: iconColor }} />
               <div style={{ fontWeight: 700, fontSize: 12, marginTop: 10, color: T.text }}>{label}</div>

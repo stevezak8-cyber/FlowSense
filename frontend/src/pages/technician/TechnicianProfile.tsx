@@ -3,9 +3,10 @@ import { useNavigate } from "react-router-dom"
 import { api } from "@/api/client"
 import type { ApiTechnician, ApiJob } from "@/api/types"
 import { Loader2, ArrowUpDown } from "lucide-react"
+import { useTheme } from "@/theme/theme-context"
 
 // Exact modernist design system tokens
-const T = {
+const LIGHT_T = {
   bg: "#f3f2f2",
   surface: "#eae9e9",
   text: "#201e1d",
@@ -17,7 +18,35 @@ const T = {
   n500: "#9b9797",
   n600: "#7d7979",
   n700: "#605d5d",
-} as const
+}
+
+const DARK_T = {
+  bg: "#1a1817",
+  surface: "#242120",
+  text: "#f3f2f2",
+  accent: "#ec3013",
+  accentLight: "#ff6b47",
+  n200: "#242120",
+  n300: "#3a3634",
+  n400: "#524d4a",
+  n500: "#726c69",
+  n600: "#948e8a",
+  n700: "#b8b2ae",
+}
+
+const T = { ...LIGHT_T }
+
+function glassCard(isDark: boolean): React.CSSProperties {
+  return isDark
+    ? { background: "rgba(50,46,44,0.55)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.08), inset 1px 0 0 0 rgba(255,255,255,0.05), 0 6px 14px -6px rgba(0,0,0,0.4)" }
+    : { background: "rgba(255,255,255,0.45)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.75), inset 1px 0 0 0 rgba(255,255,255,0.488), 0 6px 14px -6px rgba(32,30,29,0.18)" }
+}
+
+function glassPanel(isDark: boolean): React.CSSProperties {
+  return isDark
+    ? { background: "rgba(32,29,28,0.6)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.08), inset 1px 0 0 0 rgba(255,255,255,0.05), 0 20px 40px -20px rgba(0,0,0,0.5)" }
+    : { background: "rgba(255,255,255,0.55)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", border: "1px solid rgba(255,255,255,0.55)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.6), inset 1px 0 0 0 rgba(255,255,255,0.39), 0 20px 40px -20px rgba(0,0,0,0.25)" }
+}
 
 const STATUS_LABEL: Record<string, string> = {
   scheduled: "SCHEDULED",
@@ -44,6 +73,11 @@ function Icon({ name, size = 16, color = T.n700 }: { name: string; size?: number
 }
 
 export default function TechnicianProfile() {
+  const { theme } = useTheme()
+  const isDark = theme === "dark"
+  Object.assign(T, isDark ? DARK_T : LIGHT_T)
+  const card = glassCard(isDark)
+  const panel = glassPanel(isDark)
   const navigate = useNavigate()
   const [tech, setTech] = useState<ApiTechnician | null>(null)
   const [jobs, setJobs] = useState<ApiJob[]>([])
@@ -166,7 +200,7 @@ export default function TechnicianProfile() {
   const font = "'Archivo', system-ui, sans-serif"
 
   return (
-    <div style={{ margin: 8, borderRadius: 28, overflow: "hidden", fontFamily: font, background: "rgba(255,255,255,0.55)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", border: "1px solid rgba(255,255,255,0.55)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.6), inset 1px 0 0 0 rgba(255,255,255,0.39), 0 20px 40px -20px rgba(0,0,0,0.25)", color: T.text, display: "flex", flexDirection: "column" }}>
+    <div style={{ margin: 8, borderRadius: 28, overflow: "hidden", fontFamily: font, ...panel, color: T.text, display: "flex", flexDirection: "column" }}>
 
       {/* Name + avatar */}
       <div style={{ padding: "20px 16px 16px", display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12 }}>
@@ -416,7 +450,7 @@ export default function TechnicianProfile() {
             <div key={job.id} style={{
               margin: jobView === "list" ? "0 16px 8px" : 0,
               border: `1px solid ${T.n300}`, borderRadius: 16,
-              background: "rgba(255,255,255,0.45)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.75), inset 1px 0 0 0 rgba(255,255,255,0.488), 0 6px 14px -6px rgba(32,30,29,0.18)", display: "flex", alignItems: "center",
+              ...card, display: "flex", alignItems: "center",
               justifyContent: "space-between", padding: "12px 14px",
             }}>
               <div>
@@ -445,7 +479,7 @@ export default function TechnicianProfile() {
           onClick={() => navigate("/technician/profile/password")}
           style={{
             width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
-            border: `1px solid ${T.n300}`, borderRadius: 16, background: "rgba(255,255,255,0.45)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.75), inset 1px 0 0 0 rgba(255,255,255,0.488), 0 6px 14px -6px rgba(32,30,29,0.18)",
+            border: `1px solid ${T.n300}`, borderRadius: 16, ...card,
             padding: 14, fontFamily: font, cursor: "pointer",
           }}
         >
