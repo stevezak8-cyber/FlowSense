@@ -3,6 +3,7 @@ import { Outlet, useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
 import { AppSidebar } from "@/components/app-sidebar"
 import { TopHeader } from "@/components/top-header"
+import { AuroraBackdrop } from "@/components/aurora-backdrop"
 import { TrialBanner } from "@/components/office/trial-banner"
 import { SubscriptionCancelledScreen } from "@/components/office/subscription-cancelled-screen"
 import { OnboardingProvider } from "@/components/office/onboarding-context"
@@ -31,11 +32,12 @@ export default function OfficeLayout() {
   return (
     <OnboardingProvider>
       <div className="office-theme flex min-h-screen bg-background">
+        <AuroraBackdrop tone="warm" />
         <AppSidebar />
-        <div className="flex flex-1 flex-col md:pl-[220px]">
+        <div className="flex flex-1 flex-col md:pl-[252px]">
           <TopHeader />
           <TrialBanner />
-          <main className="flex-1 px-8 py-8">
+          <main className="flex-1 px-4 pb-8 md:px-6">
             <Outlet />
           </main>
         </div>

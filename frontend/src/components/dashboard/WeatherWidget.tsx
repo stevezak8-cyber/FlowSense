@@ -67,7 +67,7 @@ export function WeatherWidget({ city }: { city?: string }) {
   }, [city])
 
   if (loading) return (
-    <div className="rounded-2xl border-2 border-foreground bg-card p-5 flex items-center gap-2 text-muted-foreground">
+    <div className="rounded-2xl border border-border bg-card p-5 flex items-center gap-2 text-muted-foreground">
       <Loader2 className="h-4 w-4 animate-spin" />
       <span className="text-sm">Loading weather…</span>
     </div>
@@ -83,8 +83,8 @@ export function WeatherWidget({ city }: { city?: string }) {
 
   return (
     <div className={cn(
-      "rounded-2xl border-2 bg-card p-5 space-y-4",
-      alert ? "border-amber-500/60" : "border-foreground"
+      "rounded-2xl border bg-card p-5 space-y-4",
+      alert ? "border-amber-500/60" : "border-border"
     )}>
       {/* Header */}
       <div className="flex items-start justify-between">

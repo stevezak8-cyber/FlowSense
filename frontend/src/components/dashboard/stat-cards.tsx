@@ -37,11 +37,11 @@ function DeltaBadge({ delta }: { delta: WeekDelta }) {
 export function StatCards({ stats, loading, weekOverWeek }: StatCardsProps) {
   if (loading || !stats) {
     return (
-      <div className="overflow-hidden rounded-2xl border-2 border-foreground bg-card">
+      <div className="overflow-hidden rounded-2xl border border-border bg-card">
         {[0, 1].map((row) => (
           <div
             key={row}
-            className={`grid grid-cols-2 divide-x divide-border lg:grid-cols-4 ${row === 1 ? "border-t-2 border-foreground" : ""}`}
+            className={`grid grid-cols-2 divide-x divide-border lg:grid-cols-4 ${row === 1 ? "border-t border-border" : ""}`}
           >
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="animate-pulse p-5">
@@ -87,11 +87,11 @@ export function StatCards({ stats, loading, weekOverWeek }: StatCardsProps) {
   ]
 
   return (
-    <div className="overflow-hidden rounded-2xl border-2 border-foreground bg-card">
+    <div className="overflow-hidden rounded-2xl border border-border bg-card">
       {[cards.slice(0, 4), cards.slice(4, 8)].map((row, rowIndex) => (
         <div
           key={rowIndex}
-          className={`grid grid-cols-2 divide-x divide-border lg:grid-cols-4 ${rowIndex === 1 ? "border-t-2 border-foreground" : ""}`}
+          className={`grid grid-cols-2 divide-x divide-border lg:grid-cols-4 ${rowIndex === 1 ? "border-t border-border" : ""}`}
         >
           {row.map((stat) => (
             <div key={stat.label} className="p-5">

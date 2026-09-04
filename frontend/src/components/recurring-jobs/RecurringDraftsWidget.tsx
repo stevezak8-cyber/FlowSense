@@ -18,8 +18,8 @@ export function RecurringDraftsWidget() {
   const visible = drafts.slice(0, 5)
 
   return (
-    <div className="overflow-hidden rounded-2xl border-2 border-foreground bg-card">
-      <div className="border-b-2 border-foreground px-6 py-4">
+    <div className="overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="border-b border-border px-6 py-4">
         <span className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
           <RefreshCw className="h-4 w-4" />
           Recurring Jobs to Confirm ({drafts.length})

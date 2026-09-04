@@ -101,6 +101,7 @@ export function AppSidebar() {
 
     <aside className={cn(
       "fixed inset-y-0 left-0 z-50 flex w-[220px] flex-col bg-sidebar shadow-[1px_0_8px_rgba(0,0,0,0.04)] dark:border-r dark:border-sidebar-border dark:shadow-none transition-transform duration-200",
+      "md:inset-y-4 md:left-4 md:rounded-3xl md:border md:border-sidebar-border md:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.5),0_20px_40px_-20px_rgba(0,0,0,0.25)] dark:md:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_20px_40px_-20px_rgba(0,0,0,0.5)]",
       "md:translate-x-0",
       mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
     )}>

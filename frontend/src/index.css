@@ -5,40 +5,43 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* ─── MedOps Light Theme ─── */
+/* ─── MedOps Light Theme — Liquid Glass ───
+   --card/--popover/--sidebar/--background/--border/--input carry alpha so the aurora
+   backdrop (see .aurora-backdrop) shows through; backdrop-filter is applied globally
+   below via the .bg-card/.bg-popover/.bg-sidebar utility-class cascade. */
 :root {
-  --background: oklch(0.97 0.002 260);
+  --background: rgba(247,246,250,0.75);
   --foreground: oklch(0.15 0.02 260);
-  --card: oklch(1 0 0);
+  --card: rgba(255,255,255,0.55);
   --card-foreground: oklch(0.15 0.02 260);
-  --popover: oklch(1 0 0);
+  --popover: rgba(255,255,255,0.78);
   --popover-foreground: oklch(0.15 0.02 260);
   --primary: oklch(0.52 0.16 265);
   --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.965 0.003 260);
+  --secondary: rgba(255,255,255,0.4);
   --secondary-foreground: oklch(0.28 0.02 260);
-  --muted: oklch(0.955 0.003 260);
-  --muted-foreground: oklch(0.50 0.012 260);
+  --muted: rgba(255,255,255,0.35);
+  --muted-foreground: oklch(0.44 0.012 260);
   --accent: oklch(0.60 0.17 150);
   --accent-foreground: oklch(1 0 0);
   --destructive: oklch(0.55 0.22 27);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.94 0.002 260);
-  --input: oklch(0.96 0.003 260);
+  --border: rgba(255,255,255,0.6);
+  --input: rgba(255,255,255,0.45);
   --ring: oklch(0.52 0.16 265);
   --chart-1: oklch(0.52 0.16 265);
   --chart-2: oklch(0.60 0.17 150);
   --chart-3: oklch(0.58 0.14 210);
   --chart-4: oklch(0.70 0.16 55);
   --chart-5: oklch(0.48 0.10 260);
-  --radius: 0.75rem;
-  --sidebar: oklch(1 0 0);
+  --radius: 1.15rem;
+  --sidebar: rgba(255,255,255,0.5);
   --sidebar-foreground: oklch(0.40 0.015 260);
   --sidebar-primary: oklch(0.52 0.16 265);
   --sidebar-primary-foreground: oklch(0.52 0.16 265);
-  --sidebar-accent: oklch(0.965 0.008 265);
+  --sidebar-accent: rgba(255,255,255,0.35);
   --sidebar-accent-foreground: oklch(0.52 0.16 265);
-  --sidebar-border: oklch(0.95 0.002 260);
+  --sidebar-border: rgba(255,255,255,0.55);
   --sidebar-ring: oklch(0.52 0.16 265);
   --success: oklch(0.60 0.17 150);
   --success-foreground: oklch(1 0 0);
@@ -46,39 +49,39 @@
   --warning-foreground: oklch(0.20 0.02 260);
 }
 
-/* ─── MedOps Dark Theme ─── */
+/* ─── MedOps Dark Theme — Liquid Glass ─── */
 .dark {
-  --background: oklch(0.16 0.015 260);
+  --background: rgba(20,20,26,0.78);
   --foreground: oklch(0.93 0.005 260);
-  --card: oklch(0.20 0.015 260);
+  --card: rgba(40,40,50,0.5);
   --card-foreground: oklch(0.93 0.005 260);
-  --popover: oklch(0.20 0.015 260);
+  --popover: rgba(40,40,50,0.8);
   --popover-foreground: oklch(0.93 0.005 260);
   --primary: oklch(0.62 0.18 265);
   --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.23 0.015 260);
+  --secondary: rgba(255,255,255,0.06);
   --secondary-foreground: oklch(0.88 0.005 260);
-  --muted: oklch(0.25 0.012 260);
-  --muted-foreground: oklch(0.58 0.01 260);
+  --muted: rgba(255,255,255,0.05);
+  --muted-foreground: oklch(0.64 0.01 260);
   --accent: oklch(0.62 0.17 150);
   --accent-foreground: oklch(1 0 0);
   --destructive: oklch(0.60 0.22 27);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.28 0.012 260);
-  --input: oklch(0.24 0.015 260);
+  --border: rgba(255,255,255,0.12);
+  --input: rgba(255,255,255,0.08);
   --ring: oklch(0.62 0.18 265);
   --chart-1: oklch(0.62 0.18 265);
   --chart-2: oklch(0.62 0.17 150);
   --chart-3: oklch(0.60 0.14 210);
   --chart-4: oklch(0.72 0.16 55);
   --chart-5: oklch(0.55 0.10 260);
-  --sidebar: oklch(0.18 0.015 260);
+  --sidebar: rgba(32,32,40,0.55);
   --sidebar-foreground: oklch(0.70 0.008 260);
   --sidebar-primary: oklch(0.62 0.18 265);
   --sidebar-primary-foreground: oklch(0.62 0.18 265);
-  --sidebar-accent: oklch(0.24 0.02 265);
+  --sidebar-accent: rgba(255,255,255,0.06);
   --sidebar-accent-foreground: oklch(0.62 0.18 265);
-  --sidebar-border: oklch(0.26 0.012 260);
+  --sidebar-border: rgba(255,255,255,0.1);
   --sidebar-ring: oklch(0.62 0.18 265);
   --success: oklch(0.62 0.17 150);
   --success-foreground: oklch(1 0 0);
@@ -160,69 +163,127 @@
    Deliberately leaves --destructive/--success/--warning/--chart-* untouched: those stay semantic
    (red/green/amber) for status legibility across jobs/invoices/compliance, inherited from :root/.dark. */
 .office-theme {
-  --background: #f3f2f2;
+  --background: rgba(244,239,233,0.75);
   --foreground: #201e1d;
-  --card: #fbfaf9;
+  --card: rgba(255,253,250,0.55);
   --card-foreground: #201e1d;
-  --popover: #fbfaf9;
+  --popover: rgba(255,253,250,0.8);
   --popover-foreground: #201e1d;
   --primary: #ec3013;
   --primary-foreground: #fdf6f4;
-  --secondary: #eae9e9;
+  --secondary: rgba(255,255,255,0.4);
   --secondary-foreground: #201e1d;
-  --muted: #eae7e7;
-  --muted-foreground: #7d7979;
+  --muted: rgba(255,255,255,0.35);
+  --muted-foreground: #6b6863;
   --accent: #ec3013;
   --accent-foreground: #fdf6f4;
-  --border: #d7d3d3;
-  --input: #eae7e7;
+  --border: rgba(255,255,255,0.6);
+  --input: rgba(255,255,255,0.45);
   --ring: #ec3013;
-  --sidebar: #fbfaf9;
+  --sidebar: rgba(255,253,250,0.5);
   --sidebar-foreground: #201e1d;
   --sidebar-primary: #ec3013;
   --sidebar-primary-foreground: #ec3013;
-  --sidebar-accent: #eae7e7;
+  --sidebar-accent: rgba(255,255,255,0.35);
   --sidebar-accent-foreground: #201e1d;
-  --sidebar-border: #d7d3d3;
+  --sidebar-border: rgba(255,255,255,0.55);
   --sidebar-ring: #ec3013;
 }
 
 .dark .office-theme {
-  --background: #1a1817;
+  --background: rgba(26,24,23,0.78);
   --foreground: #f3f2f2;
-  --card: #242220;
+  --card: rgba(46,43,41,0.5);
   --card-foreground: #f3f2f2;
-  --popover: #242220;
+  --popover: rgba(46,43,41,0.8);
   --popover-foreground: #f3f2f2;
   --primary: #ec3013;
   --primary-foreground: #fdf6f4;
-  --secondary: #2e2b29;
+  --secondary: rgba(255,255,255,0.06);
   --secondary-foreground: #f3f2f2;
-  --muted: #2e2b29;
-  --muted-foreground: #9b9797;
+  --muted: rgba(255,255,255,0.05);
+  --muted-foreground: #b0aca6;
   --accent: #ec3013;
   --accent-foreground: #fdf6f4;
-  --border: #3a3735;
-  --input: #2e2b29;
+  --border: rgba(255,255,255,0.1);
+  --input: rgba(255,255,255,0.08);
   --ring: #ec3013;
-  --sidebar: #242220;
+  --sidebar: rgba(38,35,33,0.55);
   --sidebar-foreground: #f3f2f2;
   --sidebar-primary: #ec3013;
   --sidebar-primary-foreground: #ec3013;
-  --sidebar-accent: #2e2b29;
+  --sidebar-accent: rgba(255,255,255,0.06);
   --sidebar-accent-foreground: #f3f2f2;
-  --sidebar-border: #3a3735;
+  --sidebar-border: rgba(255,255,255,0.1);
   --sidebar-ring: #ec3013;
+}
+
+/* ─── Liquid Glass: backdrop-filter cascade ───
+   Reaches every component that uses bg-card/bg-popover/bg-sidebar (Card, Dialog, Popover,
+   Select/DropdownMenu content, the sidebar, tooltips, etc.) without editing each one —
+   the translucent color tokens above are what backdrop-filter actually blurs. Kept out of
+   .bg-background: that utility covers huge full-viewport wrappers, where a blur region that
+   large is needless GPU cost for very little visible difference. */
+@layer utilities {
+  .bg-card, .bg-popover, .bg-sidebar {
+    backdrop-filter: blur(20px) saturate(165%);
+    -webkit-backdrop-filter: blur(20px) saturate(165%);
+  }
 }
 
 /* ─── MedOps Card Style ─── */
 @layer components {
   .medops-card {
-    @apply rounded-2xl bg-card;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.03);
+    @apply rounded-2xl bg-card border border-border;
+    backdrop-filter: blur(20px) saturate(165%);
+    -webkit-backdrop-filter: blur(20px) saturate(165%);
+    box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.5), 0 1px 3px rgba(0, 0, 0, 0.04), 0 12px 28px -14px rgba(0, 0, 0, 0.18);
   }
   :is(.dark) .medops-card {
-    @apply border border-border;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.06), 0 1px 3px rgba(0, 0, 0, 0.3), 0 12px 28px -14px rgba(0, 0, 0, 0.4);
   }
+}
+
+/* ─── Liquid Glass: aurora backdrop ───
+   A soft blurred gradient mesh, painted once behind each app shell (see AuroraBackdrop
+   component) so the translucent glass panels above have something to visibly refract —
+   flat backgrounds make backdrop-filter blur invisible. Two tones: "cool" (blue MedOps
+   default) and "warm" (office's burnt-orange). */
+.aurora-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: #f4f3f8;
+}
+.dark .aurora-backdrop {
+  background-color: #131318;
+}
+.aurora-backdrop.aurora-cool {
+  background-image:
+    radial-gradient(760px 620px at 8% 6%, rgba(79,70,229,0.20) 0%, transparent 60%),
+    radial-gradient(820px 700px at 92% 16%, rgba(56,189,248,0.18) 0%, transparent 62%),
+    radial-gradient(900px 780px at 18% 94%, rgba(129,140,248,0.16) 0%, transparent 62%),
+    radial-gradient(760px 640px at 96% 90%, rgba(52,211,153,0.14) 0%, transparent 60%);
+}
+.dark .aurora-backdrop.aurora-cool {
+  background-image:
+    radial-gradient(760px 620px at 8% 6%, rgba(79,70,229,0.28) 0%, transparent 60%),
+    radial-gradient(820px 700px at 92% 16%, rgba(56,189,248,0.22) 0%, transparent 62%),
+    radial-gradient(900px 780px at 18% 94%, rgba(129,140,248,0.20) 0%, transparent 62%),
+    radial-gradient(760px 640px at 96% 90%, rgba(52,211,153,0.16) 0%, transparent 60%);
+}
+.aurora-backdrop.aurora-warm {
+  background-image:
+    radial-gradient(760px 620px at 10% 6%, rgba(236,48,19,0.28) 0%, transparent 60%),
+    radial-gradient(820px 700px at 90% 16%, rgba(255,178,102,0.30) 0%, transparent 62%),
+    radial-gradient(900px 780px at 18% 94%, rgba(255,214,153,0.26) 0%, transparent 62%),
+    radial-gradient(760px 640px at 96% 90%, rgba(174,24,0,0.18) 0%, transparent 60%);
+}
+.dark .aurora-backdrop.aurora-warm {
+  background-image:
+    radial-gradient(760px 620px at 10% 6%, rgba(236,48,19,0.30) 0%, transparent 60%),
+    radial-gradient(820px 700px at 90% 16%, rgba(255,178,102,0.20) 0%, transparent 62%),
+    radial-gradient(900px 780px at 18% 94%, rgba(255,214,153,0.14) 0%, transparent 62%),
+    radial-gradient(760px 640px at 96% 90%, rgba(174,24,0,0.22) 0%, transparent 60%);
 }

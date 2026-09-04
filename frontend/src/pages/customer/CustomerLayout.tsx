@@ -15,6 +15,7 @@ import { PneurosLogo } from "@/components/brand"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useAuth } from "@/auth/auth-context"
 import { ConciergeChatWidget } from "@/components/customer/ConciergeChatWidget"
+import { AuroraBackdrop } from "@/components/aurora-backdrop"
 
 const navItems = [
   { label: "Dashboard", to: "/customer", icon: LayoutDashboard },
@@ -40,6 +41,7 @@ export default function CustomerLayout() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <AuroraBackdrop tone="cool" />
       {/* Header */}
       <header className="sticky top-0 z-30 bg-card shadow-[0_1px_4px_rgba(0,0,0,0.04)] dark:border-b dark:border-border dark:shadow-none">
         <div className="mx-auto flex h-[60px] max-w-5xl items-center justify-between px-4">

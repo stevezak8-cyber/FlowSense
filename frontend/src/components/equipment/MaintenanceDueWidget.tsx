@@ -46,8 +46,8 @@ export function MaintenanceDueWidget() {
   if (loading || items.length === 0) return null
 
   return (
-    <div className="overflow-hidden rounded-2xl border-2 border-foreground bg-card">
-      <div className="flex items-center justify-between border-b-2 border-foreground px-6 py-4">
+    <div className="overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="flex items-center justify-between border-b border-border px-6 py-4">
         <span className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
           <Wrench className="h-4 w-4" />
           Maintenance Due ({items.length})

@@ -37,7 +37,7 @@ export function RecentJobs({ jobs, loading }: RecentJobsProps) {
 
   if (loading) {
     return (
-      <div className="rounded-2xl border-2 border-foreground bg-card">
+      <div className="rounded-2xl border border-border bg-card">
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           <span className="ml-2 text-sm text-muted-foreground">Loading recent jobs...</span>
@@ -47,8 +47,8 @@ export function RecentJobs({ jobs, loading }: RecentJobsProps) {
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border-2 border-foreground bg-card">
-      <div className="flex items-center justify-between border-b-2 border-foreground px-6 py-4">
+    <div className="overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="flex items-center justify-between border-b border-border px-6 py-4">
         <div>
           <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
             Recent Jobs

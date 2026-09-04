@@ -96,7 +96,7 @@ export function TechStatus({ technicians, jobs, loading }: TechStatusProps) {
 
   if (loading) {
     return (
-      <div className="rounded-2xl border-2 border-foreground bg-card">
+      <div className="rounded-2xl border border-border bg-card">
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           <span className="ml-2 text-sm text-muted-foreground">Loading...</span>
@@ -106,8 +106,8 @@ export function TechStatus({ technicians, jobs, loading }: TechStatusProps) {
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border-2 border-foreground bg-card">
-      <div className="flex items-center justify-between border-b-2 border-foreground px-6 py-4">
+    <div className="overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="flex items-center justify-between border-b border-border px-6 py-4">
         <div>
           <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
             Technician Roster
@@ -146,7 +146,7 @@ export function TechStatus({ technicians, jobs, loading }: TechStatusProps) {
               className="flex items-center gap-3 px-6 py-4 transition-colors hover:bg-secondary/60"
             >
               <div className="relative">
-                <Avatar className="h-10 w-10 border-2 border-foreground/10">
+                <Avatar className="h-10 w-10 border border-border/10">
                   <AvatarFallback className={`bg-gradient-to-br ${gradientFor(tech.id)} text-xs text-white font-bold`}>
                     {initials}
                   </AvatarFallback>

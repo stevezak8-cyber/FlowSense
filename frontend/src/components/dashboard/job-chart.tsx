@@ -51,7 +51,7 @@ export function JobChart({ data, loading }: JobChartProps) {
 
   if (loading) {
     return (
-      <div className="rounded-2xl border-2 border-foreground bg-card p-6">
+      <div className="rounded-2xl border border-border bg-card p-6">
         <div className="flex items-center justify-center py-16">
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           <span className="ml-2 text-sm text-muted-foreground">Loading chart...</span>
@@ -61,7 +61,7 @@ export function JobChart({ data, loading }: JobChartProps) {
   }
 
   return (
-    <div className="rounded-2xl border-2 border-foreground bg-card p-6">
+    <div className="rounded-2xl border border-border bg-card p-6">
       <div className="mb-5">
         <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
           Weekly Job Volume
