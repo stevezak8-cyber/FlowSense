@@ -21,17 +21,9 @@ export default function OfficeLayout() {
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Radix portals (Select, Dialog, DropdownMenu, etc.) render into document.body, outside this
-  // component's DOM subtree — the class must live on body too, or portaled content falls back
-  // to the root (non-office) palette.
-  useEffect(() => {
-    document.body.classList.add("office-theme")
-    return () => document.body.classList.remove("office-theme")
-  }, [])
-
   return (
     <OnboardingProvider>
-      <div className="office-theme flex min-h-screen bg-background">
+      <div className="flex min-h-screen bg-background">
         <AuroraBackdrop tone="warm" />
         <AppSidebar />
         <div className="flex flex-1 flex-col md:pl-[252px]">
