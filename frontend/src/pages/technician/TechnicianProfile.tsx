@@ -416,7 +416,7 @@ export default function TechnicianProfile() {
             <div key={job.id} style={{
               margin: jobView === "list" ? "0 16px 8px" : 0,
               border: `1px solid ${T.n300}`, borderRadius: 16,
-              background: "rgba(255,255,255,0.55)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", display: "flex", alignItems: "center",
+              background: "rgba(255,255,255,0.45)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.75), 0 6px 14px -6px rgba(32,30,29,0.18)", display: "flex", alignItems: "center",
               justifyContent: "space-between", padding: "12px 14px",
             }}>
               <div>
@@ -445,7 +445,7 @@ export default function TechnicianProfile() {
           onClick={() => navigate("/technician/profile/password")}
           style={{
             width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
-            border: `1px solid ${T.n300}`, borderRadius: 16, background: "rgba(255,255,255,0.55)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)",
+            border: `1px solid ${T.n300}`, borderRadius: 16, background: "rgba(255,255,255,0.45)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.75), 0 6px 14px -6px rgba(32,30,29,0.18)",
             padding: 14, fontFamily: font, cursor: "pointer",
           }}
         >
