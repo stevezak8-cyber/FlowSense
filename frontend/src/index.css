@@ -10,24 +10,24 @@
    backdrop (see .aurora-backdrop) shows through; backdrop-filter is applied globally
    below via the .bg-card/.bg-popover/.bg-sidebar utility-class cascade. */
 :root {
-  --background: rgba(247,246,250,0.75);
+  --background: rgba(247,246,250,0.54);
   --foreground: oklch(0.15 0.02 260);
-  --card: rgba(255,255,255,0.55);
+  --card: rgba(255,255,255,0.341);
   --card-foreground: oklch(0.15 0.02 260);
-  --popover: rgba(255,255,255,0.78);
+  --popover: rgba(255,255,255,0.608);
   --popover-foreground: oklch(0.15 0.02 260);
   --primary: oklch(0.52 0.16 265);
   --primary-foreground: oklch(1 0 0);
-  --secondary: rgba(255,255,255,0.4);
+  --secondary: rgba(255,255,255,0.22);
   --secondary-foreground: oklch(0.28 0.02 260);
-  --muted: rgba(255,255,255,0.35);
+  --muted: rgba(255,255,255,0.175);
   --muted-foreground: oklch(0.44 0.012 260);
   --accent: oklch(0.60 0.17 150);
   --accent-foreground: oklch(1 0 0);
   --destructive: oklch(0.55 0.22 27);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: rgba(255,255,255,0.6);
-  --input: rgba(255,255,255,0.45);
+  --border: rgba(255,255,255,0.432);
+  --input: rgba(255,255,255,0.279);
   --ring: oklch(0.52 0.16 265);
   --chart-1: oklch(0.52 0.16 265);
   --chart-2: oklch(0.60 0.17 150);
@@ -35,13 +35,13 @@
   --chart-4: oklch(0.70 0.16 55);
   --chart-5: oklch(0.48 0.10 260);
   --radius: 1.15rem;
-  --sidebar: rgba(255,255,255,0.5);
+  --sidebar: rgba(255,255,255,0.29);
   --sidebar-foreground: oklch(0.40 0.015 260);
   --sidebar-primary: oklch(0.52 0.16 265);
   --sidebar-primary-foreground: oklch(0.52 0.16 265);
-  --sidebar-accent: rgba(255,255,255,0.35);
+  --sidebar-accent: rgba(255,255,255,0.175);
   --sidebar-accent-foreground: oklch(0.52 0.16 265);
-  --sidebar-border: rgba(255,255,255,0.55);
+  --sidebar-border: rgba(255,255,255,0.385);
   --sidebar-ring: oklch(0.52 0.16 265);
   --success: oklch(0.60 0.17 150);
   --success-foreground: oklch(1 0 0);
@@ -51,37 +51,37 @@
 
 /* ─── MedOps Dark Theme — Liquid Glass ─── */
 .dark {
-  --background: rgba(20,20,26,0.78);
+  --background: rgba(20,20,26,0.562);
   --foreground: oklch(0.93 0.005 260);
-  --card: rgba(40,40,50,0.5);
+  --card: rgba(40,40,50,0.31);
   --card-foreground: oklch(0.93 0.005 260);
-  --popover: rgba(40,40,50,0.8);
+  --popover: rgba(40,40,50,0.624);
   --popover-foreground: oklch(0.93 0.005 260);
   --primary: oklch(0.62 0.18 265);
   --primary-foreground: oklch(1 0 0);
-  --secondary: rgba(255,255,255,0.06);
+  --secondary: rgba(255,255,255,0.033);
   --secondary-foreground: oklch(0.88 0.005 260);
-  --muted: rgba(255,255,255,0.05);
+  --muted: rgba(255,255,255,0.025);
   --muted-foreground: oklch(0.64 0.01 260);
   --accent: oklch(0.62 0.17 150);
   --accent-foreground: oklch(1 0 0);
   --destructive: oklch(0.60 0.22 27);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: rgba(255,255,255,0.12);
-  --input: rgba(255,255,255,0.08);
+  --border: rgba(255,255,255,0.086);
+  --input: rgba(255,255,255,0.05);
   --ring: oklch(0.62 0.18 265);
   --chart-1: oklch(0.62 0.18 265);
   --chart-2: oklch(0.62 0.17 150);
   --chart-3: oklch(0.60 0.14 210);
   --chart-4: oklch(0.72 0.16 55);
   --chart-5: oklch(0.55 0.10 260);
-  --sidebar: rgba(32,32,40,0.55);
+  --sidebar: rgba(32,32,40,0.319);
   --sidebar-foreground: oklch(0.70 0.008 260);
   --sidebar-primary: oklch(0.62 0.18 265);
   --sidebar-primary-foreground: oklch(0.62 0.18 265);
-  --sidebar-accent: rgba(255,255,255,0.06);
+  --sidebar-accent: rgba(255,255,255,0.03);
   --sidebar-accent-foreground: oklch(0.62 0.18 265);
-  --sidebar-border: rgba(255,255,255,0.1);
+  --sidebar-border: rgba(255,255,255,0.07);
   --sidebar-ring: oklch(0.62 0.18 265);
   --success: oklch(0.62 0.17 150);
   --success-foreground: oklch(1 0 0);
@@ -163,58 +163,58 @@
    Deliberately leaves --destructive/--success/--warning/--chart-* untouched: those stay semantic
    (red/green/amber) for status legibility across jobs/invoices/compliance, inherited from :root/.dark. */
 .office-theme {
-  --background: rgba(244,239,233,0.75);
+  --background: rgba(244,239,233,0.54);
   --foreground: #201e1d;
-  --card: rgba(255,253,250,0.55);
+  --card: rgba(255,253,250,0.341);
   --card-foreground: #201e1d;
-  --popover: rgba(255,253,250,0.8);
+  --popover: rgba(255,253,250,0.624);
   --popover-foreground: #201e1d;
   --primary: #ec3013;
   --primary-foreground: #fdf6f4;
-  --secondary: rgba(255,255,255,0.4);
+  --secondary: rgba(255,255,255,0.22);
   --secondary-foreground: #201e1d;
-  --muted: rgba(255,255,255,0.35);
+  --muted: rgba(255,255,255,0.175);
   --muted-foreground: #6b6863;
   --accent: #ec3013;
   --accent-foreground: #fdf6f4;
-  --border: rgba(255,255,255,0.6);
-  --input: rgba(255,255,255,0.45);
+  --border: rgba(255,255,255,0.432);
+  --input: rgba(255,255,255,0.279);
   --ring: #ec3013;
-  --sidebar: rgba(255,253,250,0.5);
+  --sidebar: rgba(255,253,250,0.29);
   --sidebar-foreground: #201e1d;
   --sidebar-primary: #ec3013;
   --sidebar-primary-foreground: #ec3013;
-  --sidebar-accent: rgba(255,255,255,0.35);
+  --sidebar-accent: rgba(255,255,255,0.175);
   --sidebar-accent-foreground: #201e1d;
-  --sidebar-border: rgba(255,255,255,0.55);
+  --sidebar-border: rgba(255,255,255,0.385);
   --sidebar-ring: #ec3013;
 }
 
 .dark .office-theme {
-  --background: rgba(26,24,23,0.78);
+  --background: rgba(26,24,23,0.562);
   --foreground: #f3f2f2;
-  --card: rgba(46,43,41,0.5);
+  --card: rgba(46,43,41,0.31);
   --card-foreground: #f3f2f2;
-  --popover: rgba(46,43,41,0.8);
+  --popover: rgba(46,43,41,0.624);
   --popover-foreground: #f3f2f2;
   --primary: #ec3013;
   --primary-foreground: #fdf6f4;
-  --secondary: rgba(255,255,255,0.06);
+  --secondary: rgba(255,255,255,0.033);
   --secondary-foreground: #f3f2f2;
-  --muted: rgba(255,255,255,0.05);
+  --muted: rgba(255,255,255,0.025);
   --muted-foreground: #b0aca6;
   --accent: #ec3013;
   --accent-foreground: #fdf6f4;
-  --border: rgba(255,255,255,0.1);
-  --input: rgba(255,255,255,0.08);
+  --border: rgba(255,255,255,0.072);
+  --input: rgba(255,255,255,0.05);
   --ring: #ec3013;
-  --sidebar: rgba(38,35,33,0.55);
+  --sidebar: rgba(38,35,33,0.319);
   --sidebar-foreground: #f3f2f2;
   --sidebar-primary: #ec3013;
   --sidebar-primary-foreground: #ec3013;
-  --sidebar-accent: rgba(255,255,255,0.06);
+  --sidebar-accent: rgba(255,255,255,0.03);
   --sidebar-accent-foreground: #f3f2f2;
-  --sidebar-border: rgba(255,255,255,0.1);
+  --sidebar-border: rgba(255,255,255,0.07);
   --sidebar-ring: #ec3013;
 }
 
@@ -226,8 +226,8 @@
    large is needless GPU cost for very little visible difference. */
 @layer utilities {
   .bg-card, .bg-popover, .bg-sidebar {
-    backdrop-filter: blur(20px) saturate(165%);
-    -webkit-backdrop-filter: blur(20px) saturate(165%);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
   }
 }
 
@@ -235,8 +235,8 @@
 @layer components {
   .medops-card {
     @apply rounded-2xl bg-card border border-border;
-    backdrop-filter: blur(20px) saturate(165%);
-    -webkit-backdrop-filter: blur(20px) saturate(165%);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
     box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.5), 0 1px 3px rgba(0, 0, 0, 0.04), 0 12px 28px -14px rgba(0, 0, 0, 0.18);
   }
   :is(.dark) .medops-card {

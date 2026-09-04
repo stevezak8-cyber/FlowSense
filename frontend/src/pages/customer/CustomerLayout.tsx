@@ -75,10 +75,10 @@ export default function CustomerLayout() {
                   key={item.to}
                   to={item.to}
                   className={cn(
-                    "flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-2.5 text-xs font-medium transition-colors",
+                    "flex items-center gap-2 whitespace-nowrap rounded-t-lg border-b-2 px-4 py-2.5 text-xs font-medium transition-all",
                     isActive
                       ? "border-primary text-primary"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
+                      : "border-transparent text-muted-foreground hover:border-white/40 hover:bg-sidebar-accent hover:text-foreground hover:backdrop-blur-md hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.5)] dark:hover:border-white/10 dark:hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)]"
                   )}
                 >
                   <item.icon className="h-4 w-4" />
