@@ -416,7 +416,7 @@ export default function TechnicianProfile() {
             <div key={job.id} style={{
               margin: jobView === "list" ? "0 16px 8px" : 0,
               border: `1px solid ${T.n300}`, borderRadius: 16,
-              background: "#fff", display: "flex", alignItems: "center",
+              background: "rgba(255,255,255,0.55)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", display: "flex", alignItems: "center",
               justifyContent: "space-between", padding: "12px 14px",
             }}>
               <div>
@@ -445,7 +445,7 @@ export default function TechnicianProfile() {
           onClick={() => navigate("/technician/profile/password")}
           style={{
             width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
-            border: `1px solid ${T.n300}`, borderRadius: 16, background: "#fff",
+            border: `1px solid ${T.n300}`, borderRadius: 16, background: "rgba(255,255,255,0.55)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)",
             padding: 14, fontFamily: font, cursor: "pointer",
           }}
         >

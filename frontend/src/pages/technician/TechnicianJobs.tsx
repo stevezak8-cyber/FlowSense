@@ -207,7 +207,7 @@ export default function TechnicianJobsPage() {
         </div>
 
         <div style={{ flex: 1, padding: "16px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#fff", border: `1px solid ${T.n300}`, borderRadius: 12, padding: "10px 12px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.55)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", border: `1px solid ${T.n300}`, borderRadius: 12, padding: "10px 12px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
               <MapPin style={{ width: 14, height: 14, color: T.accent, flexShrink: 0 }} />
               <span>{job.customer.address}</span>
@@ -219,7 +219,7 @@ export default function TechnicianJobsPage() {
             </Button>
           </div>
 
-          <div style={{ background: "#fff", border: `1px solid ${T.n300}`, borderRadius: 12, padding: "10px 12px", display: "flex", flexDirection: "column", gap: 6 }}>
+          <div style={{ background: "rgba(255,255,255,0.55)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", border: `1px solid ${T.n300}`, borderRadius: 12, padding: "10px 12px", display: "flex", flexDirection: "column", gap: 6 }}>
             <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", color: T.n600 }}>CUSTOMER</p>
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600 }}><User style={{ width: 14, height: 14, color: T.n500 }} />{job.customer.name}</div>
             {job.customer.phone && (
@@ -231,14 +231,14 @@ export default function TechnicianJobsPage() {
           </div>
 
           {job.symptomSummary && (
-            <div style={{ background: "#fff", border: `1px solid ${T.n300}`, borderRadius: 12, padding: "10px 12px" }}>
+            <div style={{ background: "rgba(255,255,255,0.55)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", border: `1px solid ${T.n300}`, borderRadius: 12, padding: "10px 12px" }}>
               <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", color: T.n600, marginBottom: 6 }}>NOTES</p>
               <p style={{ fontSize: 13, lineHeight: 1.5 }}>{job.symptomSummary}</p>
             </div>
           )}
 
           {eq && (
-            <div style={{ background: "#fff", border: `1px solid ${T.n300}`, borderRadius: 12, padding: "10px 12px" }}>
+            <div style={{ background: "rgba(255,255,255,0.55)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", border: `1px solid ${T.n300}`, borderRadius: 12, padding: "10px 12px" }}>
               <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", color: T.n600, marginBottom: 6 }}>EQUIPMENT</p>
               <p style={{ fontSize: 13, fontWeight: 600 }}>{[eq.make, eq.model].filter(Boolean).join(" ") || eq.equipmentType}</p>
               {eq.serialNumber && <p style={{ fontSize: 11, color: T.n600 }}>S/N: {eq.serialNumber}</p>}
@@ -246,7 +246,7 @@ export default function TechnicianJobsPage() {
           )}
 
           {job.preArrivalNotes && (
-            <div style={{ background: "#fff", border: `1px solid ${T.accent}`, borderRadius: 12, padding: "10px 12px" }}>
+            <div style={{ background: "rgba(255,255,255,0.55)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", border: `1px solid ${T.accent}`, borderRadius: 12, padding: "10px 12px" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <Sparkles style={{ width: 13, height: 13, color: T.accent }} />
@@ -278,7 +278,7 @@ export default function TechnicianJobsPage() {
             </div>
           )}
 
-          <div style={{ background: "#fff", border: `1px solid ${T.n300}`, borderRadius: 12, padding: "10px 12px" }}>
+          <div style={{ background: "rgba(255,255,255,0.55)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", border: `1px solid ${T.n300}`, borderRadius: 12, padding: "10px 12px" }}>
             <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", color: T.n600, marginBottom: 8 }}>PHOTOS</p>
             <JobPhotos jobId={job.id} photos={job.photos ?? []} canUpload={true}
               onPhotosChange={(photos) => setJobs((prev) => prev.map((j) => (j.id === job.id ? { ...j, photos } : j)))} />
@@ -485,7 +485,7 @@ export default function TechnicianJobsPage() {
             <button
               key={label}
               onClick={() => { if (activeJobs[0]) setAskAiJob(activeJobs[0]) }}
-              style={{ border: `1px solid ${T.n300}`, borderRadius: 16, background: "#fff", padding: 12, cursor: "pointer", textAlign: "left", fontFamily: font }}
+              style={{ border: `1px solid ${T.n300}`, borderRadius: 16, background: "rgba(255,255,255,0.55)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", padding: 12, cursor: "pointer", textAlign: "left", fontFamily: font }}
             >
               <Icon style={{ width: 16, height: 16, color: iconColor }} />
               <div style={{ fontWeight: 700, fontSize: 12, marginTop: 10, color: T.text }}>{label}</div>
