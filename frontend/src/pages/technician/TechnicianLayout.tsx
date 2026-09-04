@@ -107,7 +107,7 @@ export default function TechnicianLayout() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <AuroraBackdrop tone="warm" />
-      <header className="sticky top-4 z-30 mx-4 flex h-[56px] items-center justify-between rounded-2xl border border-border bg-card px-4 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.5),0_14px_30px_-18px_rgba(0,0,0,0.25)] dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_14px_30px_-18px_rgba(0,0,0,0.5)]">
+      <header className="sticky top-4 z-30 mx-4 flex h-[56px] items-center justify-between rounded-2xl border border-border bg-card px-4 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.5),inset_1px_0_0_0_rgba(255,255,255,0.325),0_14px_30px_-18px_rgba(0,0,0,0.25)] dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),inset_1px_0_0_0_rgba(255,255,255,0.039),0_14px_30px_-18px_rgba(0,0,0,0.5)]">
         <PneurosLogo size="sm" />
         <div className="flex items-center gap-3">
           {user && (
@@ -200,7 +200,7 @@ export default function TechnicianLayout() {
         <Outlet />
       </main>
 
-      <nav className="fixed inset-x-4 bottom-4 z-30 flex items-center justify-around rounded-2xl border border-border bg-card py-2.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.5),0_14px_30px_-18px_rgba(0,0,0,0.25)] dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_14px_30px_-18px_rgba(0,0,0,0.5)]">
+      <nav className="fixed inset-x-4 bottom-4 z-30 flex items-center justify-around rounded-2xl border border-border bg-card py-2.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.5),inset_1px_0_0_0_rgba(255,255,255,0.325),0_14px_30px_-18px_rgba(0,0,0,0.25)] dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),inset_1px_0_0_0_rgba(255,255,255,0.039),0_14px_30px_-18px_rgba(0,0,0,0.5)]">
         {navItems.map((item) => {
           const isActive =
             item.href === "/technician"
@@ -214,7 +214,7 @@ export default function TechnicianLayout() {
                 "flex flex-col items-center gap-1 rounded-xl border border-transparent px-3 py-1.5 transition-all",
                 isActive
                   ? "text-primary"
-                  : "text-muted-foreground hover:border-white/40 hover:bg-sidebar-accent hover:text-foreground hover:backdrop-blur-sm hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.5)] dark:hover:border-white/10 dark:hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)]"
+                  : "text-muted-foreground hover:border-white/40 hover:bg-sidebar-accent hover:text-foreground hover:backdrop-blur-sm hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.5),inset_1px_0_0_0_rgba(255,255,255,0.325)] dark:hover:border-white/10 dark:hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),inset_1px_0_0_0_rgba(255,255,255,0.052)]"
               )}
             >
               <item.icon className="h-5 w-5" />

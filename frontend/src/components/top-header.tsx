@@ -16,7 +16,7 @@ export function TopHeader() {
     : "U"
 
   return (
-    <header className="sticky top-4 z-20 mx-4 mt-4 flex h-[60px] items-center justify-between rounded-2xl border border-border bg-card px-5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.5),0_14px_30px_-18px_rgba(0,0,0,0.25)] dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_14px_30px_-18px_rgba(0,0,0,0.5)] md:mx-6">
+    <header className="sticky top-4 z-20 mx-4 mt-4 flex h-[60px] items-center justify-between rounded-2xl border border-border bg-card px-5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.5),inset_1px_0_0_0_rgba(255,255,255,0.325),0_14px_30px_-18px_rgba(0,0,0,0.25)] dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),inset_1px_0_0_0_rgba(255,255,255,0.039),0_14px_30px_-18px_rgba(0,0,0,0.5)] md:mx-6">
       <GlobalSearch />
       <div className="flex items-center gap-3">
         <div className="hidden items-center gap-2 rounded-full bg-card px-3 py-1.5 text-xs text-muted-foreground shadow-sm md:flex">
