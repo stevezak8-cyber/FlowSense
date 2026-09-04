@@ -238,3 +238,68 @@
     radial-gradient(900px 780px at 18% 94%, rgba(255,214,153,0.14) 0%, transparent 62%),
     radial-gradient(760px 640px at 96% 90%, rgba(174,24,0,0.22) 0%, transparent 60%);
 }
+
+/* ─── FullCalendar: reskin to match the platform theme ───
+   FullCalendar ships its own default (light/Bootstrap-ish) styling; these
+   custom properties + overrides route it through our design tokens instead,
+   so it sits inside a .medops-card glass shell without looking foreign. */
+.fc {
+  --fc-border-color: var(--border);
+  --fc-page-bg-color: transparent;
+  --fc-neutral-bg-color: var(--muted);
+  --fc-list-event-hover-bg-color: var(--muted);
+  --fc-today-bg-color: color-mix(in oklch, var(--primary) 8%, transparent);
+  --fc-now-indicator-color: var(--primary);
+  --fc-button-bg-color: var(--secondary);
+  --fc-button-border-color: transparent;
+  --fc-button-hover-bg-color: var(--muted);
+  --fc-button-hover-border-color: transparent;
+  --fc-button-active-bg-color: var(--primary);
+  --fc-button-active-border-color: var(--primary);
+  --fc-button-text-color: var(--foreground);
+  --fc-event-border-color: transparent;
+  font-family: var(--font-sans);
+  color: var(--foreground);
+}
+.fc .fc-toolbar-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--foreground);
+}
+.fc .fc-button {
+  text-transform: capitalize;
+  font-weight: 600;
+  font-size: 0.75rem;
+  border-radius: 0.6rem;
+  padding: 0.35rem 0.75rem;
+  box-shadow: none !important;
+}
+.fc .fc-button-primary:not(:disabled).fc-button-active {
+  color: var(--primary-foreground);
+}
+.fc .fc-col-header-cell-cushion,
+.fc .fc-timegrid-axis-cushion {
+  color: var(--muted-foreground);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.fc .fc-timegrid-slot-label-cushion {
+  color: var(--muted-foreground);
+  font-size: 0.7rem;
+}
+.fc .fc-scrollgrid,
+.fc .fc-scrollgrid-section > * {
+  border-color: var(--border);
+}
+.fc .fc-timegrid-now-indicator-line {
+  border-color: var(--primary);
+}
+.fc .fc-timegrid-now-indicator-arrow {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.fc .fc-day-today .fc-col-header-cell-cushion {
+  color: var(--primary);
+}

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, forwardRef, useImperativeHandle, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import FullCalendar from "@fullcalendar/react"
 import timeGridPlugin from "@fullcalendar/timegrid"
@@ -8,6 +8,7 @@ import { api } from "@/api/client"
 import type { ApiJob } from "@/api/types"
 import { CalendarEventCard } from "./CalendarEventCard"
 import { UnassignedStrip } from "./UnassignedStrip"
+import type { PriorityFilter } from "./PriorityPanel"
 import { DispatchSuggestions } from "@/components/jobs/dispatch-suggestions"
 import { PageError } from "@/components/page-error"
 import { Loader2 } from "lucide-react"
@@ -37,15 +38,26 @@ interface ReassignState {
 
 interface ScheduleCalendarProps {
   technicianId?: string | null
+  priorityFilter?: PriorityFilter
   refreshKey?: number
 }
 
-export function ScheduleCalendar({ technicianId, refreshKey }: ScheduleCalendarProps) {
+export interface ScheduleCalendarHandle {
+  gotoDate: (date: Date) => void
+}
+
+export const ScheduleCalendar = forwardRef<ScheduleCalendarHandle, ScheduleCalendarProps>(
+  function ScheduleCalendar({ technicianId, priorityFilter, refreshKey }, ref) {
   const navigate = useNavigate()
+  const calendarRef = useRef<FullCalendar>(null)
   const [jobs, setJobs] = useState<ApiJob[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [reassign, setReassign] = useState<ReassignState | null>(null)
+
+  useImperativeHandle(ref, () => ({
+    gotoDate: (date: Date) => calendarRef.current?.getApi().gotoDate(date),
+  }), [])
 
   const fetchJobs = useCallback(async () => {
     setLoading(true)
@@ -62,9 +74,13 @@ export function ScheduleCalendar({ technicianId, refreshKey }: ScheduleCalendarP
 
   useEffect(() => { fetchJobs() }, [fetchJobs, refreshKey])
 
-  const filteredJobs = technicianId
-    ? jobs.filter((j) => j.technicianId === technicianId)
-    : jobs
+  const filteredJobs = jobs
+    .filter((j) => !technicianId || j.technicianId === technicianId)
+    .filter((j) => {
+      if (priorityFilter === "urgent") return j.priority === "urgent"
+      if (priorityFilter === "unassigned") return !j.technicianId
+      return true
+    })
 
   async function handleEventDrop({ event, revert }: EventDropArg) {
     const job = event.extendedProps.job as ApiJob
@@ -110,7 +126,7 @@ export function ScheduleCalendar({ technicianId, refreshKey }: ScheduleCalendarP
   if (error) return <PageError message={error} onRetry={fetchJobs} />
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+    <div className="medops-card flex flex-col overflow-hidden p-3" style={{ height: "100%" }}>
       {loading && (
         <div style={{ display: "flex", justifyContent: "center", padding: "48px" }}>
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -119,6 +135,7 @@ export function ScheduleCalendar({ technicianId, refreshKey }: ScheduleCalendarP
 
       {!loading && (
         <FullCalendar
+          ref={calendarRef}
           plugins={[timeGridPlugin, interactionPlugin]}
           initialView="timeGridWeek"
           headerToolbar={{
@@ -166,7 +183,8 @@ export function ScheduleCalendar({ technicianId, refreshKey }: ScheduleCalendarP
           onClick={() => setReassign(null)}
         >
           <div
-            style={{ background: "white", borderRadius: "12px", padding: "24px", width: "400px", maxWidth: "90vw" }}
+            className="medops-card"
+            style={{ padding: "24px", width: "400px", maxWidth: "90vw", color: "var(--popover-foreground)" }}
             onClick={(e) => e.stopPropagation()}
           >
             <h3 style={{ margin: "0 0 16px", fontWeight: 700 }}>Reassign Technician</h3>
@@ -188,4 +206,4 @@ export function ScheduleCalendar({ technicianId, refreshKey }: ScheduleCalendarP
       )}
     </div>
   )
-}
+})

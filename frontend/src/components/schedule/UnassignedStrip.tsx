@@ -19,15 +19,15 @@ export function UnassignedStrip({ jobs }: UnassignedStripProps) {
     <div
       style={{
         padding: "8px 16px",
-        background: "var(--bg-secondary, #f8fafc)",
-        borderTop: "1px solid var(--border, #e2e8f0)",
+        background: "var(--muted)",
+        borderTop: "1px solid var(--border)",
       }}
     >
       <div
         style={{
           fontSize: "10px",
           fontWeight: 700,
-          color: "var(--text-secondary, #64748b)",
+          color: "var(--muted-foreground)",
           letterSpacing: "0.05em",
           marginBottom: "6px",
         }}
@@ -43,13 +43,13 @@ export function UnassignedStrip({ jobs }: UnassignedStripProps) {
             data-urgent={job.priority === "urgent" ? "true" : undefined}
             onDragStart={(e) => handleDragStart(e, job.id)}
             style={{
-              background: job.priority === "urgent" ? "#dc2626" : "var(--bg-primary, white)",
-              border: job.priority === "urgent" ? "none" : "1px solid var(--border, #e2e8f0)",
+              background: job.priority === "urgent" ? "var(--destructive)" : "var(--card)",
+              border: job.priority === "urgent" ? "none" : "1px solid var(--border)",
               borderRadius: "4px",
               padding: "4px 8px",
               fontSize: "11px",
               fontWeight: 600,
-              color: job.priority === "urgent" ? "white" : "var(--text-secondary, #64748b)",
+              color: job.priority === "urgent" ? "var(--destructive-foreground)" : "var(--card-foreground)",
               cursor: "grab",
             }}
           >
