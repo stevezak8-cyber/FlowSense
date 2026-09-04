@@ -106,7 +106,7 @@ export default function TechnicianLayout() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <AuroraBackdrop tone="cool" />
+      <AuroraBackdrop tone="warm" />
       <header className="sticky top-0 z-30 flex h-[60px] items-center justify-between bg-card px-4 shadow-[0_1px_4px_rgba(0,0,0,0.04)] dark:border-b dark:border-border dark:shadow-none">
         <PneurosLogo size="sm" />
         <div className="flex items-center gap-3">

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { PneurosLogo } from "@/components/brand"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Loader2, Building2, Wrench, UserCircle, AlertCircle } from "lucide-react"
+import { AuroraBackdrop } from "@/components/aurora-backdrop"
 
 const roleHome: Record<UserRole, string> = {
   office: "/office",
@@ -61,6 +62,7 @@ export default function LoginPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
+        <AuroraBackdrop tone="cool" />
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     )
@@ -68,6 +70,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <AuroraBackdrop tone="cool" />
       <header className="flex items-center justify-between bg-background px-6 py-5 lg:px-10">
         <PneurosLogo size="md" />
         <ThemeToggle />

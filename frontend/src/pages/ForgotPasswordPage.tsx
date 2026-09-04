@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { PneurosLogo } from "@/components/brand"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Loader2, AlertCircle, CheckCircle2, Mail } from "lucide-react"
+import { AuroraBackdrop } from "@/components/aurora-backdrop"
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
@@ -38,6 +39,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <AuroraBackdrop tone="cool" />
       <header className="flex items-center justify-between bg-background px-6 py-5 lg:px-10">
         <PneurosLogo size="md" />
         <ThemeToggle />

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Loader2, AlertCircle, CheckCircle2, Zap } from "lucide-react"
+import { AuroraBackdrop } from "@/components/aurora-backdrop"
 
 interface InviteInfo {
   email: string
@@ -104,6 +105,7 @@ export default function InvitePage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
+        <AuroraBackdrop tone="cool" />
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     )
@@ -113,6 +115,7 @@ export default function InvitePage() {
   if (loadError) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background p-4">
+        <AuroraBackdrop tone="cool" />
         <Card className="w-full max-w-sm border-border bg-card">
           <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
             <AlertCircle className="h-8 w-8 text-destructive" />
@@ -129,6 +132,7 @@ export default function InvitePage() {
   if (done) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background p-4">
+        <AuroraBackdrop tone="cool" />
         <Card className="w-full max-w-sm border-border bg-card">
           <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
             <CheckCircle2 className="h-8 w-8 text-success" />
@@ -142,6 +146,7 @@ export default function InvitePage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <AuroraBackdrop tone="cool" />
       <div className="w-full max-w-sm">
         {/* Logo / brand */}
         <div className="mb-8 flex items-center gap-2">
