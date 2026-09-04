@@ -56,7 +56,7 @@ export function MobileMenuButton({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="flex md:hidden items-center justify-center h-9 w-9 rounded-xl border border-transparent text-muted-foreground transition-colors hover:border-white/40 dark:hover:border-white/10 hover:bg-sidebar-accent hover:text-foreground hover:backdrop-blur-md"
+      className="flex md:hidden items-center justify-center h-9 w-9 rounded-xl border border-transparent text-muted-foreground transition-colors hover:border-white/40 dark:hover:border-white/10 hover:bg-sidebar-accent hover:text-foreground hover:backdrop-blur-sm"
       aria-label="Open menu"
     >
       <Menu className="h-5 w-5" />
@@ -111,7 +111,7 @@ export function AppSidebar() {
         <button
           type="button"
           onClick={() => setMobileOpen(false)}
-          className="flex md:hidden items-center justify-center h-8 w-8 rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-white/40 dark:hover:border-white/10 hover:bg-sidebar-accent hover:backdrop-blur-md"
+          className="flex md:hidden items-center justify-center h-8 w-8 rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-white/40 dark:hover:border-white/10 hover:bg-sidebar-accent hover:backdrop-blur-sm"
           aria-label="Close menu"
         >
           <X className="h-4 w-4" />
@@ -133,7 +133,7 @@ export function AppSidebar() {
                 "flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] transition-all",
                 isActive
                   ? "text-sidebar-primary font-semibold bg-primary/[0.06]"
-                  : "text-sidebar-foreground font-medium border border-transparent hover:border-white/40 dark:hover:border-white/10 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:backdrop-blur-md hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.5)] dark:hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)]"
+                  : "text-sidebar-foreground font-medium border border-transparent hover:border-white/40 dark:hover:border-white/10 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:backdrop-blur-sm hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.5)] dark:hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)]"
               )}
             >
               <item.icon className={cn("h-[18px] w-[18px]", isActive ? "text-sidebar-primary" : "text-muted-foreground")} />
@@ -151,7 +151,7 @@ export function AppSidebar() {
         <button
           type="button"
           onClick={openBillingPortal}
-          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium text-sidebar-foreground transition-all border border-transparent hover:border-white/40 dark:hover:border-white/10 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:backdrop-blur-md hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.5)] dark:hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)]"
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium text-sidebar-foreground transition-all border border-transparent hover:border-white/40 dark:hover:border-white/10 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:backdrop-blur-sm hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.5)] dark:hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)]"
         >
           <CreditCard className="h-[18px] w-[18px] text-muted-foreground" />
           Billing
@@ -160,7 +160,7 @@ export function AppSidebar() {
           <Link
             key={item.href}
             to={item.href}
-            className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium text-sidebar-foreground transition-all border border-transparent hover:border-white/40 dark:hover:border-white/10 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:backdrop-blur-md hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.5)] dark:hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)]"
+            className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium text-sidebar-foreground transition-all border border-transparent hover:border-white/40 dark:hover:border-white/10 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:backdrop-blur-sm hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.5)] dark:hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)]"
           >
             <item.icon className="h-[18px] w-[18px] text-muted-foreground" />
             {item.label}

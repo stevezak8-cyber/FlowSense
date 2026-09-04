@@ -152,7 +152,7 @@ export default function LandingPage() {
         style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: "auto", height: 900 }}
       />
       {/* Nav */}
-      <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/45 backdrop-blur-2xl backdrop-saturate-150 shadow-[inset_0_-1px_0_0_rgba(255,255,255,0.5)]">
+      <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/45 backdrop-blur-sm backdrop-saturate-125 shadow-[inset_0_-1px_0_0_rgba(255,255,255,0.5)]">
         <div className="mx-auto max-w-7xl px-6 lg:px-10 flex items-center justify-between h-16">
           <div className="flex items-center gap-2">
             <span className="text-lg font-black tracking-tight">PNEUROS</span>
@@ -223,7 +223,7 @@ export default function LandingPage() {
 
       {/* Dashboard screenshot */}
       <section className="relative mx-auto max-w-7xl px-6 lg:px-10 py-12">
-        <div className="rounded-2xl border border-white/45 bg-white/35 backdrop-blur-2xl backdrop-saturate-150 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.6),0_20px_40px_-20px_rgba(0,0,0,0.15)] overflow-hidden">
+        <div className="rounded-2xl border border-white/45 bg-white/35 backdrop-blur-sm backdrop-saturate-125 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.6),0_20px_40px_-20px_rgba(0,0,0,0.15)] overflow-hidden">
           <div className="flex">
             <div className="w-44 border-r border-gray-200 bg-white p-4 space-y-1 text-xs font-medium text-gray-500">
               {["Dashboard","Schedule","Jobs","Maintenance","Technicians","Customers","Messages","Revenue","Compliance"].map(item => (
@@ -393,7 +393,7 @@ export default function LandingPage() {
               <p className="text-gray-500 mb-4">EPA 608 prompts, safety acknowledgements and code reminders are part of the job flow, not a binder someone fills in on Friday.</p>
               <p className="text-sm text-gray-400">Filter the log by technician, type and date range — the default view is the last 90 days.</p>
             </div>
-            <div className="rounded-2xl border border-gray-200 bg-white/50 backdrop-blur-2xl backdrop-saturate-150 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.6),0_20px_40px_-20px_rgba(0,0,0,0.15)] overflow-hidden">
+            <div className="rounded-2xl border border-gray-200 bg-white/50 backdrop-blur-sm backdrop-saturate-125 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.6),0_20px_40px_-20px_rgba(0,0,0,0.15)] overflow-hidden">
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-gray-100">
@@ -454,7 +454,7 @@ export default function LandingPage() {
           <h2 className="text-5xl font-black leading-tight mb-12">Three plans.</h2>
           <div className="grid lg:grid-cols-3 gap-6">
             {PRICING.map(({ name, price, seats, cta, ctaTo, highlight, badge, features, locked }) => (
-              <div key={name} className={`rounded-2xl border bg-white/42 backdrop-blur-2xl backdrop-saturate-150 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.6),0_20px_40px_-20px_rgba(0,0,0,0.15)] p-8 ${highlight ? "border-[#e63f2a] ring-1 ring-[#e63f2a]" : "border-gray-200"}`}>
+              <div key={name} className={`rounded-2xl border bg-white/42 backdrop-blur-sm backdrop-saturate-125 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.6),0_20px_40px_-20px_rgba(0,0,0,0.15)] p-8 ${highlight ? "border-[#e63f2a] ring-1 ring-[#e63f2a]" : "border-gray-200"}`}>
                 <div className="flex items-center gap-2 mb-4">
                   <p className="font-black text-xl">{name}</p>
                   {badge && <span className="rounded-full bg-[#e63f2a] px-2 py-0.5 text-[10px] font-bold text-white">{badge}</span>}

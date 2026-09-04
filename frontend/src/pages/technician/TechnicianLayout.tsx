@@ -214,7 +214,7 @@ export default function TechnicianLayout() {
                 "flex flex-col items-center gap-1 rounded-xl border border-transparent px-3 py-1.5 transition-all",
                 isActive
                   ? "text-primary"
-                  : "text-muted-foreground hover:border-white/40 hover:bg-sidebar-accent hover:text-foreground hover:backdrop-blur-md hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.5)] dark:hover:border-white/10 dark:hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)]"
+                  : "text-muted-foreground hover:border-white/40 hover:bg-sidebar-accent hover:text-foreground hover:backdrop-blur-sm hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.5)] dark:hover:border-white/10 dark:hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)]"
               )}
             >
               <item.icon className="h-5 w-5" />
