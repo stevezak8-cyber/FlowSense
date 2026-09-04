@@ -36,16 +36,19 @@ const DARK_T = {
 
 const T = { ...LIGHT_T }
 
+const CORNER_GLOW_LIGHT = "radial-gradient(ellipse 70% 60% at 0% 0%, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 60%), radial-gradient(ellipse 70% 60% at 100% 100%, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 60%)"
+const CORNER_GLOW_DARK = "radial-gradient(ellipse 70% 60% at 0% 0%, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 60%), radial-gradient(ellipse 70% 60% at 100% 100%, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 60%)"
+
 function glassCard(isDark: boolean): React.CSSProperties {
   return isDark
-    ? { background: "rgba(50,46,44,0.55)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.08), inset 1px 0 0 0 rgba(255,255,255,0.05), 0 6px 14px -6px rgba(0,0,0,0.4)" }
-    : { background: "rgba(255,255,255,0.45)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.75), inset 1px 0 0 0 rgba(255,255,255,0.488), 0 6px 14px -6px rgba(32,30,29,0.18)" }
+    ? { backgroundColor: "rgba(50,46,44,0.55)", backgroundImage: CORNER_GLOW_DARK, backgroundRepeat: "no-repeat", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.16), inset 1px 0 0 0 rgba(255,255,255,0.1), inset 0 -1px 0 0 rgba(255,255,255,0.05), inset -1px 0 0 0 rgba(255,255,255,0.04), 0 6px 14px -6px rgba(0,0,0,0.4)" }
+    : { backgroundColor: "rgba(255,255,255,0.45)", backgroundImage: CORNER_GLOW_LIGHT, backgroundRepeat: "no-repeat", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.85), inset 1px 0 0 0 rgba(255,255,255,0.55), inset 0 -1px 0 0 rgba(255,255,255,0.3), inset -1px 0 0 0 rgba(255,255,255,0.2), 0 6px 14px -6px rgba(32,30,29,0.18)" }
 }
 
 function glassPanel(isDark: boolean): React.CSSProperties {
   return isDark
-    ? { background: "rgba(32,29,28,0.6)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.08), inset 1px 0 0 0 rgba(255,255,255,0.05), 0 20px 40px -20px rgba(0,0,0,0.5)" }
-    : { background: "rgba(255,255,255,0.55)", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", border: "1px solid rgba(255,255,255,0.55)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.6), inset 1px 0 0 0 rgba(255,255,255,0.39), 0 20px 40px -20px rgba(0,0,0,0.25)" }
+    ? { backgroundColor: "rgba(32,29,28,0.6)", backgroundImage: CORNER_GLOW_DARK, backgroundRepeat: "no-repeat", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.18), inset 1px 0 0 0 rgba(255,255,255,0.11), inset 0 -1px 0 0 rgba(255,255,255,0.05), inset -1px 0 0 0 rgba(255,255,255,0.04), 0 20px 40px -20px rgba(0,0,0,0.5)" }
+    : { backgroundColor: "rgba(255,255,255,0.55)", backgroundImage: CORNER_GLOW_LIGHT, backgroundRepeat: "no-repeat", backdropFilter: "blur(8px) saturate(130%)", WebkitBackdropFilter: "blur(8px) saturate(130%)", border: "1px solid rgba(255,255,255,0.55)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.7), inset 1px 0 0 0 rgba(255,255,255,0.45), inset 0 -1px 0 0 rgba(255,255,255,0.25), inset -1px 0 0 0 rgba(255,255,255,0.15), 0 20px 40px -20px rgba(0,0,0,0.25)" }
 }
 
 const STATUS_LABEL: Record<string, string> = {
