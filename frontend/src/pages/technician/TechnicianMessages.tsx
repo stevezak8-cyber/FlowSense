@@ -127,7 +127,7 @@ export default function TechMessagesPage() {
   // Thread view
   if (activeConv) {
     return (
-      <div style={{ margin: "8px auto", maxWidth: 720, borderRadius: 28, overflow: "hidden", fontFamily: font, ...panel, color: T.text, display: "flex", flexDirection: "column", height: "calc(100% - 16px)" }}>
+      <div style={{ margin: "8px auto", maxWidth: 960, borderRadius: 28, overflow: "hidden", fontFamily: font, ...panel, color: T.text, display: "flex", flexDirection: "column", height: "calc(100% - 16px)" }}>
         {/* Thread header */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderBottom: `2px solid ${T.text}` }}>
           <button onClick={() => setActiveConv(null)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex" }}>
@@ -237,7 +237,7 @@ export default function TechMessagesPage() {
 
   // Conversation list
   return (
-    <div style={{ margin: "8px auto", maxWidth: 720, borderRadius: 28, overflow: "hidden", fontFamily: font, ...panel, color: T.text, display: "flex", flexDirection: "column" }}>
+    <div style={{ margin: "8px auto", maxWidth: 960, borderRadius: 28, overflow: "hidden", fontFamily: font, ...panel, color: T.text, display: "flex", flexDirection: "column" }}>
 
       {/* Title */}
       <div style={{ padding: "20px 16px 16px", display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12 }}>
