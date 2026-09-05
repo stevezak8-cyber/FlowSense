@@ -93,19 +93,19 @@ export async function sendInvoiceReceiptEmail(params: {
     html: `
       <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
         <h2 style="color:#1a1a1a;">Payment Received</h2>
-        <p>Hi ${customerName},</p>
-        <p>Thank you — we've received your payment of <strong>$${amount.toFixed(2)}</strong> for <strong>${description}</strong>.</p>
+        <p>Hi ${escapeHtml(customerName)},</p>
+        <p>Thank you — we've received your payment of <strong>$${amount.toFixed(2)}</strong> for <strong>${escapeHtml(description)}</strong>.</p>
         <div style="background:#f5f5f5;padding:16px;border-radius:8px;margin:16px 0;">
           <p style="margin:4px 0;"><strong>Amount paid:</strong> $${amount.toFixed(2)}</p>
-          <p style="margin:4px 0;"><strong>Service:</strong> ${description}</p>
+          <p style="margin:4px 0;"><strong>Service:</strong> ${escapeHtml(description)}</p>
           <p style="margin:4px 0;"><strong>Date:</strong> ${new Date(params.issuedDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</p>
         </div>
         ${orgContactPhone || orgContactEmail ? `
         <p style="color:#555;font-size:14px;">Questions? Contact us:<br/>
-          ${orgContactPhone ? `Phone: ${orgContactPhone}<br/>` : ""}
-          ${orgContactEmail ? `Email: ${orgContactEmail}` : ""}
+          ${orgContactPhone ? `Phone: ${escapeHtml(orgContactPhone)}<br/>` : ""}
+          ${orgContactEmail ? `Email: ${escapeHtml(orgContactEmail)}` : ""}
         </p>` : ""}
-        <p>Thank you,<br/>${orgName}</p>
+        <p>Thank you,<br/>${escapeHtml(orgName)}</p>
         <p style="color:#888;font-size:13px;margin-top:24px;">— Pneuros</p>
       </div>
     `,

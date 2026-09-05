@@ -4,6 +4,7 @@ import { z } from "zod";
 import Stripe from "stripe";
 import { generateInvoicePdf } from "../services/invoice-pdf.js";
 import { sendEmail } from "../services/email.js";
+import { escapeHtml } from "../lib/escape-html.js";
 
 export const invoicesRouter = Router();
 
@@ -203,7 +204,7 @@ invoicesRouter.post("/:id/send", async (req, res) => {
     await sendEmail({
       to: invoice.customer.email,
       subject: `Invoice from ${invoice.organization.name}`,
-      html: `<p>Hi ${invoice.customer.name},</p><p>Please find your invoice attached. Thank you for your business.</p><p>— ${invoice.organization.name}</p>`,
+      html: `<p>Hi ${escapeHtml(invoice.customer.name)},</p><p>Please find your invoice attached. Thank you for your business.</p><p>— ${escapeHtml(invoice.organization.name)}</p>`,
       attachments: [{ filename, content: buffer, contentType: "application/pdf" }],
     })
 
