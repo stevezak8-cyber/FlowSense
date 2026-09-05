@@ -5,6 +5,7 @@ import { sendEmail } from "../services/email.js";
 import { sendEstimateReadySms } from "../services/sms.js";
 import { stripe } from "../services/stripe.js";
 import { jobTitle } from "../lib/job-title.js";
+import { escapeHtml } from "../lib/escape-html.js";
 import { z } from "zod";
 
 export const estimatesRouter = Router();
@@ -105,8 +106,8 @@ estimatesRouter.post("/:id/send", async (req, res) => {
     await sendEmail({
       to: estimate.job.customer.email ?? "",
       subject: `Your estimate from Pneuros — expires in 48 hours`,
-      html: `<p>Hi ${estimate.job.customer.name},</p>
-<p>Your estimate for <strong>${jobTitle(estimate.job)}</strong> is ready to review.</p>
+      html: `<p>Hi ${escapeHtml(estimate.job.customer.name)},</p>
+<p>Your estimate for <strong>${escapeHtml(jobTitle(estimate.job))}</strong> is ready to review.</p>
 <p><a href="${portalUrl}">View Your Estimate</a></p>
 <p>This link expires in 48 hours.</p>`,
     });

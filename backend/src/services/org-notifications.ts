@@ -304,7 +304,7 @@ export async function notifyOfficeDepositReceived(estimateId: string): Promise<v
     to: orgEmail,
     subject: `Deposit received — ${customerName}`,
     html: `
-      <p>A deposit of <strong>$${amount.toFixed(2)}</strong> was received from <strong>${customerName}</strong> for <strong>${title}</strong>.</p>
+      <p>A deposit of <strong>$${amount.toFixed(2)}</strong> was received from <strong>${escapeHtml(customerName)}</strong> for <strong>${escapeHtml(title)}</strong>.</p>
       <p>The job has been marked as <strong>confirmed</strong>.</p>
     `,
   })

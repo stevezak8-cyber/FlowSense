@@ -1,6 +1,7 @@
 import { Resend } from "resend";
 import { prisma } from "../lib/prisma.js";
 import { jobTitle } from "../lib/job-title.js";
+import { escapeHtml } from "../lib/escape-html.js";
 
 const FROM_EMAIL = process.env.FROM_EMAIL ?? "Pneuros <onboarding@resend.dev>";
 
@@ -63,8 +64,8 @@ export async function sendDepositReceiptEmail(estimateId: string): Promise<void>
     to: estimate.job.customer.email,
     subject: `Deposit received — ${title}`,
     html: `
-      <p>Hi ${customerName},</p>
-      <p>We've received your deposit of <strong>$${amount.toFixed(2)}</strong> for <strong>${title}</strong>.</p>
+      <p>Hi ${escapeHtml(customerName)},</p>
+      <p>We've received your deposit of <strong>$${amount.toFixed(2)}</strong> for <strong>${escapeHtml(title)}</strong>.</p>
       <p>Your appointment is confirmed. Your technician will be in touch soon.</p>
       <p>Thank you,<br/>The Pneuros Team</p>
     `,
