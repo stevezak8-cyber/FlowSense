@@ -1,4 +1,4 @@
-function titleCase(s: string): string {
+export function titleCase(s: string): string {
   return s.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 

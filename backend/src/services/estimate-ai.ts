@@ -85,7 +85,7 @@ export async function generateEstimate(jobId: string, organizationId: string): P
           jobs: {
             orderBy: { createdAt: "desc" },
             take: 5,
-            select: { equipmentType: true, serviceType: true, symptomSummary: true, completedAt: true },
+            select: { equipmentType: true, serviceType: true, symptomSummary: true },
           },
         },
       },
@@ -137,8 +137,8 @@ Return ONLY valid JSON, no markdown.`,
       messages: [
         {
           role: "user",
-          content: `Job: ${(job as any).title}
-Notes: ${(job as any).notes ?? "None"}
+          content: `Job: ${jobTitle(job)}
+Notes: ${job.symptomSummary ?? "None"}
 Customer equipment history:\n${jobHistory || "No prior history"}`,
         },
       ],

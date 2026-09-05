@@ -1,4 +1,5 @@
 import PDFDocument from "pdfkit"
+import { titleCase } from "../lib/job-title.js"
 
 interface InvoiceWithRelations {
   id: string
@@ -52,8 +53,7 @@ export async function generateInvoicePdf(invoice: InvoiceWithRelations): Promise
       doc.font("Helvetica-Bold").text("JOB DETAILS")
       doc.font("Helvetica")
       if (invoice.job.equipmentType) {
-        const formatted = invoice.job.equipmentType.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())
-        doc.text(`Equipment: ${formatted}`)
+        doc.text(`Equipment: ${titleCase(invoice.job.equipmentType)}`)
       }
       if (invoice.job.symptomSummary) {
         doc.text(`Complaint: ${invoice.job.symptomSummary}`)

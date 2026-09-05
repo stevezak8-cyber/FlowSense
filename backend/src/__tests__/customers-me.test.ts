@@ -119,10 +119,23 @@ describe("GET /me/jobs", () => {
     expect(res.status).toBe(403)
   })
 
-  it("returns completed and cancelled jobs for the customer", async () => {
+  it("returns all jobs for the customer regardless of status", async () => {
+    // The frontend history page splits this single response into "Upcoming"
+    // (pending/scheduled) and past sections client-side, so the route must
+    // not filter by status here.
     mockPrisma.job.findMany.mockResolvedValue([
       {
         id: "job1",
+        status: "scheduled",
+        scheduledAt: "2026-09-10T10:00:00.000Z",
+        completedAt: null,
+        equipmentType: "AC",
+        symptomSummary: "Not cooling",
+        actionsTaken: null,
+        technician: { name: "Bob Tech" },
+      },
+      {
+        id: "job2",
         status: "completed",
         scheduledAt: "2026-08-10T10:00:00.000Z",
         completedAt: "2026-08-10T12:00:00.000Z",
@@ -132,7 +145,7 @@ describe("GET /me/jobs", () => {
         technician: { name: "Bob Tech" },
       },
       {
-        id: "job2",
+        id: "job3",
         status: "cancelled",
         scheduledAt: "2026-07-01T09:00:00.000Z",
         completedAt: null,
@@ -144,14 +157,14 @@ describe("GET /me/jobs", () => {
     ])
     const res = await request(makeApp()).get("/me/jobs")
     expect(res.status).toBe(200)
-    expect(res.body).toHaveLength(2)
-    expect(res.body[0].status).toBe("completed")
-    expect(res.body[1].status).toBe("cancelled")
+    expect(res.body).toHaveLength(3)
+    expect(res.body[0].status).toBe("scheduled")
+    expect(res.body[1].status).toBe("completed")
+    expect(res.body[2].status).toBe("cancelled")
     const callArgs = mockPrisma.job.findMany.mock.calls[0][0]
     expect(callArgs.where.customerId).toBe("cust1")
     expect(callArgs.where.organizationId).toBe("org1")
-    expect(callArgs.where.status.in).toContain("completed")
-    expect(callArgs.where.status.in).toContain("cancelled")
+    expect(callArgs.where.status).toBeUndefined()
   })
 })
 

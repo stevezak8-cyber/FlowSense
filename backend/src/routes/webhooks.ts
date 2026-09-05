@@ -7,6 +7,14 @@ import { createNotification } from "../services/create-notification.js";
 
 export const webhooksRouter = Router();
 
+// Stripe moved Invoice.subscription to Invoice.parent.subscription_details.subscription
+// in newer API versions, but the actual webhook payload shape depends on the API
+// version pinned to the webhook *endpoint* in the Stripe dashboard, not on the
+// apiVersion this codebase requests — so check both to be safe either way.
+function invoiceSubscriptionId(inv: Stripe.Invoice): string | Stripe.Subscription | null | undefined {
+  return inv.parent?.subscription_details?.subscription ?? (inv as unknown as { subscription?: string }).subscription;
+}
+
 // POST /webhooks/stripe
 // Receives Stripe events and updates local state.
 // IMPORTANT: this route must receive the raw (unparsed) body — mount it
@@ -193,7 +201,7 @@ webhooksRouter.post("/stripe", async (req: Request, res: Response) => {
     case "invoice.payment_succeeded": {
       const inv = event.data.object as Stripe.Invoice;
       // Only handle subscription invoices — customer job invoices handled by checkout.session.completed
-      if (!inv.parent?.subscription_details?.subscription) break;
+      if (!invoiceSubscriptionId(inv)) break;
       const org = await prisma.organization.findFirst({
         where: { stripeCustomerId: inv.customer as string },
       });
@@ -213,7 +221,7 @@ webhooksRouter.post("/stripe", async (req: Request, res: Response) => {
 
     case "invoice.payment_failed": {
       const inv = event.data.object as Stripe.Invoice;
-      if (!inv.parent?.subscription_details?.subscription) break;
+      if (!invoiceSubscriptionId(inv)) break;
       const failedOrg = await prisma.organization.findFirst({
         where: { stripeCustomerId: inv.customer as string },
       });

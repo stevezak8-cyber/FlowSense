@@ -127,7 +127,7 @@ publicEstimatesRouter.get("/:token", async (req, res) => {
     where: { token: req.params.token },
     include: {
       lines: { include: { pricebookItem: true } },
-      job: { select: { equipmentType: true, serviceType: true, customer: { select: { address: true } } } },
+      job: { select: { equipmentType: true, serviceType: true } },
     },
   });
 
@@ -137,7 +137,7 @@ publicEstimatesRouter.get("/:token", async (req, res) => {
     return res.status(410).json({ error: "This estimate has expired — please contact us to request a new one." });
   }
 
-  res.json(estimate);
+  res.json({ ...estimate, job: { title: jobTitle(estimate.job) } });
 });
 
 publicEstimatesRouter.post("/:token/approve", async (req, res) => {

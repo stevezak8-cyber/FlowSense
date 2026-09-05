@@ -90,7 +90,7 @@ billingRouter.get("/connect", async (req, res) => {
     return res.status(503).json({ error: "Stripe Connect not configured" })
   }
 
-  const organizationId = req.user!.organizationId
+  const organizationId = user.organizationId
   const hmac = crypto.createHmac("sha256", stateSecret).update(organizationId).digest("hex")
   const state = `${organizationId}.${hmac}`
 

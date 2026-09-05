@@ -9,6 +9,7 @@
 import { prisma } from "../lib/prisma.js";
 import { sendEmail } from "./email.js";
 import { escapeHtml } from "../lib/escape-html.js";
+import { jobTitle } from "../lib/job-title.js";
 import twilio from "twilio";
 
 interface JobSummary {
@@ -297,13 +298,13 @@ export async function notifyOfficeDepositReceived(estimateId: string): Promise<v
 
   const amount = estimate.depositAmount ?? 0
   const customerName = estimate.job?.customer?.name ?? "Customer"
-  const jobTitle = estimate.job?.equipmentType ?? "job"
+  const title = jobTitle(estimate.job ?? {})
 
   await sendEmail({
     to: orgEmail,
     subject: `Deposit received — ${customerName}`,
     html: `
-      <p>A deposit of <strong>$${amount.toFixed(2)}</strong> was received from <strong>${customerName}</strong> for <strong>${jobTitle}</strong>.</p>
+      <p>A deposit of <strong>$${amount.toFixed(2)}</strong> was received from <strong>${customerName}</strong> for <strong>${title}</strong>.</p>
       <p>The job has been marked as <strong>confirmed</strong>.</p>
     `,
   })
