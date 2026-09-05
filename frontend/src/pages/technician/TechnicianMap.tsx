@@ -187,7 +187,7 @@ export default function TechMapPage() {
   }
 
   return (
-    <div style={{ margin: "8px auto", maxWidth: 560, borderRadius: 28, overflow: "hidden", fontFamily: font, ...panel, color: T.text, display: "flex", flexDirection: "column" }}>
+    <div style={{ margin: "8px auto", maxWidth: 720, borderRadius: 28, overflow: "hidden", fontFamily: font, ...panel, color: T.text, display: "flex", flexDirection: "column" }}>
 
       {/* Title */}
       <div style={{ padding: "20px 16px 16px", display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12 }}>
