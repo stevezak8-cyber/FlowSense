@@ -13,6 +13,8 @@ import RegisterPage from "./pages/RegisterPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import InvitePage from "./pages/InvitePage";
+import TermsOfServicePage from "./pages/legal/TermsOfServicePage";
+import PrivacyPolicyPage from "./pages/legal/PrivacyPolicyPage";
 
 // Office
 import OfficeLayout from "./pages/office/OfficeLayout";
@@ -72,6 +74,10 @@ function App() {
 
       {/* Landing page */}
       <Route path="/" element={<LandingPage />} />
+
+      {/* Legal — public */}
+      <Route path="/terms" element={<TermsOfServicePage />} />
+      <Route path="/privacy" element={<PrivacyPolicyPage />} />
 
       {/* Office Dashboard — requires office role */}
       <Route

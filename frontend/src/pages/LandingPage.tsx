@@ -558,6 +558,8 @@ export default function LandingPage() {
           <span className="font-black text-gray-900">PNEUROS</span>
           <span>© 2026 Pneuros. HVAC field service platform.</span>
           <div className="flex gap-4">
+            <Link to="/terms" className="hover:text-gray-700 transition-colors">Terms</Link>
+            <Link to="/privacy" className="hover:text-gray-700 transition-colors">Privacy</Link>
             <Link to="/login" className="hover:text-gray-700 transition-colors">Sign in</Link>
             <Link to="/register" className="hover:text-gray-700 transition-colors">Start free trial</Link>
           </div>

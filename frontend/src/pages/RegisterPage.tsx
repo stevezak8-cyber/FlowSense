@@ -198,6 +198,13 @@ export default function RegisterPage() {
                 {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
                 Create Account
               </Button>
+
+              <p className="text-center text-xs text-muted-foreground">
+                By creating an account, you agree to our{" "}
+                <Link to="/terms" className="font-medium text-primary hover:underline">Terms of Service</Link>
+                {" "}and{" "}
+                <Link to="/privacy" className="font-medium text-primary hover:underline">Privacy Policy</Link>.
+              </p>
             </form>
           </div>
 
