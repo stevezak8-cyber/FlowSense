@@ -19,7 +19,7 @@ const NAV_LINKS = [
 
 const PLATFORM_FEATURES = [
   { title: "Smart dispatch", desc: "Suggestions ranked by skill match, drive time and workload, with a best-match flag and a score on every tech." },
-  { title: "Schedule board", desc: "A calendar of assigned work with an unassigned strip you drag until the day is clean." },
+  { title: "Schedule board", desc: "A weekly calendar with a mini month view, category and priority filters, and an unassigned strip you drag until the day is clean." },
   { title: "Job documentation", desc: "Photos, voice recordings and a completion dialog that turns the visit into a written record." },
   { title: "Estimates & pricebook", desc: "Build tiered options from a catalog, send them, and let the customer approve a tier themselves." },
   { title: "Maintenance plans", desc: "Recurring jobs dispatched automatically with equipment history attached." },
@@ -312,7 +312,7 @@ export default function LandingPage() {
           <h2 className="text-5xl font-black leading-tight mb-12">Every side of the job is already in the same database.</h2>
           <div className="grid lg:grid-cols-3 gap-px bg-gray-200">
             {[
-              { role: "Office", title: "Dispatch, schedule, invoice", desc: "Dashboard, schedule calendar with an unassigned strip, jobs, maintenance plans, technicians, customers, messages, revenue, and compliance — all in one tab.", features: ["Smart dispatch", "Schedule board", "Estimates & pricebook", "Revenue forecast"] },
+              { role: "Office", title: "Dispatch, schedule, invoice", desc: "Dashboard, a weekly schedule with priority and category filters plus an unassigned strip, jobs, maintenance plans, technicians, customers, messages, revenue, and compliance — all in one tab.", features: ["Smart dispatch", "Schedule board", "Estimates & pricebook", "Revenue forecast"] },
               { role: "Technician", title: "Jobs, map, co-pilot", desc: "An installable phone app with an on-duty toggle, push notifications for new jobs, offline queueing, photos and voice notes, and a co-pilot that knows which unit you're standing in front of.", features: ["Offline job queue", "Photos & voice notes", "AI co-pilot", "EPA 608 prompts"] },
               { role: "Customer", title: "Book, approve, pay", desc: "Your customers book their own appointments, approve an estimate tier and pay the invoice online. They see their equipment records, service history and maintenance plan, and can reach you through a concierge chat.", features: ["Online booking", "Estimate approval", "Card payment"], badge: "Most shops have none" },
             ].map(({ role, title, desc, features, badge }) => (
