@@ -3,13 +3,12 @@ import type { RequestHandler } from "express";
 import crypto from "crypto";
 import { prisma } from "../lib/prisma.js";
 import { stripe, getPriceId } from "../services/stripe.js";
-import type { AuthRequest } from "../middleware/types.js";
 
 export const billingRouter = Router();
 
 // POST /billing/portal — create a Stripe billing portal session
 billingRouter.post("/portal", async (req, res) => {
-  const user = (req as AuthRequest).user;
+  const user = req.user!;
 
   const org = await prisma.organization.findUnique({ where: { id: user.organizationId } });
 
@@ -34,7 +33,7 @@ billingRouter.post("/portal", async (req, res) => {
 
 // POST /billing/upgrade — upgrade org subscription plan (admin only)
 billingRouter.post("/upgrade", async (req, res) => {
-  const user = (req as AuthRequest).user;
+  const user = req.user!;
 
   const { organizationId, plan } = req.body as { organizationId?: string; plan?: string };
 
@@ -76,7 +75,7 @@ billingRouter.post("/upgrade", async (req, res) => {
 
 // GET /billing/connect — start Stripe Connect OAuth
 billingRouter.get("/connect", async (req, res) => {
-  const user = (req as AuthRequest).user
+  const user = req.user!
   if (!["office", "admin"].includes(user.role)) {
     return res.status(403).json({ error: "Office access required" })
   }
@@ -91,7 +90,7 @@ billingRouter.get("/connect", async (req, res) => {
     return res.status(503).json({ error: "Stripe Connect not configured" })
   }
 
-  const organizationId = (req as AuthRequest).user!.organizationId
+  const organizationId = req.user!.organizationId
   const hmac = crypto.createHmac("sha256", stateSecret).update(organizationId).digest("hex")
   const state = `${organizationId}.${hmac}`
 

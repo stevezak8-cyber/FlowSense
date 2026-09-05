@@ -4,6 +4,7 @@ import { generateEstimate } from "../services/estimate-ai.js";
 import { sendEmail } from "../services/email.js";
 import { sendEstimateReadySms } from "../services/sms.js";
 import { stripe } from "../services/stripe.js";
+import { jobTitle } from "../lib/job-title.js";
 import { z } from "zod";
 
 export const estimatesRouter = Router();
@@ -98,14 +99,14 @@ estimatesRouter.post("/:id/send", async (req, res) => {
     data: { status: "sent", sentAt, expiresAt },
   });
 
-  const portalUrl = `${process.env.FRONTEND_URL ?? "http://localhost:5173"}/customer/estimates/${(estimate as any).token}`;
+  const portalUrl = `${process.env.FRONTEND_URL ?? "http://localhost:5173"}/customer/estimates/${estimate.token}`;
 
   try {
     await sendEmail({
-      to: (estimate as any).job.customer.email ?? "",
+      to: estimate.job.customer.email ?? "",
       subject: `Your estimate from Pneuros — expires in 48 hours`,
-      html: `<p>Hi ${(estimate as any).job.customer.name},</p>
-<p>Your estimate for <strong>${(estimate as any).job.title}</strong> is ready to review.</p>
+      html: `<p>Hi ${estimate.job.customer.name},</p>
+<p>Your estimate for <strong>${jobTitle(estimate.job)}</strong> is ready to review.</p>
 <p><a href="${portalUrl}">View Your Estimate</a></p>
 <p>This link expires in 48 hours.</p>`,
     });
@@ -126,7 +127,7 @@ publicEstimatesRouter.get("/:token", async (req, res) => {
     where: { token: req.params.token },
     include: {
       lines: { include: { pricebookItem: true } },
-      job: { select: { title: true, address: true } },
+      job: { select: { equipmentType: true, serviceType: true, customer: { select: { address: true } } } },
     },
   });
 
@@ -191,18 +192,13 @@ publicEstimatesRouter.post("/:token/approve", async (req, res) => {
 publicEstimatesRouter.post("/:token/deposit", async (req, res) => {
   const { token } = req.params;
 
-  type EstimateWithRelations = Awaited<ReturnType<typeof prisma.estimate.findUnique>> & {
-    job: { title: string };
-    organization: { stripeConnectAccountId: string | null; stripeConnectOnboarded: boolean };
-  };
-
   const estimate = await prisma.estimate.findUnique({
     where: { token },
     include: {
-      job: { select: { title: true } },
+      job: { select: { equipmentType: true, serviceType: true } },
       organization: { select: { stripeConnectAccountId: true, stripeConnectOnboarded: true } },
     },
-  }) as EstimateWithRelations | null;
+  });
 
   if (!estimate) return res.status(404).json({ error: "Estimate not found" });
   if (estimate.status !== "approved") return res.status(400).json({ error: "Estimate has not been approved" });
@@ -222,7 +218,7 @@ publicEstimatesRouter.post("/:token/deposit", async (req, res) => {
       line_items: [{
         price_data: {
           currency: "usd",
-          product_data: { name: `Deposit — ${estimate.job.title}` },
+          product_data: { name: `Deposit — ${jobTitle(estimate.job)}` },
           unit_amount: Math.round(estimate.depositAmount * 100),
         },
         quantity: 1,

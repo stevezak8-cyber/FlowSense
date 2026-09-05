@@ -122,7 +122,7 @@ describe("Stripe webhook — subscription events", () => {
     process.env.STRIPE_PRICE_ID_SHOP = "price_shop_test"
     const event = makeEvent("invoice.payment_succeeded", {
       customer: "cus_abc",
-      subscription: "sub_123",
+      parent: { subscription_details: { subscription: "sub_123" } },
       billing_reason: "subscription_cycle",
       lines: { data: [{ price: { id: "price_shop_test" } }] },
     })

@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "../lib/prisma.js";
 import { AI_MODEL } from "../lib/ai-config.js";
+import { jobTitle } from "../lib/job-title.js";
 
 const apiKey = process.env.ANTHROPIC_API_KEY;
 if (!apiKey) {
@@ -84,7 +85,7 @@ export async function generateEstimate(jobId: string, organizationId: string): P
           jobs: {
             orderBy: { createdAt: "desc" },
             take: 5,
-            select: { title: true, notes: true, completedAt: true },
+            select: { equipmentType: true, serviceType: true, symptomSummary: true, completedAt: true },
           },
         },
       },
@@ -102,8 +103,8 @@ export async function generateEstimate(jobId: string, organizationId: string): P
     pricebookItems.map((i) => ({ id: i.id, name: i.name, category: i.category, unitPrice: i.unitPrice, unit: i.unit }))
   );
 
-  const jobHistory = (job.customer as any).jobs
-    .map((j: any) => `- ${j.title}${j.notes ? `: ${j.notes}` : ""}`)
+  const jobHistory = job.customer.jobs
+    .map((j) => `- ${jobTitle(j)}${j.symptomSummary ? `: ${j.symptomSummary}` : ""}`)
     .join("\n");
 
   try {

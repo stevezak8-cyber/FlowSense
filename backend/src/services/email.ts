@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { prisma } from "../lib/prisma.js";
+import { jobTitle } from "../lib/job-title.js";
 
 const FROM_EMAIL = process.env.FROM_EMAIL ?? "Pneuros <onboarding@resend.dev>";
 
@@ -55,15 +56,15 @@ export async function sendDepositReceiptEmail(estimateId: string): Promise<void>
   if (!estimate?.job?.customer?.email) return
 
   const amount = estimate.depositAmount ?? 0
-  const jobTitle = estimate.job.title
+  const title = jobTitle(estimate.job)
   const customerName = estimate.job.customer.name
 
   await sendEmail({
     to: estimate.job.customer.email,
-    subject: `Deposit received — ${jobTitle}`,
+    subject: `Deposit received — ${title}`,
     html: `
       <p>Hi ${customerName},</p>
-      <p>We've received your deposit of <strong>$${amount.toFixed(2)}</strong> for <strong>${jobTitle}</strong>.</p>
+      <p>We've received your deposit of <strong>$${amount.toFixed(2)}</strong> for <strong>${title}</strong>.</p>
       <p>Your appointment is confirmed. Your technician will be in touch soon.</p>
       <p>Thank you,<br/>The Pneuros Team</p>
     `,

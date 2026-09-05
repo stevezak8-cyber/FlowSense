@@ -193,7 +193,7 @@ webhooksRouter.post("/stripe", async (req: Request, res: Response) => {
     case "invoice.payment_succeeded": {
       const inv = event.data.object as Stripe.Invoice;
       // Only handle subscription invoices — customer job invoices handled by checkout.session.completed
-      if (!inv.subscription) break;
+      if (!inv.parent?.subscription_details?.subscription) break;
       const org = await prisma.organization.findFirst({
         where: { stripeCustomerId: inv.customer as string },
       });
@@ -213,7 +213,7 @@ webhooksRouter.post("/stripe", async (req: Request, res: Response) => {
 
     case "invoice.payment_failed": {
       const inv = event.data.object as Stripe.Invoice;
-      if (!inv.subscription) break;
+      if (!inv.parent?.subscription_details?.subscription) break;
       const failedOrg = await prisma.organization.findFirst({
         where: { stripeCustomerId: inv.customer as string },
       });

@@ -18,7 +18,7 @@ function makeApp() {
   const app = express()
   app.use(express.json())
   app.use((req, _res, next) => {
-    ;(req as any).user = { id: "user-1", organizationId: "org-1" }
+    ;(req as any).user = { userId: "user-1", organizationId: "org-1" }
     next()
   })
   app.use("/api/push", pushRouter)

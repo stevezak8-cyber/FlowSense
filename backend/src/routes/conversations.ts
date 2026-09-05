@@ -158,7 +158,7 @@ conversationsRouter.post("/:id/messages", async (req, res) => {
         select: { user: { select: { id: true } } },
       }).then((techs) => {
         const userIds = techs.flatMap((t) => (t.user ? [t.user.id] : []))
-        const senderId = req.user!.id
+        const senderId = req.user!.userId
         return Promise.all(
           userIds
             .filter((uid) => uid !== senderId)

@@ -1,11 +1,10 @@
 import { Router } from "express"
 import { prisma } from "../lib/prisma.js"
-import type { AuthRequest } from "../middleware/types.js"
 
 export const onboardingRouter = Router()
 
 onboardingRouter.get("/status", async (req, res) => {
-  const { organizationId } = (req as AuthRequest).user
+  const { organizationId } = req.user!
 
   const org = await prisma.organization.findUnique({
     where: { id: organizationId },
@@ -35,7 +34,7 @@ onboardingRouter.get("/status", async (req, res) => {
 })
 
 onboardingRouter.post("/dismiss", async (req, res) => {
-  const { organizationId } = (req as AuthRequest).user
+  const { organizationId } = req.user!
   await prisma.organization.update({
     where: { id: organizationId },
     data: { onboardingDismissed: true },

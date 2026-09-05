@@ -22,7 +22,7 @@ aiRouter.post("/chat/stream", async (req, res) => {
   }
 
   const { jobId, message } = parsed.data
-  const userId = req.user!.id
+  const userId = req.user!.userId
   const organizationId = req.user!.organizationId
 
   // Verify job exists and belongs to this org before writing anything

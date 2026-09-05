@@ -9,7 +9,7 @@ interface InvoiceWithRelations {
   dueDate: Date
   organization: { name: string }
   customer: { name: string; address: string; city: string; state: string; postalCode: string }
-  job: { equipmentType: string | null; symptomSummary: string | null }
+  job: { equipmentType: string | null; symptomSummary: string | null } | null
 }
 
 export async function generateInvoicePdf(invoice: InvoiceWithRelations): Promise<Buffer> {
@@ -48,7 +48,7 @@ export async function generateInvoicePdf(invoice: InvoiceWithRelations): Promise
     doc.moveDown(1)
 
     // Job details
-    if (invoice.job.equipmentType || invoice.job.symptomSummary) {
+    if (invoice.job?.equipmentType || invoice.job?.symptomSummary) {
       doc.font("Helvetica-Bold").text("JOB DETAILS")
       doc.font("Helvetica")
       if (invoice.job.equipmentType) {

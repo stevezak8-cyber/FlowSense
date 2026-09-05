@@ -25,7 +25,7 @@ pushRouter.post("/subscribe", async (req, res) => {
       endpoint,
       p256dh: keys.p256dh,
       auth: keys.auth,
-      userId: req.user!.id,
+      userId: req.user!.userId,
       organizationId: req.user!.organizationId,
     },
     update: { p256dh: keys.p256dh, auth: keys.auth },
@@ -37,7 +37,7 @@ pushRouter.delete("/subscribe", async (req, res) => {
   const endpoint = req.query.endpoint as string | undefined
   if (!endpoint) return res.status(400).json({ error: "endpoint query parameter required" })
   await prisma.pushSubscription.deleteMany({
-    where: { endpoint, userId: req.user!.id },
+    where: { endpoint, userId: req.user!.userId },
   })
   res.status(204).send()
 })

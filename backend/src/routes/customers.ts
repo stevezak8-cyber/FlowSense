@@ -115,6 +115,7 @@ customersRouter.get("/me/jobs", async (req, res) => {
       where: {
         customerId: user.customerId,
         organizationId: user.organizationId,
+        status: { in: ["completed", "cancelled"] },
       },
       select: {
         id: true,
