@@ -382,7 +382,7 @@ export default function TechnicianJobsPage() {
   const visibleJobs = tabJobs[activeTab]
 
   return (
-    <div style={{ margin: 8, borderRadius: 28, overflow: "hidden", fontFamily: font, ...panel, color: T.text, display: "flex", flexDirection: "column" }}>
+    <div style={{ margin: "8px auto", maxWidth: 560, borderRadius: 28, overflow: "hidden", fontFamily: font, ...panel, color: T.text, display: "flex", flexDirection: "column" }}>
 
       {/* Greeting */}
       <div style={{ padding: "20px 16px 16px" }}>
