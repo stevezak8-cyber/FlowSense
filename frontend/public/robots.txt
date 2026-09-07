@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /office
+Disallow: /technician
+Disallow: /customer
+Disallow: /reset-password
+Disallow: /invite
+
+Sitemap: https://flowsense-production-1d80.up.railway.app/sitemap.xml

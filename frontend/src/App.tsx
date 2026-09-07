@@ -1,12 +1,14 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useEffect } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { RequireAuth } from "./auth/require-auth";
 import { useNotifications } from "@/lib/websocket";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
 import { OfflineIndicator } from "@/components/pwa/OfflineIndicator";
 import { initSyncManager } from "@/lib/sync-manager";
+import { Loader2 } from "lucide-react";
 
-// Pages
+// Pages loaded on first paint — kept eager so the marketing site and auth
+// flows render immediately with no extra network round trip.
 import LoginPage from "./pages/LoginPage";
 import LandingPage from "./pages/LandingPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -15,38 +17,53 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import InvitePage from "./pages/InvitePage";
 import TermsOfServicePage from "./pages/legal/TermsOfServicePage";
 import PrivacyPolicyPage from "./pages/legal/PrivacyPolicyPage";
+import NotFoundPage from "./pages/NotFoundPage";
+
+// Everything below is role-gated, so it's only ever needed after a visitor
+// has signed in as that role — code-split so a customer never downloads the
+// office dashboard's bundle (FullCalendar, revenue charts, etc.) and vice versa.
 
 // Office
-import OfficeLayout from "./pages/office/OfficeLayout";
-import OfficeDashboard from "./pages/office/OfficeDashboard";
-import OfficeJobs from "./pages/office/OfficeJobs";
-import OfficeTechnicians from "./pages/office/OfficeTechnicians";
-import OfficeCustomers from "./pages/office/OfficeCustomers";
-import OfficeMessages from "./pages/office/OfficeMessages";
-import OfficeRevenue from "./pages/office/OfficeRevenue"
-import OfficeSchedule from "./pages/office/OfficeSchedule"
-import OfficeSettings from "./pages/office/OfficeSettings";
-import OfficeCompliance from "./pages/office/OfficeCompliance"
-import { MaintenancePlans } from "./pages/office/MaintenancePlans"
+const OfficeLayout = lazy(() => import("./pages/office/OfficeLayout"));
+const OfficeDashboard = lazy(() => import("./pages/office/OfficeDashboard"));
+const OfficeJobs = lazy(() => import("./pages/office/OfficeJobs"));
+const OfficeTechnicians = lazy(() => import("./pages/office/OfficeTechnicians"));
+const OfficeCustomers = lazy(() => import("./pages/office/OfficeCustomers"));
+const OfficeMessages = lazy(() => import("./pages/office/OfficeMessages"));
+const OfficeRevenue = lazy(() => import("./pages/office/OfficeRevenue"));
+const OfficeSchedule = lazy(() => import("./pages/office/OfficeSchedule"));
+const OfficeSettings = lazy(() => import("./pages/office/OfficeSettings"));
+const OfficeCompliance = lazy(() => import("./pages/office/OfficeCompliance"));
+const MaintenancePlans = lazy(() =>
+  import("./pages/office/MaintenancePlans").then((m) => ({ default: m.MaintenancePlans }))
+);
 
 // Technician
-import TechnicianLayout from "./pages/technician/TechnicianLayout";
-import TechnicianJobs from "./pages/technician/TechnicianJobs";
-import TechnicianMap from "./pages/technician/TechnicianMap";
-import TechnicianMessages from "./pages/technician/TechnicianMessages";
-import TechnicianProfile from "./pages/technician/TechnicianProfile";
+const TechnicianLayout = lazy(() => import("./pages/technician/TechnicianLayout"));
+const TechnicianJobs = lazy(() => import("./pages/technician/TechnicianJobs"));
+const TechnicianMap = lazy(() => import("./pages/technician/TechnicianMap"));
+const TechnicianMessages = lazy(() => import("./pages/technician/TechnicianMessages"));
+const TechnicianProfile = lazy(() => import("./pages/technician/TechnicianProfile"));
 
 // Customer
-import CustomerLayout from "./pages/customer/CustomerLayout";
-import CustomerDashboard from "./pages/customer/CustomerDashboard";
-import CustomerBook from "./pages/customer/CustomerBook";
-import CustomerInvoices from "./pages/customer/CustomerInvoices";
-import CustomerMessages from "./pages/customer/CustomerMessages"
-import CustomerEstimate from "./pages/customer/CustomerEstimate";
-import CustomerEquipment from "./pages/customer/CustomerEquipment";
-import CustomerAccount from "./pages/customer/CustomerAccount";
-import CustomerHistory from "./pages/customer/CustomerHistory";
-import CustomerMaintenancePlans from "./pages/customer/CustomerMaintenancePlans";
+const CustomerLayout = lazy(() => import("./pages/customer/CustomerLayout"));
+const CustomerDashboard = lazy(() => import("./pages/customer/CustomerDashboard"));
+const CustomerBook = lazy(() => import("./pages/customer/CustomerBook"));
+const CustomerInvoices = lazy(() => import("./pages/customer/CustomerInvoices"));
+const CustomerMessages = lazy(() => import("./pages/customer/CustomerMessages"));
+const CustomerEstimate = lazy(() => import("./pages/customer/CustomerEstimate"));
+const CustomerEquipment = lazy(() => import("./pages/customer/CustomerEquipment"));
+const CustomerAccount = lazy(() => import("./pages/customer/CustomerAccount"));
+const CustomerHistory = lazy(() => import("./pages/customer/CustomerHistory"));
+const CustomerMaintenancePlans = lazy(() => import("./pages/customer/CustomerMaintenancePlans"));
+
+function RouteLoader() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+    </div>
+  );
+}
 
 function App() {
   useNotifications();
@@ -59,6 +76,7 @@ function App() {
     <>
       <UpdatePrompt />
       <OfflineIndicator />
+      <Suspense fallback={<RouteLoader />}>
       <Routes>
       {/* Auth — public */}
       <Route path="/login" element={<LoginPage />} />
@@ -137,9 +155,10 @@ function App() {
       {/* Customer estimate approval — public, no auth required */}
       <Route path="/customer/estimates/:token" element={<CustomerEstimate />} />
 
-      {/* Catch-all redirect */}
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      {/* Catch-all — unknown routes get a real 404, not a silent redirect */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
+    </Suspense>
     </>
   );
 }

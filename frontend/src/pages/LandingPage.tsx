@@ -156,7 +156,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-6 lg:px-10 flex items-center justify-between h-16">
           <div className="flex items-center gap-2">
             <span className="text-lg font-black tracking-tight">PNEUROS</span>
-            <span className="text-[10px] font-semibold text-gray-400 tracking-widest uppercase">HVAC Platform</span>
+            <span className="hidden sm:inline text-[10px] font-semibold text-gray-400 tracking-widest uppercase">HVAC Platform</span>
           </div>
           <nav className="hidden md:flex items-center gap-7">
             {NAV_LINKS.map(l => (
@@ -164,7 +164,7 @@ export default function LandingPage() {
             ))}
           </nav>
           <div className="flex items-center gap-3">
-            <Link to="/login" className="text-sm font-semibold text-gray-700 hover:text-gray-900 transition-colors">Sign in</Link>
+            <Link to="/login" className="hidden sm:inline text-sm font-semibold text-gray-700 hover:text-gray-900 transition-colors">Sign in</Link>
             <Link to="/register" className="rounded-full bg-[#ec3013] px-5 py-2 text-sm font-bold text-white hover:bg-[#ae1800] transition-colors">Start free trial</Link>
           </div>
         </div>
@@ -208,12 +208,12 @@ export default function LandingPage() {
 
           <div className="space-y-px">
             <div className="rounded-2xl border border-gray-100 bg-gray-50 p-7">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-[#ec3013] mb-2">Smart Dispatch</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-[#ae1800] mb-2">Smart Dispatch</p>
               <h3 className="text-2xl font-black leading-tight mb-2">Ranked by skill match, drive time & workload</h3>
               <p className="text-sm text-gray-500">Every assignment shows the score, the drive minutes, today's job count and whether that tech has been to the address before.</p>
             </div>
             <div className="rounded-2xl border border-gray-100 bg-gray-50 p-7">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-[#ec3013] mb-2">Compliance</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-[#ae1800] mb-2">Compliance</p>
               <h3 className="text-2xl font-black leading-tight mb-2">EPA 608 logged at the job, not after it</h3>
               <p className="text-sm text-gray-500">Refrigerant prompts, safety acknowledgements and code reminders write to an audit log you can filter by technician, type and date range.</p>
             </div>
@@ -308,7 +308,7 @@ export default function LandingPage() {
       {/* Three Seats */}
       <section id="roles" className="py-20">
         <div className="mx-auto max-w-7xl px-6 lg:px-10">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-[#ec3013] mb-3">02 — Three Seats, One System</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-[#ae1800] mb-3">02 — Three Seats, One System</p>
           <h2 className="text-5xl font-black leading-tight mb-12">Every side of the job is already in the same database.</h2>
           <div className="grid lg:grid-cols-3 gap-px bg-gray-200">
             {[
@@ -318,7 +318,7 @@ export default function LandingPage() {
             ].map(({ role, title, desc, features, badge }) => (
               <div key={role} className="bg-white p-8">
                 <div className="flex items-center gap-2 mb-4">
-                  <p className="text-[11px] font-bold uppercase tracking-widest text-[#ec3013]">{role}</p>
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-[#ae1800]">{role}</p>
                   {badge && <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-600">{badge}</span>}
                 </div>
                 <h3 className="text-2xl font-black mb-3">{title}</h3>
@@ -335,7 +335,7 @@ export default function LandingPage() {
       {/* Platform features */}
       <section id="platform" className="py-20 bg-gray-50">
         <div className="mx-auto max-w-7xl px-6 lg:px-10">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-[#ec3013] mb-3">03 — The Platform</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-[#ae1800] mb-3">03 — The Platform</p>
           <h2 className="text-5xl font-black leading-tight mb-12">What ships today.</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-gray-200">
             {PLATFORM_FEATURES.map(({ title, desc }) => (
@@ -353,7 +353,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-6 lg:px-10">
           <div className="grid lg:grid-cols-2 gap-16 items-start">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-[#ec3013] mb-3">04 — Field AI</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-[#ae1800] mb-3">04 — Field AI</p>
               <h2 className="text-4xl font-black leading-tight mb-4">The co-pilot already knows which unit you're standing in front of.</h2>
               <p className="text-gray-500 mb-8">Job context, technician profile and organization history load before the first message. A technician opens the assistant from the job and asks in plain language.</p>
               <div className="grid grid-cols-2 gap-4">
@@ -388,7 +388,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-6 lg:px-10">
           <div className="grid lg:grid-cols-2 gap-16 items-start">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-[#ec3013] mb-3">05 — Compliance</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-[#ae1800] mb-3">05 — Compliance</p>
               <h2 className="text-4xl font-black leading-tight mb-4">The audit trail is a side effect of doing the work.</h2>
               <p className="text-gray-500 mb-4">EPA 608 prompts, safety acknowledgements and code reminders are part of the job flow, not a binder someone fills in on Friday.</p>
               <p className="text-sm text-gray-400">Filter the log by technician, type and date range — the default view is the last 90 days.</p>
@@ -450,7 +450,7 @@ export default function LandingPage() {
       {/* Pricing */}
       <section id="pricing" className="py-20">
         <div className="mx-auto max-w-7xl px-6 lg:px-10">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-[#ec3013] mb-3">06 — Pricing</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-[#ae1800] mb-3">06 — Pricing</p>
           <h2 className="text-5xl font-black leading-tight mb-12">Three plans.</h2>
           <div className="grid lg:grid-cols-3 gap-6">
             {PRICING.map(({ name, price, seats, cta, ctaTo, highlight, badge, features, locked }) => (
@@ -462,7 +462,7 @@ export default function LandingPage() {
                 <p className="text-5xl font-black mb-1">{price}<span className="text-lg font-medium text-gray-400"> / month</span></p>
                 <p className="text-xs text-gray-400 mb-6">{seats}</p>
                 <ul className="space-y-2 mb-6">
-                  {features.map(f => <li key={f} className="flex items-start gap-2 text-sm"><span className="text-[#ec3013] font-bold mt-0.5">✓</span>{f}</li>)}
+                  {features.map(f => <li key={f} className="flex items-start gap-2 text-sm"><span className="text-[#ae1800] font-bold mt-0.5">✓</span>{f}</li>)}
                   {locked.map(f => <li key={f} className="flex items-start gap-2 text-sm text-gray-300"><span className="mt-0.5">—</span>{f}</li>)}
                 </ul>
                 <Link to={ctaTo} className={`block w-full rounded-xl py-3 text-center text-sm font-bold transition-colors ${highlight ? "bg-[#ec3013] text-white hover:bg-[#ae1800]" : "border border-gray-300 text-gray-700 hover:border-gray-400"}`}>{cta}</Link>
@@ -476,7 +476,7 @@ export default function LandingPage() {
       {/* Stats */}
       <section className="py-20 bg-gray-50">
         <div className="mx-auto max-w-7xl px-6 lg:px-10">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-[#ec3013] mb-3">07 — By the numbers</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-[#ae1800] mb-3">07 — By the numbers</p>
           <h2 className="text-4xl font-black mb-10">What the platform does.</h2>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-gray-200">
             {STATS.map(({ value, label }) => (
@@ -511,7 +511,7 @@ export default function LandingPage() {
       {/* FAQ */}
       <section id="faq" className="py-20 bg-gray-50">
         <div className="mx-auto max-w-7xl px-6 lg:px-10">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-[#ec3013] mb-3">08 — Questions</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-[#ae1800] mb-3">08 — Questions</p>
           <h2 className="text-5xl font-black leading-tight mb-10">Before you start.</h2>
           <div className="grid lg:grid-cols-2 gap-x-16">
             <div>{FAQS.filter((_,i)=>i%2===0).map(f=><FaqItem key={f.q} {...f}/>)}</div>

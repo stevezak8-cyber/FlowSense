@@ -21,7 +21,7 @@ export default defineConfig({
         name: "Pneuros",
         short_name: "Pneuros",
         description: "HVAC field service platform for technicians",
-        theme_color: "#0f766e",
+        theme_color: "#ec3013",
         background_color: "#0f172a",
         display: "standalone",
         orientation: "portrait",
