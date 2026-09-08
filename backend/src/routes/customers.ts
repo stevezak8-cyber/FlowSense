@@ -1,4 +1,6 @@
 import { Router } from "express";
+import multer, { MulterError } from "multer";
+import Papa from "papaparse";
 import { prisma } from "../lib/prisma.js";
 import { z } from "zod";
 
@@ -17,6 +19,24 @@ const createCustomerSchema = z.object({
 });
 
 const updateCustomerSchema = createCustomerSchema.partial();
+
+// --- Bulk CSV import ---
+
+const IMPORTABLE_FIELDS = [
+  "name", "phone", "address", "addressLine2", "city", "state", "postalCode", "email", "notes",
+] as const;
+type ImportableField = (typeof IMPORTABLE_FIELDS)[number];
+const REQUIRED_IMPORT_FIELDS: ImportableField[] = ["name", "phone", "address", "city", "state", "postalCode"];
+const MAX_IMPORT_ROWS = 2000;
+
+const importUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
+
+function normalizePhone(phone: string | null | undefined): string {
+  return (phone ?? "").replace(/\D/g, "");
+}
 
 customersRouter.get("/", async (req, res) => {
   // Customers should not browse the full customer list
@@ -42,6 +62,175 @@ customersRouter.get("/", async (req, res) => {
     res.json(customers);
   } catch (e) {
     res.status(500).json({ error: e instanceof Error ? e.message : "Failed to list customers" });
+  }
+});
+
+// POST /api/customers/import/parse — upload a CSV, get back headers + rows for column mapping
+customersRouter.post(
+  "/import/parse",
+  (req, res, next) => {
+    if (req.user!.role !== "office") return res.status(403).json({ error: "Forbidden" });
+    importUpload.single("file")(req, res, (err) => {
+      if (err instanceof MulterError) {
+        if (err.code === "LIMIT_FILE_SIZE") {
+          return res.status(400).json({ error: "File too large — maximum 5MB" });
+        }
+        return res.status(400).json({ error: err.message });
+      }
+      if (err) return next(err);
+      next();
+    });
+  },
+  (req, res) => {
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+
+    let text: string;
+    try {
+      text = req.file.buffer.toString("utf-8").replace(/^﻿/, ""); // strip BOM if present
+    } catch {
+      return res.status(400).json({ error: "Could not read file — make sure it's a plain CSV" });
+    }
+
+    const result = Papa.parse<string[]>(text, { skipEmptyLines: true });
+    const rows = result.data;
+
+    if (!rows || rows.length === 0) {
+      return res.status(400).json({ error: "The file appears to be empty" });
+    }
+
+    const [headerRow, ...dataRows] = rows;
+    const headers = headerRow.map((h) => h.trim());
+
+    if (headers.length === 0 || headers.every((h) => !h)) {
+      return res.status(400).json({ error: "Couldn't find a header row — make sure the first row has column names" });
+    }
+    if (dataRows.length === 0) {
+      return res.status(400).json({ error: "No data rows found below the header" });
+    }
+    if (dataRows.length > MAX_IMPORT_ROWS) {
+      return res.status(400).json({ error: `Too many rows — this importer supports up to ${MAX_IMPORT_ROWS} customers per file` });
+    }
+
+    res.json({ headers, rows: dataRows, rowCount: dataRows.length });
+  }
+);
+
+const importCommitSchema = z.object({
+  headers: z.array(z.string()),
+  rows: z.array(z.array(z.string())),
+  mapping: z.record(z.number().int().nonnegative()),
+});
+
+// POST /api/customers/import/commit — apply a confirmed column mapping and bulk-create customers
+customersRouter.post("/import/commit", async (req, res) => {
+  if (req.user!.role !== "office") return res.status(403).json({ error: "Forbidden" });
+
+  const parsed = importCommitSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.flatten() });
+  }
+  const { headers, rows, mapping } = parsed.data;
+
+  if (rows.length === 0) {
+    return res.status(400).json({ error: "No rows to import" });
+  }
+  if (rows.length > MAX_IMPORT_ROWS) {
+    return res.status(400).json({ error: `Too many rows — this importer supports up to ${MAX_IMPORT_ROWS} customers per file` });
+  }
+
+  const missingRequired = REQUIRED_IMPORT_FIELDS.filter((f) => mapping[f] === undefined);
+  if (missingRequired.length > 0) {
+    return res.status(400).json({ error: `Missing column mapping for required field(s): ${missingRequired.join(", ")}` });
+  }
+  for (const [field, idx] of Object.entries(mapping)) {
+    if (!(IMPORTABLE_FIELDS as readonly string[]).includes(field)) {
+      return res.status(400).json({ error: `Unknown field in mapping: ${field}` });
+    }
+    if (idx < 0 || idx >= headers.length) {
+      return res.status(400).json({ error: `Mapping for "${field}" references a column that doesn't exist` });
+    }
+  }
+
+  const organizationId = req.user!.organizationId;
+
+  const existing = await prisma.customer.findMany({
+    where: { organizationId },
+    select: { phone: true, email: true },
+  });
+  const existingPhones = new Set(existing.map((c) => normalizePhone(c.phone)).filter(Boolean));
+  const existingEmails = new Set(
+    existing.map((c) => c.email?.toLowerCase()).filter((e): e is string => !!e)
+  );
+  const seenPhonesInFile = new Set<string>();
+  const seenEmailsInFile = new Set<string>();
+
+  const skipped: { row: number; reason: string }[] = [];
+  const toCreate: z.infer<typeof createCustomerSchema>[] = [];
+
+  rows.forEach((row, i) => {
+    const rowNumber = i + 2; // +1 for header row, +1 for 1-indexing — matches the row number in a spreadsheet
+
+    const get = (field: ImportableField): string | undefined => {
+      const idx = mapping[field];
+      if (idx === undefined) return undefined;
+      return row[idx]?.trim() || undefined;
+    };
+
+    const candidate = {
+      name: get("name"),
+      phone: get("phone"),
+      address: get("address"),
+      addressLine2: get("addressLine2"),
+      city: get("city"),
+      state: get("state"),
+      postalCode: get("postalCode"),
+      email: get("email"),
+      notes: get("notes"),
+    };
+
+    // Silently skip fully blank rows (trailing blank lines are common in spreadsheet exports)
+    if (Object.values(candidate).every((v) => !v)) return;
+
+    const rowValidation = createCustomerSchema.safeParse(candidate);
+    if (!rowValidation.success) {
+      const issue = rowValidation.error.errors[0];
+      skipped.push({ row: rowNumber, reason: issue ? `${issue.path.join(".")}: ${issue.message}` : "Invalid data" });
+      return;
+    }
+
+    const data = rowValidation.data;
+    const normalizedPhone = normalizePhone(data.phone);
+    const normalizedEmail = data.email?.toLowerCase();
+
+    if (normalizedPhone && existingPhones.has(normalizedPhone)) {
+      return skipped.push({ row: rowNumber, reason: "A customer with this phone number already exists" });
+    }
+    if (normalizedEmail && existingEmails.has(normalizedEmail)) {
+      return skipped.push({ row: rowNumber, reason: "A customer with this email already exists" });
+    }
+    if (normalizedPhone && seenPhonesInFile.has(normalizedPhone)) {
+      return skipped.push({ row: rowNumber, reason: "Duplicate phone number within this file" });
+    }
+    if (normalizedEmail && seenEmailsInFile.has(normalizedEmail)) {
+      return skipped.push({ row: rowNumber, reason: "Duplicate email within this file" });
+    }
+
+    if (normalizedPhone) seenPhonesInFile.add(normalizedPhone);
+    if (normalizedEmail) seenEmailsInFile.add(normalizedEmail);
+    toCreate.push(data);
+  });
+
+  if (toCreate.length === 0) {
+    return res.json({ created: 0, skipped });
+  }
+
+  try {
+    await prisma.customer.createMany({
+      data: toCreate.map((c) => ({ organizationId, ...c })),
+    });
+    res.json({ created: toCreate.length, skipped });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : "Failed to import customers" });
   }
 });
 

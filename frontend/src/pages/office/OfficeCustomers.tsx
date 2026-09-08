@@ -6,6 +6,7 @@ import { api } from "@/api/client"
 import type { ApiCustomer } from "@/api/types"
 import { CustomerTable } from "@/components/customers/customer-table"
 import { AddCustomerDialog } from "@/components/customers/add-customer-dialog"
+import { ImportCustomersDialog } from "@/components/customers/import-customers-dialog"
 import { PageError } from "@/components/page-error"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users } from "lucide-react"
@@ -63,14 +64,22 @@ export default function OfficeCustomersPage() {
           <h1 className="text-xl font-semibold tracking-tight text-foreground">Customer Database</h1>
           <p className="mt-1 text-sm text-muted-foreground">Manage customer records, service history, and contact info</p>
         </div>
-        <AddCustomerDialog
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-          onCreated={(cust) => {
-            setCustomers((prev) => [cust, ...prev])
-            triggerRefresh()
-          }}
-        />
+        <div className="flex items-center gap-2">
+          <ImportCustomersDialog
+            onImported={() => {
+              fetchCustomers()
+              triggerRefresh()
+            }}
+          />
+          <AddCustomerDialog
+            open={dialogOpen}
+            onOpenChange={setDialogOpen}
+            onCreated={(cust) => {
+              setCustomers((prev) => [cust, ...prev])
+              triggerRefresh()
+            }}
+          />
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -92,7 +101,7 @@ export default function OfficeCustomersPage() {
           </p>
           <button
             onClick={() => setDialogOpen(true)}
-            className="mt-6 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700"
+            className="mt-6 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
           >
             Add Customer
           </button>
