@@ -35,7 +35,7 @@ const PRICING = [
     price: "$799",
     seats: "Up to 5 trucks · 3 office seats",
     cta: "Start free trial",
-    ctaTo: "/register",
+    ctaTo: "/register?plan=shop",
     highlight: false,
     features: [
       "Office dashboard, jobs and schedule board",
@@ -56,7 +56,7 @@ const PRICING = [
     price: "$1,499",
     seats: "Up to 25 trucks · 10 office seats",
     cta: "Start free trial",
-    ctaTo: "/register",
+    ctaTo: "/register?plan=fleet",
     highlight: true,
     badge: "Most shops",
     features: [
@@ -77,7 +77,7 @@ const PRICING = [
     price: "$2,999",
     seats: "Unlimited trucks · unlimited seats",
     cta: "Book a call",
-    ctaTo: "/register",
+    ctaTo: "mailto:stevezak8@gmail.com?subject=Enterprise%20plan%20inquiry",
     highlight: false,
     features: [
       "Everything in Fleet, plus:",
@@ -465,7 +465,11 @@ export default function LandingPage() {
                   {features.map(f => <li key={f} className="flex items-start gap-2 text-sm"><span className="text-[#ae1800] font-bold mt-0.5">✓</span>{f}</li>)}
                   {locked.map(f => <li key={f} className="flex items-start gap-2 text-sm text-gray-300"><span className="mt-0.5">—</span>{f}</li>)}
                 </ul>
-                <Link to={ctaTo} className={`block w-full rounded-xl py-3 text-center text-sm font-bold transition-colors ${highlight ? "bg-[#ec3013] text-white hover:bg-[#ae1800]" : "border border-gray-300 text-gray-700 hover:border-gray-400"}`}>{cta}</Link>
+                {ctaTo.startsWith("mailto:") ? (
+                  <a href={ctaTo} className={`block w-full rounded-xl py-3 text-center text-sm font-bold transition-colors ${highlight ? "bg-[#ec3013] text-white hover:bg-[#ae1800]" : "border border-gray-300 text-gray-700 hover:border-gray-400"}`}>{cta}</a>
+                ) : (
+                  <Link to={ctaTo} className={`block w-full rounded-xl py-3 text-center text-sm font-bold transition-colors ${highlight ? "bg-[#ec3013] text-white hover:bg-[#ae1800]" : "border border-gray-300 text-gray-700 hover:border-gray-400"}`}>{cta}</Link>
+                )}
               </div>
             ))}
           </div>

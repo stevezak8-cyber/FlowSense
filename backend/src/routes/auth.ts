@@ -27,6 +27,7 @@ const registerSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
+  plan: z.enum(["shop", "fleet", "enterprise"]).optional().default("shop"),
 });
 
 // POST /api/auth/register (public) — create a new org + admin user
@@ -36,7 +37,7 @@ authRouter.post("/register", async (req, res) => {
     return res.status(400).json({ error: parsed.error.errors[0]?.message ?? "Invalid data" });
   }
 
-  const { companyName, name, email, password } = parsed.data;
+  const { companyName, name, email, password, plan } = parsed.data;
 
   // Generate a URL-safe slug from company name
   const baseSlug = companyName
@@ -132,7 +133,7 @@ authRouter.post("/register", async (req, res) => {
         const session = await stripe.checkout.sessions.create({
           mode: "subscription",
           customer: stripeCustomerId,
-          line_items: [{ price: getPriceId("shop"), quantity: 1 }],
+          line_items: [{ price: getPriceId(plan), quantity: 1 }],
           subscription_data: { trial_period_days: 30 },
           payment_method_collection: "always",
           success_url: `${appUrl}/office?checkout=success`,

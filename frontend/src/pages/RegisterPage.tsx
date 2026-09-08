@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Link, Navigate, useNavigate } from "react-router-dom"
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom"
 import { useAuth } from "@/auth/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,9 +8,19 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { Loader2, AlertCircle, Building2, User, Mail, Lock } from "lucide-react"
 import { AuroraBackdrop } from "@/components/aurora-backdrop"
 
+const VALID_PLANS = new Set(["shop", "fleet", "enterprise"])
+const PLAN_LABELS: Record<string, string> = {
+  shop: "Shop — $799/mo",
+  fleet: "Fleet — $1,499/mo",
+  enterprise: "Enterprise — $2,999/mo",
+}
+
 export default function RegisterPage() {
   const { user, loading } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const requestedPlan = searchParams.get("plan")
+  const plan = requestedPlan && VALID_PLANS.has(requestedPlan) ? requestedPlan : "shop"
 
   const [companyName, setCompanyName] = useState("")
   const [name, setName] = useState("")
@@ -38,7 +48,7 @@ export default function RegisterPage() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ companyName, name, email, password }),
+        body: JSON.stringify({ companyName, name, email, password, plan }),
       })
 
       const data = await res.json()
@@ -85,6 +95,9 @@ export default function RegisterPage() {
             <p className="mt-2 text-sm text-muted-foreground">
               Get your HVAC business up and running in minutes
             </p>
+            <span className="mt-3 inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+              {PLAN_LABELS[plan]} · 30-day free trial
+            </span>
           </div>
 
           <div className="medops-card p-7">
