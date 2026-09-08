@@ -14,6 +14,7 @@ import { MaintenanceDueWidget } from "@/components/equipment/MaintenanceDueWidge
 import { RecurringDraftsWidget } from "@/components/recurring-jobs/RecurringDraftsWidget"
 import { WeatherWidget } from "@/components/dashboard/WeatherWidget"
 import { NewsWidget } from "@/components/dashboard/NewsWidget"
+import { VerseOfTheDay } from "@/components/dashboard/VerseOfTheDay"
 import { PageError } from "@/components/page-error"
 import { Button } from "@/components/ui/button"
 import { Link } from "react-router-dom"
@@ -208,9 +209,10 @@ export default function OfficeDashboardPage() {
           <h2 id="plan-ahead-heading" className="text-lg font-bold tracking-tight text-foreground">Plan ahead</h2>
           <p className="mt-1 text-sm text-muted-foreground">Local conditions and industry updates for the days ahead.</p>
         </div>
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <WeatherWidget city={stats?.city} />
           <NewsWidget />
+          <VerseOfTheDay />
         </div>
       </section>
 

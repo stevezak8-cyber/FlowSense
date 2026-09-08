@@ -125,6 +125,13 @@ export default function TechnicianJobsPage() {
   const [currentEstimate, setCurrentEstimate] = useState<Estimate | null>(null)
   const [generatingEstimate, setGeneratingEstimate] = useState(false)
   const [jobEquipment, setJobEquipment] = useState<Record<string, Equipment | null>>({})
+  const [verse, setVerse] = useState<{ reference: string; text: string; translation: string } | null>(null)
+
+  useEffect(() => {
+    api.get<{ reference: string; text: string; translation: string }>("/api/verse-of-the-day")
+      .then(setVerse)
+      .catch(() => {})
+  }, [])
 
   function fetchJobs() {
     setLoading(true)
@@ -506,6 +513,17 @@ export default function TechnicianJobsPage() {
           <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: T.accentLight }}>SEE ALL JOBS →</span>
         </div>
       </div>
+
+      {/* Verse of the day */}
+      {verse && (
+        <div style={{ borderTop: `2px solid ${T.text}`, padding: 16 }}>
+          <div style={{ fontSize: 10, letterSpacing: "0.14em", color: T.n600 }}>VERSE OF THE DAY</div>
+          <div style={{ ...card, border: `1px solid ${T.n300}`, borderRadius: 16, padding: 14, marginTop: 10 }}>
+            <div style={{ fontSize: 13, fontStyle: "italic", lineHeight: 1.5, color: T.text }}>&ldquo;{verse.text}&rdquo;</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: T.n600, marginTop: 8 }}>{verse.reference} ({verse.translation})</div>
+          </div>
+        </div>
+      )}
 
       {/* AI Assistant */}
       <div style={{ borderTop: `2px solid ${T.text}`, padding: 16 }}>

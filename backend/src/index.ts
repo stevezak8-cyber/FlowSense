@@ -84,6 +84,7 @@ import { reviewsRouter } from "./routes/reviews.js"
 import { voiceRouter } from "./routes/voice.js"
 import { conciergeRouter } from "./routes/concierge.js"
 import { notificationsRouter } from "./routes/notifications.js"
+import { verseRouter } from "./routes/verse.js"
 import { createDemoLimiter } from "./middleware/rate-limits.js";
 import { setupWebSocket } from "./services/notifications.js";
 import { startInvoiceScheduler } from "./services/invoice-scheduler.js";
@@ -171,6 +172,7 @@ app.use("/api/notifications", apiLimiter, requireAuth, notificationsRouter)
 app.use("/api/availability", apiLimiter, requireAuth, availabilityRouter)
 app.use("/api/reviews", apiLimiter, requireAuth, requireSubscription, reviewsRouter)
 app.use("/api/voice", apiLimiter, requireAuth, requireSubscription, voiceRouter)
+app.use("/api/verse-of-the-day", apiLimiter, requireAuth, verseRouter)
 
 // In production, serve the compiled frontend static build and handle SPA routing.
 // In development, Vite proxies /api requests — this block is never reached.
