@@ -43,6 +43,7 @@ const PRICING = [
       "Customer app with online booking",
       "Invoicing and card payment",
       "EPA 608 compliance log",
+      "CSV import for your existing customer list",
     ],
     locked: [
       "AI co-pilot and job summaries",
@@ -69,7 +70,7 @@ const PRICING = [
     ],
     locked: [
       "Multiple locations and branch reporting",
-      "Data migration and guided onboarding",
+      "Guided onboarding for your team",
     ],
   },
   {
@@ -83,7 +84,7 @@ const PRICING = [
       "Everything in Fleet, plus:",
       "Several locations under one organization",
       "Branch-level revenue and compliance reporting",
-      "Migration and data import from your current system",
+      "White-glove migration of job history, equipment and pricebook from your current system",
       "Customer concierge chat",
       "Guided onboarding for the whole crew",
       "Priority support",
