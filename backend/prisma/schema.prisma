@@ -39,6 +39,7 @@ model Organization {
   stripeConnectAccountId  String?
   stripeConnectOnboarded  Boolean @default(false)
   smsEnabled              Boolean @default(false)
+  verseOfTheDayEnabled    Boolean @default(true)
 
   users         User[]
   technicians   Technician[]

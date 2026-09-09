@@ -271,6 +271,7 @@ export interface ApiOrganization {
   stripeConnectOnboarded: boolean
   stripeConnectAccountId: string | null
   smsEnabled: boolean
+  verseOfTheDayEnabled: boolean
 }
 
 export interface PricebookItem {

@@ -68,6 +68,10 @@ export default function OfficeSettings() {
   const [smsEnabled, setSmsEnabled] = useState(false)
   const [smsLoading, setSmsLoading] = useState(false)
 
+  // Verse of the day state
+  const [verseEnabled, setVerseEnabled] = useState(true)
+  const [verseLoading, setVerseLoading] = useState(false)
+
   // Notification state
   const [prefs, setPrefs] = useState<NotificationPreferences>(DEFAULT_PREFS)
   const [prefsSaving, setPrefsSaving] = useState(false)
@@ -112,6 +116,7 @@ export default function OfficeSettings() {
         setOrgAddress(data.address ?? "")
         setPrefs(data.notificationPreferences ?? DEFAULT_PREFS)
         setSmsEnabled(data.smsEnabled ?? false)
+        setVerseEnabled(data.verseOfTheDayEnabled ?? true)
       })
       .catch(() => setOrgError("Could not load organization settings"))
       .finally(() => setOrgLoading(false))
@@ -126,6 +131,18 @@ export default function OfficeSettings() {
       // leave toggle in current state on error
     } finally {
       setSmsLoading(false)
+    }
+  }
+
+  async function handleVerseToggle(enabled: boolean) {
+    setVerseLoading(true)
+    try {
+      await api.patch<ApiOrganization>("/api/organizations/me", { verseOfTheDayEnabled: enabled })
+      setVerseEnabled(enabled)
+    } catch {
+      // leave toggle in current state on error
+    } finally {
+      setVerseLoading(false)
     }
   }
 
@@ -523,6 +540,37 @@ export default function OfficeSettings() {
             <span
               className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
                 smsEnabled ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
+        </div>
+      </div>
+
+      {/* Verse of the Day */}
+      <div className="rounded-xl border bg-card p-5 space-y-4">
+        <div className="flex items-center gap-2">
+          <BookOpen className="h-5 w-5 text-muted-foreground" />
+          <h3 className="font-semibold">Verse of the Day</h3>
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <p className="text-sm font-medium">Show a daily verse on the dashboard</p>
+            <p className="text-xs text-muted-foreground">
+              A short KJV verse appears on the office dashboard and technician jobs page each day.
+            </p>
+          </div>
+          <button
+            role="switch"
+            aria-checked={verseEnabled}
+            onClick={() => !verseLoading && handleVerseToggle(!verseEnabled)}
+            disabled={verseLoading}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+              verseEnabled ? "bg-primary" : "bg-input"
+            } ${verseLoading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                verseEnabled ? "translate-x-6" : "translate-x-1"
               }`}
             />
           </button>
