@@ -71,6 +71,7 @@ import { webhooksRouter } from "./routes/webhooks.js";
 import { billingRouter, billingConnectCallbackHandler } from "./routes/billing.js"
 import { twilioWebhookRouter } from "./routes/twilio-webhook.js"
 import { onboardingRouter } from "./routes/onboarding.js";
+import { platformRouter } from "./routes/platform.js";
 import { pricebookRouter } from "./routes/pricebook.js";
 import { estimatesRouter, publicEstimatesRouter } from "./routes/estimates.js";
 import { pushRouter } from "./routes/push.js"
@@ -141,6 +142,9 @@ app.use("/api/webhooks/twilio", apiLimiter, express.urlencoded({ extended: false
 // Billing routes (auth required, no subscription check — these manage the subscription itself)
 app.use("/api/billing", apiLimiter, requireAuth, billingRouter);
 app.use("/api/admin/billing", apiLimiter, requireAuth, billingRouter);
+
+// Platform admin (the founders, by email allow-list) — no subscription check
+app.use("/api/platform", apiLimiter, requireAuth, platformRouter);
 
 // Protected routes (auth + subscription check + general rate limit)
 app.use("/api/jobs", apiLimiter, requireAuth, requireSubscription, jobsRouter);

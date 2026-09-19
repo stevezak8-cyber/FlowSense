@@ -24,6 +24,7 @@ import NotFoundPage from "./pages/NotFoundPage";
 // office dashboard's bundle (FullCalendar, revenue charts, etc.) and vice versa.
 
 // Office
+const PlatformAccountsPage = lazy(() => import("./pages/PlatformAccountsPage"));
 const OfficeLayout = lazy(() => import("./pages/office/OfficeLayout"));
 const OfficeDashboard = lazy(() => import("./pages/office/OfficeDashboard"));
 const OfficeJobs = lazy(() => import("./pages/office/OfficeJobs"));
@@ -96,6 +97,16 @@ function App() {
       {/* Legal — public */}
       <Route path="/terms" element={<TermsOfServicePage />} />
       <Route path="/privacy" element={<PrivacyPolicyPage />} />
+
+      {/* Platform admin — founders only; the API 404s for everyone else */}
+      <Route
+        path="/platform"
+        element={
+          <RequireAuth role="office">
+            <PlatformAccountsPage />
+          </RequireAuth>
+        }
+      />
 
       {/* Office Dashboard — requires office role */}
       <Route
