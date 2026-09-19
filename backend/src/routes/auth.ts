@@ -7,6 +7,7 @@ import { requireAuth } from "../middleware/auth.js";
 import { stripe, getPriceId } from "../services/stripe.js";
 import { seedPricebook } from "../services/estimate-ai.js";
 import { seedSandboxData } from "../services/sandbox.js";
+import { demoLoginEnabled } from "../lib/demo-access.js";
 import { sendEmail } from "../services/email.js";
 import { sendSms } from "../services/sms.js";
 
@@ -548,6 +549,10 @@ const DEMO_EMAILS: Record<string, string> = {
 };
 
 authRouter.post("/demo", async (req, res) => {
+  // Disabled in production unless DEMO_ENABLED=true; answer like any unknown route.
+  if (!demoLoginEnabled()) {
+    return res.status(404).json({ error: "Not found" });
+  }
   const role = req.body?.role as string | undefined;
   const email = role ? DEMO_EMAILS[role] : undefined;
   if (!email) {
