@@ -1,13 +1,6 @@
-import { Link, useNavigate } from "react-router-dom"
+import { Link } from "react-router-dom"
 import { useState } from "react"
-import { ChevronDown, Building2, Wrench, UserCircle } from "lucide-react"
-import { useAuth } from "@/auth/auth-context"
-
-const DEMO_ROLES = [
-  { role: "office" as const, label: "Office Manager", icon: Building2, desc: "Dashboard, dispatch, schedule, revenue" },
-  { role: "technician" as const, label: "Technician", icon: Wrench, desc: "Jobs, map, AI co-pilot, offline mode" },
-  { role: "customer" as const, label: "Customer", icon: UserCircle, desc: "Booking, estimates, invoices, history" },
-]
+import { ChevronDown } from "lucide-react"
 
 const NAV_LINKS = [
   { label: "Roles", href: "#roles" },
@@ -99,7 +92,7 @@ const FAQS = [
   { q: "Do my technicians need to install an app?", a: "It runs in the browser and installs to the home screen when prompted. It keeps working with no signal and syncs when service returns." },
   { q: "What about EPA 608 records?", a: "Prompts fire during the job and write to a compliance log, filterable by technician, type and date range for an audit." },
   { q: "Is the AI required?", a: "No. AI briefings, job summaries and insights turn on when an Anthropic key is configured, and the rest of the platform is unaffected without one." },
-  { q: "Can I try it before signing up?", a: "The sign-in screen has one-click demo accounts for the office, technician and customer views." },
+  { q: "Can I explore it before using it for real?", a: "Yes. Every new account starts in a sandbox loaded with sample customers, technicians, jobs and invoices. Look around as long as you like, then exit the sandbox with one click — it clears the sample data so you can start with your own." },
 ]
 
 const STATS = [
@@ -122,29 +115,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   )
 }
 
-const ROLE_HOME: Record<string, string> = {
-  office: "/office",
-  technician: "/technician",
-  customer: "/customer",
-}
-
 export default function LandingPage() {
-  const { demoLogin } = useAuth()
-  const navigate = useNavigate()
-  const [demoLoading, setDemoLoading] = useState<string | null>(null)
-
-  async function handleDemo(role: "office" | "technician" | "customer") {
-    setDemoLoading(role)
-    try {
-      await demoLogin(role)
-      navigate(ROLE_HOME[role])
-    } catch {
-      navigate("/login")
-    } finally {
-      setDemoLoading(null)
-    }
-  }
-
   return (
     <div className="relative bg-white text-gray-900 font-sans">
       <div
@@ -188,23 +159,9 @@ export default function LandingPage() {
             <div className="flex items-center gap-3 flex-wrap">
               <Link to="/register" className="rounded-full bg-[#ec3013] px-7 py-3.5 text-sm font-bold text-white hover:bg-[#ae1800] transition-colors">Start free trial</Link>
             </div>
-            <div className="mt-6">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Try a demo account — no sign-up needed</p>
-              <div className="flex gap-3 flex-wrap">
-                {DEMO_ROLES.map(({ role, label, icon: Icon, desc }) => (
-                  <button key={role} onClick={() => handleDemo(role)} disabled={!!demoLoading}
-                    className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-left hover:border-gray-300 hover:shadow-sm transition-all disabled:opacity-50">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-100">
-                      <Icon className="h-4 w-4 text-gray-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-gray-900">{demoLoading === role ? "Loading…" : label}</p>
-                      <p className="text-xs text-gray-400">{desc}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
+            <p className="mt-5 max-w-md text-sm text-gray-500">
+              Every new account starts in a sandbox loaded with sample customers, technicians and jobs. Explore the whole platform first, then clear it with one click and start for real.
+            </p>
           </div>
 
           <div className="space-y-px">
@@ -499,7 +456,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-6 lg:px-10">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-gray-200">
             {[
-              ["Try before you sign up","One-click demo accounts for the office, technician and customer views — the real app, not a video."],
+              ["Practice before you go live","Every new account starts in a sandbox with sample data — the real app, not a video. Clear it with one click when you're ready."],
               ["Your data stays yours","Customers, jobs and equipment records export on request. Payments run through your own Stripe account."],
               ["Built for the audit","EPA 608 entries are written at the job with technician, date and refrigerant detail attached."],
               ["No long contract","Month to month. Billing is managed inside the app, and you can cancel there too."],
@@ -532,28 +489,13 @@ export default function LandingPage() {
           <p className="text-xl text-red-100 mb-8 max-w-xl">Create your organization, invite your crew, and run next week's jobs through Pneuros. You aren't charged until the trial ends.</p>
           <div className="flex items-center gap-4 mb-6">
             <div className="flex items-center gap-2 text-sm font-semibold"><span className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center text-xs font-black">1</span>Create your organization</div>
-            <div className="flex items-center gap-2 text-sm font-semibold"><span className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center text-xs font-black">2</span>Invite office, techs and customers by email</div>
-            <div className="flex items-center gap-2 text-sm font-semibold"><span className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center text-xs font-black">3</span>Dispatch your first job</div>
+            <div className="flex items-center gap-2 text-sm font-semibold"><span className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center text-xs font-black">2</span>Explore with sample data</div>
+            <div className="flex items-center gap-2 text-sm font-semibold"><span className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center text-xs font-black">3</span>Clear it and start for real</div>
           </div>
           <div className="flex items-center gap-3 flex-wrap mb-6">
             <Link to="/register" className="rounded-full bg-white text-[#ec3013] px-8 py-4 text-sm font-black hover:bg-red-50 transition-colors">Start free trial</Link>
           </div>
-          <p className="text-xs font-semibold text-red-200 uppercase tracking-widest mb-3">Or try a demo — no sign-up needed</p>
-          <div className="flex gap-3 flex-wrap">
-            {DEMO_ROLES.map(({ role, label, icon: Icon, desc }) => (
-              <button key={role} onClick={() => handleDemo(role)} disabled={!!demoLoading}
-                className="flex items-center gap-3 rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-left hover:bg-white/20 transition-all disabled:opacity-50">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/20">
-                  <Icon className="h-4 w-4 text-white" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-white">{demoLoading === role ? "Loading…" : label}</p>
-                  <p className="text-xs text-red-200">{desc}</p>
-                </div>
-              </button>
-            ))}
-          </div>
-          <p className="mt-5 text-xs text-red-200">No card required to start. Month to month.</p>
+          <p className="text-xs text-red-200">30-day free trial — a card is required, and you aren't charged until it ends. Month to month.</p>
         </div>
       </section>
 
