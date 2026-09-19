@@ -14,19 +14,25 @@ onboardingRouter.get("/status", async (req, res) => {
       address: true,
       stripeConnectOnboarded: true,
       smsEnabled: true,
-      _count: { select: { technicians: true, customers: true, jobs: true } },
     },
   })
 
   if (!org) return res.status(404).json({ error: "Organization not found" })
 
+  // Sandbox sample data must not tick off "add your first ..." steps.
+  const [technicians, customers, jobs] = await Promise.all([
+    prisma.technician.count({ where: { organizationId, isSample: false } }),
+    prisma.customer.count({ where: { organizationId, isSample: false } }),
+    prisma.job.count({ where: { organizationId, customer: { isSample: false } } }),
+  ])
+
   res.json({
     dismissed: org.onboardingDismissed,
     steps: {
       companyProfile: !!(org.phone && org.address),
-      technician: org._count.technicians > 0,
-      customer: org._count.customers > 0,
-      job: org._count.jobs > 0,
+      technician: technicians > 0,
+      customer: customers > 0,
+      job: jobs > 0,
       stripeConnect: org.stripeConnectOnboarded === true,
       smsEnabled: org.smsEnabled === true,
     },

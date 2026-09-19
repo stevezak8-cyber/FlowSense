@@ -40,6 +40,8 @@ model Organization {
   stripeConnectOnboarded  Boolean @default(false)
   smsEnabled              Boolean @default(false)
   verseOfTheDayEnabled    Boolean @default(true)
+  sandboxMode             Boolean   @default(false) // true while a new account is practicing with sample data
+  sandboxEndedAt          DateTime? // set when the account exits sandbox; sandbox can never be re-enabled
 
   users         User[]
   technicians   Technician[]
@@ -106,6 +108,7 @@ model Technician {
   epa608Level    String?      // EPA 608 compliance level
   skills         String[]     @default([])  // e.g. ["furnace", "ac", "heat-pump"]
   isOnDuty       Boolean      @default(true)  // live availability toggle
+  isSample       Boolean      @default(false) // loaded by sandbox mode; removed when the account exits sandbox
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
@@ -122,6 +125,7 @@ model Vehicle {
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   name           String       // e.g. "Truck 1"
+  isSample       Boolean      @default(false) // loaded by sandbox mode; removed when the account exits sandbox
   technicianId   String?      @unique
   technician     Technician?  @relation(fields: [technicianId], references: [id])
   createdAt      DateTime     @default(now())
@@ -146,6 +150,7 @@ model Customer {
   state          String
   postalCode     String
   notes          String?
+  isSample       Boolean      @default(false) // loaded by sandbox mode; removed when the account exits sandbox
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
@@ -341,6 +346,7 @@ model Conversation {
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   subject        String
+  isSample       Boolean      @default(false) // loaded by sandbox mode; removed when the account exits sandbox
   channel        String       @default("internal") // internal | sms | email | phone
   participants   String[]     @default([])
   unreadCount    Int          @default(0)

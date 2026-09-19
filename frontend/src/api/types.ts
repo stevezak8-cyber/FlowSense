@@ -272,6 +272,7 @@ export interface ApiOrganization {
   stripeConnectAccountId: string | null
   smsEnabled: boolean
   verseOfTheDayEnabled: boolean
+  sandboxMode?: boolean
 }
 
 export interface PricebookItem {

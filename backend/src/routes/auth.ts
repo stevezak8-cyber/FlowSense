@@ -6,6 +6,7 @@ import { z } from "zod";
 import { requireAuth } from "../middleware/auth.js";
 import { stripe, getPriceId } from "../services/stripe.js";
 import { seedPricebook } from "../services/estimate-ai.js";
+import { seedSandboxData } from "../services/sandbox.js";
 import { sendEmail } from "../services/email.js";
 import { sendSms } from "../services/sms.js";
 
@@ -89,6 +90,7 @@ authRouter.post("/register", async (req, res) => {
             name: companyName,
             slug,
             email,
+            sandboxMode: true,
             ...(stripeCustomerId ? { stripeCustomerId, plan: "trial", trialEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) } : {}),
           },
         })
@@ -118,6 +120,14 @@ authRouter.post("/register", async (req, res) => {
     seedPricebook(org.id).catch((err) =>
       console.error("[Register] Pricebook seeding error:", err)
     );
+
+    // New accounts start in sandbox mode with practice data. Awaited so the
+    // dashboard isn't empty on first load; a failure just leaves it empty.
+    try {
+      await seedSandboxData(org.id);
+    } catch (err) {
+      console.error("[Register] Sandbox seeding error:", err);
+    }
 
     // Issue a JWT so the frontend can store it before redirecting to Stripe
     const token = jwt.sign(
@@ -219,7 +229,7 @@ authRouter.get("/me", requireAuth, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user!.userId },
-      include: { organization: { select: { plan: true, trialEndsAt: true } } },
+      include: { organization: { select: { plan: true, trialEndsAt: true, sandboxMode: true } } },
     });
 
     if (!user) {
@@ -235,6 +245,7 @@ authRouter.get("/me", requireAuth, async (req, res) => {
       organization: {
         plan: user.organization.plan,
         trialEndsAt: user.organization.trialEndsAt,
+        sandboxMode: user.organization.sandboxMode,
       },
     });
   } catch {

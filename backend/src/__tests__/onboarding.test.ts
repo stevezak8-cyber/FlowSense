@@ -8,6 +8,9 @@ vi.mock("../lib/prisma.js", () => ({
       findUnique: vi.fn(),
       update: vi.fn(),
     },
+    technician: { count: vi.fn() },
+    customer: { count: vi.fn() },
+    job: { count: vi.fn() },
   },
 }))
 
@@ -33,8 +36,10 @@ describe("GET /api/onboarding/status", () => {
       onboardingDismissed: true,
       phone: "555-1234",
       address: "123 Main St",
-      _count: { technicians: 1, customers: 1, jobs: 1 },
     } as never)
+    vi.mocked(prisma.technician.count).mockResolvedValue(1)
+    vi.mocked(prisma.customer.count).mockResolvedValue(1)
+    vi.mocked(prisma.job.count).mockResolvedValue(1)
 
     const res = await request(makeApp()).get("/api/onboarding/status")
     expect(res.status).toBe(200)
@@ -48,8 +53,10 @@ describe("GET /api/onboarding/status", () => {
       address: "123 Main St",
       stripeConnectOnboarded: false,
       smsEnabled: false,
-      _count: { technicians: 1, customers: 0, jobs: 0 },
     } as never)
+    vi.mocked(prisma.technician.count).mockResolvedValue(1)
+    vi.mocked(prisma.customer.count).mockResolvedValue(0)
+    vi.mocked(prisma.job.count).mockResolvedValue(0)
 
     const res = await request(makeApp()).get("/api/onboarding/status")
     expect(res.status).toBe(200)
@@ -64,6 +71,27 @@ describe("GET /api/onboarding/status", () => {
         smsEnabled: false,
       },
     })
+  })
+})
+
+describe("sandbox sample data", () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it("only counts non-sample records, so sandbox data can't tick off setup steps", async () => {
+    vi.mocked(prisma.organization.findUnique).mockResolvedValue({
+      onboardingDismissed: false, phone: null, address: null, stripeConnectOnboarded: false, smsEnabled: false,
+    } as never)
+    vi.mocked(prisma.technician.count).mockResolvedValue(0)
+    vi.mocked(prisma.customer.count).mockResolvedValue(0)
+    vi.mocked(prisma.job.count).mockResolvedValue(0)
+
+    const res = await request(makeApp()).get("/api/onboarding/status")
+    expect(res.body.steps.technician).toBe(false)
+    expect(res.body.steps.customer).toBe(false)
+    expect(res.body.steps.job).toBe(false)
+    expect(prisma.technician.count).toHaveBeenCalledWith({ where: { organizationId: "org-1", isSample: false } })
+    expect(prisma.customer.count).toHaveBeenCalledWith({ where: { organizationId: "org-1", isSample: false } })
+    expect(prisma.job.count).toHaveBeenCalledWith({ where: { organizationId: "org-1", customer: { isSample: false } } })
   })
 })
 

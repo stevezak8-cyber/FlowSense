@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { PneurosLogo } from "@/components/brand"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { Loader2, Building2, Wrench, UserCircle, AlertCircle } from "lucide-react"
+import { Loader2, AlertCircle } from "lucide-react"
 import { AuroraBackdrop } from "@/components/aurora-backdrop"
 
 const roleHome: Record<UserRole, string> = {
@@ -15,14 +15,8 @@ const roleHome: Record<UserRole, string> = {
   customer: "/customer",
 }
 
-const demoAccounts: { label: string; role: "office" | "technician" | "customer"; icon: React.ElementType; color: string }[] = [
-  { label: "Office Manager", role: "office", icon: Building2, color: "bg-primary/10 text-primary" },
-  { label: "Technician", role: "technician", icon: Wrench, color: "bg-success/10 text-success" },
-  { label: "Customer", role: "customer", icon: UserCircle, color: "bg-chart-5/10 text-chart-5" },
-]
-
 export default function LoginPage() {
-  const { user, loading, login, demoLogin } = useAuth()
+  const { user, loading, login } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -42,18 +36,6 @@ export default function LoginPage() {
       await login(email, password)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed")
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  async function handleDemoLogin(role: "office" | "technician" | "customer") {
-    setSubmitting(true)
-    setError(null)
-    try {
-      await demoLogin(role)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Demo login failed")
     } finally {
       setSubmitting(false)
     }
@@ -149,39 +131,6 @@ export default function LoginPage() {
               Create an account
             </Link>
           </p>
-
-          {/* Demo quick-login buttons */}
-          <div className="mt-8">
-            <div className="relative mb-5">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center">
-                <span className="bg-background px-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                  Demo Accounts
-                </span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3">
-              {demoAccounts.map((acct) => (
-                <button
-                  key={acct.role}
-                  type="button"
-                  disabled={submitting}
-                  onClick={() => handleDemoLogin(acct.role)}
-                  className="group medops-card flex flex-col items-center gap-2.5 p-4 transition-all hover:shadow-md disabled:opacity-50"
-                >
-                  <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${acct.color}`}>
-                    <acct.icon className="h-5 w-5" />
-                  </div>
-                  <span className="text-[11px] font-semibold text-card-foreground">
-                    {acct.label}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </main>
     </div>

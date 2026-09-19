@@ -5,6 +5,7 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { TopHeader } from "@/components/top-header"
 import { AuroraBackdrop } from "@/components/aurora-backdrop"
 import { TrialBanner } from "@/components/office/trial-banner"
+import { SandboxBanner } from "@/components/office/sandbox-banner"
 import { SubscriptionCancelledScreen } from "@/components/office/subscription-cancelled-screen"
 import { OnboardingProvider } from "@/components/office/onboarding-context"
 
@@ -28,6 +29,7 @@ export default function OfficeLayout() {
         <AppSidebar />
         <div className="flex flex-1 flex-col md:pl-[252px]">
           <TopHeader />
+          <SandboxBanner />
           <TrialBanner />
           <main className="flex-1 px-4 pb-8 md:px-6">
             <Outlet />

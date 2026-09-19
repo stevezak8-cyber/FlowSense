@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { z } from "zod";
+import { exitSandbox, SandboxNotActiveError } from "../services/sandbox.js";
 
 export const organizationsRouter = Router();
 
@@ -43,6 +44,7 @@ organizationsRouter.get("/me", async (req, res) => {
         stripeConnectOnboarded: true,
         smsEnabled: true,
         verseOfTheDayEnabled: true,
+        sandboxMode: true,
       },
     });
 
@@ -83,10 +85,27 @@ organizationsRouter.patch("/me", async (req, res) => {
         stripeConnectOnboarded: true,
         smsEnabled: true,
         verseOfTheDayEnabled: true,
+        sandboxMode: true,
       },
     });
     res.json(updated);
   } catch {
     res.status(500).json({ error: "Failed to update organization" });
+  }
+});
+
+// POST /api/organizations/me/sandbox/exit — one-way: remove sample data and leave sandbox (office only)
+organizationsRouter.post("/me/sandbox/exit", async (req, res) => {
+  if (req.user!.role !== "office") {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  try {
+    const removed = await exitSandbox(req.user!.organizationId);
+    res.json({ ok: true, removed });
+  } catch (e) {
+    if (e instanceof SandboxNotActiveError) {
+      return res.status(409).json({ error: "This account is not in sandbox mode" });
+    }
+    res.status(500).json({ error: "Failed to exit sandbox mode" });
   }
 });
