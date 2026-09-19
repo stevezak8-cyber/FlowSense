@@ -2,7 +2,7 @@ import { LegalLayout } from "./LegalLayout"
 
 export default function PrivacyPolicyPage() {
   return (
-    <LegalLayout title="Privacy Policy" effectiveDate="[Effective Date]">
+    <LegalLayout title="Privacy Policy" effectiveDate="September 18, 2026">
       <section>
         <p>
           This Privacy Policy explains how <strong>Pneuros Software LLC</strong> ("Pneuros,"

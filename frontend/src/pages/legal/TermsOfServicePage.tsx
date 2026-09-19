@@ -2,7 +2,7 @@ import { LegalLayout } from "./LegalLayout"
 
 export default function TermsOfServicePage() {
   return (
-    <LegalLayout title="Terms of Service" effectiveDate="[Effective Date]">
+    <LegalLayout title="Terms of Service" effectiveDate="September 18, 2026">
       <section>
         <p>
           These Terms of Service ("Terms") govern access to and use of Pneuros, a field
