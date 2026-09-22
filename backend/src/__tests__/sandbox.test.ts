@@ -11,6 +11,7 @@ const tx = {
   equipment: { create: vi.fn() },
   job: { create: vi.fn() },
   invoice: { create: vi.fn() },
+  complianceLog: { create: vi.fn() },
   message: { createMany: vi.fn() },
 }
 
@@ -29,7 +30,7 @@ let n = 0
 beforeEach(() => {
   vi.clearAllMocks()
   n = 0
-  for (const create of [tx.conversation.create, tx.vehicle.create, tx.customer.create, tx.technician.create, tx.equipment.create, tx.job.create, tx.invoice.create]) {
+  for (const create of [tx.conversation.create, tx.vehicle.create, tx.customer.create, tx.technician.create, tx.equipment.create, tx.job.create, tx.invoice.create, tx.complianceLog.create]) {
     create.mockImplementation(async ({ data }: { data: object }) => ({ id: `id-${++n}`, ...data }))
   }
   tx.message.createMany.mockResolvedValue({ count: 1 })
@@ -72,6 +73,18 @@ describe("seedSandboxData", () => {
       expect(statuses.has(s)).toBe(true)
     }
     expect(tx.invoice.create).toHaveBeenCalled()
+  })
+
+  it("logs compliance entries on the completed jobs, so the audit page isn't empty", async () => {
+    vi.mocked(prisma.customer.count).mockResolvedValue(0)
+    await seedSandboxData("org-1")
+    expect(tx.complianceLog.create).toHaveBeenCalledTimes(3)
+    const types = tx.complianceLog.create.mock.calls.map(([{ data }]) => data.type)
+    expect(types).toEqual(expect.arrayContaining(["safety_ack", "code_reminder", "epa608_prompt"]))
+    for (const [{ data }] of tx.complianceLog.create.mock.calls) {
+      expect(typeof data.jobId).toBe("string")
+      expect(data.jobId.length).toBeGreaterThan(0)
+    }
   })
 })
 

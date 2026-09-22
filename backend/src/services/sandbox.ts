@@ -92,6 +92,14 @@ export async function seedSandboxData(organizationId: string): Promise<void> {
       tx.invoice.create({ data: { organizationId, jobId: j3.id, customerId: trellis.id, description: "Heat pump annual maintenance", amount: 179, status: "overdue", issuedDate: at(-40, 12), dueDate: at(-10, 12) } }),
     ])
 
+    // Compliance log entries on the completed jobs — the audit log is a headline
+    // feature on the landing page, so it shouldn't be empty in a fresh sandbox.
+    await Promise.all([
+      tx.complianceLog.create({ data: { jobId: j1.id, type: "safety_ack", payload: { items: ["Gas shutoff verified before repair", "CO detector tested before leaving"] }, createdAt: at(-9, 11) } }),
+      tx.complianceLog.create({ data: { jobId: j2.id, type: "code_reminder", payload: { codes: ["IMC 306.1 — equipment access clearance confirmed"] }, createdAt: at(-5, 15) } }),
+      tx.complianceLog.create({ data: { jobId: j3.id, type: "epa608_prompt", payload: { refrigerantType: "R-410A", lbsRecovered: 0.3, certLevel: "Type I" }, createdAt: at(-2, 12) } }),
+    ])
+
     const convo = async (subject: string, channel: string, messages: { sender: string; senderRole: string; content: string; minutesAgo: number }[]) => {
       const c = await tx.conversation.create({
         data: { ...org, subject, channel, participants: ["Dispatch", messages[0].sender], unreadCount: 1, lastMessageAt: new Date(Date.now() - messages[messages.length - 1].minutesAgo * 60_000) },
