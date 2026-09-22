@@ -55,7 +55,7 @@ import { dirname, join } from "path";
 import rateLimit from "express-rate-limit";
 import { requireAuth } from "./middleware/auth.js";
 import { requireSubscription } from "./middleware/require-subscription.js";
-import { requireAdvancedPlan, requireConciergePlan } from "./middleware/require-plan.js";
+import { requireAdvancedPlan, requireConciergePlan, requirePricebookPlan, requireMaintenancePlan } from "./middleware/require-plan.js";
 import "./middleware/types.js";
 import { healthRouter } from "./routes/health.js";
 import { jobsRouter } from "./routes/jobs.js";
@@ -158,7 +158,7 @@ app.use("/api/conversations", apiLimiter, requireAuth, requireSubscription, conv
 app.use("/api/dispatch", apiLimiter, requireAuth, requireSubscription, requireAdvancedPlan, dispatchRouter);
 app.use("/api/organizations", apiLimiter, requireAuth, requireSubscription, organizationsRouter);
 app.use("/api/onboarding", apiLimiter, requireAuth, requireSubscription, onboardingRouter);
-app.use("/api/pricebook", apiLimiter, requireAuth, requireSubscription, requireAdvancedPlan, pricebookRouter);
+app.use("/api/pricebook", apiLimiter, requireAuth, requireSubscription, requirePricebookPlan, pricebookRouter);
 
 // Public — no auth required (token is authorization)
 app.use("/api/estimates/token", apiLimiter, publicEstimatesRouter);
@@ -171,8 +171,8 @@ app.use("/api/ai", apiLimiter, requireAuth, requireSubscription, requireAdvanced
 app.use("/api/concierge", apiLimiter, requireAuth, requireSubscription, requireConciergePlan, conciergeRouter);
 app.use("/api/equipment", apiLimiter, requireAuth, requireSubscription, equipmentRouter);
 app.use("/api/search", apiLimiter, requireAuth, requireSubscription, searchRouter);
-app.use("/api/recurring-jobs", apiLimiter, requireAuth, requireSubscription, requireAdvancedPlan, recurringJobsRouter);
-app.use("/api/maintenance-plans", apiLimiter, requireAuth, requireSubscription, requireAdvancedPlan, maintenancePlansRouter)
+app.use("/api/recurring-jobs", apiLimiter, requireAuth, requireSubscription, requireMaintenancePlan, recurringJobsRouter);
+app.use("/api/maintenance-plans", apiLimiter, requireAuth, requireSubscription, requireMaintenancePlan, maintenancePlansRouter)
 app.use("/api/notifications", apiLimiter, requireAuth, notificationsRouter)
 app.use("/api/availability", apiLimiter, requireAuth, availabilityRouter)
 app.use("/api/reviews", apiLimiter, requireAuth, requireSubscription, reviewsRouter)

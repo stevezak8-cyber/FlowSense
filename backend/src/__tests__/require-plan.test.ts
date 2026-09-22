@@ -7,7 +7,13 @@ vi.mock("../lib/prisma.js", () => ({
 }))
 
 import { prisma } from "../lib/prisma.js"
-import { requireAdvancedPlan, requireConciergePlan, requireCsvImportPlan } from "../middleware/require-plan.js"
+import {
+  requireAdvancedPlan,
+  requireConciergePlan,
+  requireCsvImportPlan,
+  requirePricebookPlan,
+  requireMaintenancePlan,
+} from "../middleware/require-plan.js"
 
 function makeApp(middleware: express.RequestHandler) {
   const app = express()
@@ -63,5 +69,29 @@ describe("requireCsvImportPlan", () => {
     const res = await request(makeApp(requireCsvImportPlan)).get("/")
     expect(res.status).toBe(402)
     expect(res.body.error).toMatch(/Shop plan/)
+  })
+})
+
+describe("requirePricebookPlan", () => {
+  it("allows shop, blocks starter", async () => {
+    vi.mocked(prisma.organization.findUnique).mockResolvedValue({ plan: "shop" } as never)
+    expect((await request(makeApp(requirePricebookPlan)).get("/")).status).toBe(200)
+
+    vi.mocked(prisma.organization.findUnique).mockResolvedValue({ plan: "starter" } as never)
+    const res = await request(makeApp(requirePricebookPlan)).get("/")
+    expect(res.status).toBe(402)
+    expect(res.body.error).toMatch(/pricebook needs the Shop plan/)
+  })
+})
+
+describe("requireMaintenancePlan", () => {
+  it("allows shop, blocks starter", async () => {
+    vi.mocked(prisma.organization.findUnique).mockResolvedValue({ plan: "shop" } as never)
+    expect((await request(makeApp(requireMaintenancePlan)).get("/")).status).toBe(200)
+
+    vi.mocked(prisma.organization.findUnique).mockResolvedValue({ plan: "starter" } as never)
+    const res = await request(makeApp(requireMaintenancePlan)).get("/")
+    expect(res.status).toBe(402)
+    expect(res.body.error).toMatch(/Maintenance plans and recurring jobs need the Shop plan/)
   })
 })

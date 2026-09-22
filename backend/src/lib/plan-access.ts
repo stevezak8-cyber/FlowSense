@@ -13,10 +13,11 @@
 
 const ADVANCED_PLANS = new Set(["fleet", "enterprise", "trial"]);
 const CONCIERGE_PLANS = new Set(["enterprise", "trial"]);
-const CSV_IMPORT_PLANS = new Set(["shop", "fleet", "enterprise", "trial"]);
+const SHOP_PLANS = new Set(["shop", "fleet", "enterprise", "trial"]);
 
-// AI co-pilot & job summaries, smart dispatch, estimates/pricebook,
-// maintenance plans & recurring jobs, revenue analytics.
+// The AI-driven features: co-pilot & job summaries, smart dispatch, AI-drafted
+// estimates, revenue analytics. This is the line between "runs the shop" and
+// "does the work" — Fleet and up.
 export function planHasAdvancedFeatures(plan: string): boolean {
   return ADVANCED_PLANS.has(plan);
 }
@@ -26,10 +27,15 @@ export function planHasConcierge(plan: string): boolean {
   return CONCIERGE_PLANS.has(plan);
 }
 
-// Bulk CSV customer import — everything above Starter.
-export function planHasCsvImport(plan: string): boolean {
-  return CSV_IMPORT_PLANS.has(plan);
+// Everything above Starter: CSV import, the pricebook, and maintenance plans
+// & recurring jobs. None of these call the AI — they're plain CRUD and
+// scheduling, so there's no reason to hold them for the AI-priced tiers.
+export function planHasShopFeatures(plan: string): boolean {
+  return SHOP_PLANS.has(plan);
 }
+
+// Kept as its own name for callers/tests that are specifically about import.
+export const planHasCsvImport = planHasShopFeatures;
 
 const TECHNICIAN_CAPS: Record<string, number> = { starter: 2 };
 export function technicianCapFor(plan: string): number | null {

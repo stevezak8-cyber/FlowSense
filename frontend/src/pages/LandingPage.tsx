@@ -39,9 +39,11 @@ const PRICING = [
     ],
     locked: [
       "CSV import for your existing customer list",
+      "Pricebook",
+      "Maintenance plans and recurring jobs",
       "AI co-pilot and job summaries",
       "Smart dispatch with drive times",
-      "Estimates, pricebook, maintenance plans",
+      "AI-drafted estimates",
       "Revenue analytics and forecasting",
     ],
   },
@@ -55,11 +57,13 @@ const PRICING = [
     features: [
       "Everything in Starter, plus:",
       "CSV import for your existing customer list",
+      "Pricebook",
+      "Maintenance plans and recurring jobs",
     ],
     locked: [
       "AI co-pilot and job summaries",
       "Smart dispatch with drive times",
-      "Estimates, pricebook, maintenance plans",
+      "AI-drafted estimates",
       "Revenue analytics and forecasting",
     ],
   },
@@ -75,8 +79,7 @@ const PRICING = [
       "Everything in Shop, plus:",
       "AI co-pilot on every job, auto job summaries",
       "Smart dispatch ranked by drive time and workload",
-      "Estimates, tiered approval and pricebook",
-      "Maintenance plans and recurring jobs",
+      "AI-drafted estimates with tiered approval",
       "Revenue trends, forecast and at-risk customers",
     ],
     locked: [
