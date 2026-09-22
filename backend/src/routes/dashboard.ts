@@ -2,6 +2,7 @@ import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { getAtRiskReasons, getAnalyticsNarrative } from "../services/analytics-ai.js";
 import type { AnalyticsTrends } from "../services/analytics-ai.js";
+import { requireAdvancedPlan } from "../middleware/require-plan.js";
 
 export const dashboardRouter = Router();
 
@@ -217,7 +218,7 @@ async function getAnalyticsTrends(
 }
 
 // GET /api/dashboard/analytics/data
-dashboardRouter.get("/analytics/data", async (req, res) => {
+dashboardRouter.get("/analytics/data", requireAdvancedPlan, async (req, res) => {
   if (req.user!.role !== "office") return res.status(403).json({ error: "Forbidden" })
   try {
     const now = new Date()
@@ -326,7 +327,7 @@ dashboardRouter.get("/analytics/data", async (req, res) => {
 })
 
 // GET /api/dashboard/analytics/insights
-dashboardRouter.get("/analytics/insights", async (req, res) => {
+dashboardRouter.get("/analytics/insights", requireAdvancedPlan, async (req, res) => {
   if (req.user!.role !== "office") return res.status(403).json({ error: "Forbidden" })
   try {
     const now = new Date()

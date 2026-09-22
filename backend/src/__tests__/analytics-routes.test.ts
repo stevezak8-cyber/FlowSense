@@ -6,6 +6,7 @@ vi.mock("../lib/prisma.js", () => ({
     job: { findMany: vi.fn() },
     equipment: { findMany: vi.fn(), count: vi.fn() },
     customer: { findMany: vi.fn(), count: vi.fn() },
+    organization: { findUnique: vi.fn() },
   },
 }))
 
@@ -25,6 +26,7 @@ const mockPrisma = prisma as unknown as {
   job: { findMany: ReturnType<typeof vi.fn> }
   equipment: { findMany: ReturnType<typeof vi.fn>; count: ReturnType<typeof vi.fn> }
   customer: { findMany: ReturnType<typeof vi.fn>; count: ReturnType<typeof vi.fn> }
+  organization: { findUnique: ReturnType<typeof vi.fn> }
 }
 
 function makeApp() {
@@ -48,12 +50,21 @@ function setupDefaultMocks() {
   mockPrisma.equipment.count.mockResolvedValue(0)
   mockPrisma.customer.findMany.mockResolvedValue([])
   mockPrisma.customer.count.mockResolvedValue(0)
+  // Defaults to a plan with analytics unlocked; the plan-gating tests below override this.
+  mockPrisma.organization.findUnique.mockResolvedValue({ plan: "fleet" })
 }
 
 describe("GET /analytics/data", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     setupDefaultMocks()
+  })
+
+  it("returns 402 for a Shop plan — analytics needs Fleet or higher", async () => {
+    mockPrisma.organization.findUnique.mockResolvedValue({ plan: "shop" })
+    const res = await request(makeApp()).get("/analytics/data")
+    expect(res.status).toBe(402)
+    expect(mockPrisma.invoice.findMany).not.toHaveBeenCalled()
   })
 
   it("returns 200 with correct shape", async () => {
@@ -188,6 +199,12 @@ describe("GET /analytics/insights", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     setupDefaultMocks()
+  })
+
+  it("returns 402 for a Starter plan", async () => {
+    mockPrisma.organization.findUnique.mockResolvedValue({ plan: "starter" })
+    const res = await request(makeApp()).get("/analytics/insights")
+    expect(res.status).toBe(402)
   })
 
   it("returns 200 with narrative string when AI configured", async () => {

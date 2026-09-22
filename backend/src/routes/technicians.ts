@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { z } from "zod";
+import { technicianCapFor } from "../lib/plan-access.js";
 
 export const techniciansRouter = Router();
 
@@ -47,6 +48,18 @@ techniciansRouter.post("/", async (req, res) => {
     return res.status(400).json({ error: parsed.error.flatten() });
   }
   try {
+    const organizationId = req.user!.organizationId;
+    const org = await prisma.organization.findUnique({ where: { id: organizationId }, select: { plan: true } });
+    const cap = technicianCapFor(org?.plan ?? "");
+    if (cap !== null) {
+      const count = await prisma.technician.count({ where: { organizationId, isSample: false } });
+      if (count >= cap) {
+        return res.status(402).json({
+          error: `Your plan includes up to ${cap} technicians. Upgrade in Settings to add more.`,
+        });
+      }
+    }
+
     const technician = await prisma.technician.create({
       data: {
         organizationId: req.user!.organizationId,

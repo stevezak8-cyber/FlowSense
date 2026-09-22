@@ -169,9 +169,14 @@ webhooksRouter.post("/stripe", async (req: Request, res: Response) => {
       });
       if (!org) break;
 
+      // The tier is set from the price regardless of trial status — trialEndsAt
+      // (set below) is what marks the account as still trialing. Registration
+      // already sets plan to the chosen tier, so this mainly keeps it in sync
+      // if the price changes (e.g. an upgrade) via Stripe.
       const priceId = sub.items.data[0]?.price?.id;
       let plan: string = org.plan;
-      if (priceId === process.env.STRIPE_PRICE_ID_SHOP) plan = sub.status === "trialing" ? "trial" : "shop";
+      if (priceId === process.env.STRIPE_PRICE_ID_STARTER) plan = "starter";
+      else if (priceId === process.env.STRIPE_PRICE_ID_SHOP) plan = "shop";
       else if (priceId === process.env.STRIPE_PRICE_ID_FLEET) plan = "fleet";
       else if (priceId === process.env.STRIPE_PRICE_ID_ENTERPRISE) plan = "enterprise";
 
@@ -209,7 +214,8 @@ webhooksRouter.post("/stripe", async (req: Request, res: Response) => {
 
       const priceId = (inv.lines?.data[0] as { price?: { id: string } })?.price?.id;
       let plan = org.plan;
-      if (priceId === process.env.STRIPE_PRICE_ID_SHOP) plan = "shop";
+      if (priceId === process.env.STRIPE_PRICE_ID_STARTER) plan = "starter";
+      else if (priceId === process.env.STRIPE_PRICE_ID_SHOP) plan = "shop";
       else if (priceId === process.env.STRIPE_PRICE_ID_FLEET) plan = "fleet";
       else if (priceId === process.env.STRIPE_PRICE_ID_ENTERPRISE) plan = "enterprise";
 

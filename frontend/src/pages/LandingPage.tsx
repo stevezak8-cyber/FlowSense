@@ -24,11 +24,11 @@ const PLATFORM_FEATURES = [
 
 const PRICING = [
   {
-    name: "Shop",
-    price: "$799",
-    seats: "Up to 5 trucks · 3 office seats",
+    name: "Starter",
+    price: "$249",
+    seats: "Up to 2 trucks · 1 office seat",
     cta: "Start free trial",
-    ctaTo: "/register?plan=shop",
+    ctaTo: "/register?plan=starter",
     highlight: false,
     features: [
       "Office dashboard, jobs and schedule board",
@@ -36,6 +36,24 @@ const PRICING = [
       "Customer app with online booking",
       "Invoicing and card payment",
       "EPA 608 compliance log",
+    ],
+    locked: [
+      "CSV import for your existing customer list",
+      "AI co-pilot and job summaries",
+      "Smart dispatch with drive times",
+      "Estimates, pricebook, maintenance plans",
+      "Revenue analytics and forecasting",
+    ],
+  },
+  {
+    name: "Shop",
+    price: "$799",
+    seats: "Up to 5 trucks · 3 office seats",
+    cta: "Start free trial",
+    ctaTo: "/register?plan=shop",
+    highlight: false,
+    features: [
+      "Everything in Starter, plus:",
       "CSV import for your existing customer list",
     ],
     locked: [
@@ -409,8 +427,8 @@ export default function LandingPage() {
       <section id="pricing" className="py-20">
         <div className="mx-auto max-w-7xl px-6 lg:px-10">
           <p className="text-[11px] font-bold uppercase tracking-widest text-[#ae1800] mb-3">06 — Pricing</p>
-          <h2 className="text-5xl font-black leading-tight mb-12">Three plans.</h2>
-          <div className="grid lg:grid-cols-3 gap-6">
+          <h2 className="text-5xl font-black leading-tight mb-12">Four plans.</h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {PRICING.map(({ name, price, seats, cta, ctaTo, highlight, badge, features, locked }) => (
               <div key={name} className={`rounded-2xl border bg-white/42 backdrop-blur-sm backdrop-saturate-125 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.6),inset_1px_0_0_0_rgba(255,255,255,0.39),0_20px_40px_-20px_rgba(0,0,0,0.15)] p-8 ${highlight ? "border-[#ec3013] ring-1 ring-[#ec3013]" : "border-gray-200"}`}>
                 <div className="flex items-center gap-2 mb-4">

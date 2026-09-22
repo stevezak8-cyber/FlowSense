@@ -8,6 +8,9 @@ vi.mock("../lib/prisma.js", () => ({
       findMany: vi.fn(),
       createMany: vi.fn(),
     },
+    organization: {
+      findUnique: vi.fn(),
+    },
   },
 }))
 
@@ -18,6 +21,9 @@ const mockPrisma = prisma as unknown as {
   customer: {
     findMany: ReturnType<typeof vi.fn>
     createMany: ReturnType<typeof vi.fn>
+  }
+  organization: {
+    findUnique: ReturnType<typeof vi.fn>
   }
 }
 
@@ -40,6 +46,8 @@ beforeEach(() => {
   vi.resetAllMocks()
   mockPrisma.customer.findMany.mockResolvedValue([])
   mockPrisma.customer.createMany.mockResolvedValue({ count: 0 })
+  // Defaults to a plan with CSV import unlocked; tests for the Starter block override this.
+  mockPrisma.organization.findUnique.mockResolvedValue({ plan: "shop" })
 })
 
 describe("POST /import/parse", () => {
@@ -48,6 +56,15 @@ describe("POST /import/parse", () => {
       .post("/import/parse")
       .attach("file", Buffer.from("name,phone\nAlice,5551234567"), "customers.csv")
     expect(res.status).toBe(403)
+  })
+
+  it("returns 402 for a Starter plan, before even looking at the file", async () => {
+    mockPrisma.organization.findUnique.mockResolvedValue({ plan: "starter" })
+    const res = await request(makeApp())
+      .post("/import/parse")
+      .attach("file", Buffer.from("name,phone\nAlice,5551234567"), "customers.csv")
+    expect(res.status).toBe(402)
+    expect(res.body.error).toMatch(/Shop plan/)
   })
 
   it("returns 400 if no file is attached", async () => {
@@ -130,6 +147,15 @@ describe("POST /import/commit", () => {
       .post("/import/commit")
       .send({ headers: HEADERS, rows: [row()], mapping: MAPPING })
     expect(res.status).toBe(403)
+  })
+
+  it("returns 402 for a Starter plan", async () => {
+    mockPrisma.organization.findUnique.mockResolvedValue({ plan: "starter" })
+    const res = await request(makeApp())
+      .post("/import/commit")
+      .send({ headers: HEADERS, rows: [row()], mapping: MAPPING })
+    expect(res.status).toBe(402)
+    expect(mockPrisma.customer.createMany).not.toHaveBeenCalled()
   })
 
   it("returns 400 when a required field isn't mapped", async () => {

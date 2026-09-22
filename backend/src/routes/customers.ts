@@ -3,6 +3,7 @@ import multer, { MulterError } from "multer";
 import Papa from "papaparse";
 import { prisma } from "../lib/prisma.js";
 import { z } from "zod";
+import { requireCsvImportPlan } from "../middleware/require-plan.js";
 
 export const customersRouter = Router();
 
@@ -68,6 +69,7 @@ customersRouter.get("/", async (req, res) => {
 // POST /api/customers/import/parse — upload a CSV, get back headers + rows for column mapping
 customersRouter.post(
   "/import/parse",
+  requireCsvImportPlan,
   (req, res, next) => {
     if (req.user!.role !== "office") return res.status(403).json({ error: "Forbidden" });
     importUpload.single("file")(req, res, (err) => {
@@ -122,7 +124,7 @@ const importCommitSchema = z.object({
 });
 
 // POST /api/customers/import/commit — apply a confirmed column mapping and bulk-create customers
-customersRouter.post("/import/commit", async (req, res) => {
+customersRouter.post("/import/commit", requireCsvImportPlan, async (req, res) => {
   if (req.user!.role !== "office") return res.status(403).json({ error: "Forbidden" });
 
   const parsed = importCommitSchema.safeParse(req.body);

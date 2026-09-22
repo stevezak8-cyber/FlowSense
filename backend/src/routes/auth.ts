@@ -8,6 +8,7 @@ import { stripe, getPriceId } from "../services/stripe.js";
 import { seedPricebook } from "../services/estimate-ai.js";
 import { seedSandboxData } from "../services/sandbox.js";
 import { demoLoginEnabled } from "../lib/demo-access.js";
+import { officeSeatCapFor } from "../lib/plan-access.js";
 import { sendEmail } from "../services/email.js";
 import { sendSms } from "../services/sms.js";
 
@@ -29,7 +30,7 @@ const registerSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  plan: z.enum(["shop", "fleet", "enterprise"]).optional().default("shop"),
+  plan: z.enum(["starter", "shop", "fleet", "enterprise"]).optional().default("shop"),
 });
 
 // POST /api/auth/register (public) — create a new org + admin user
@@ -92,7 +93,9 @@ authRouter.post("/register", async (req, res) => {
             slug,
             email,
             sandboxMode: true,
-            ...(stripeCustomerId ? { stripeCustomerId, plan: "trial", trialEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) } : {}),
+            // plan is set to the chosen tier immediately, trial or not — trialEndsAt is
+            // what marks the account as still trialing (see lib/plan-access.ts)
+            ...(stripeCustomerId ? { stripeCustomerId, plan, trialEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) } : {}),
           },
         })
         const user = await tx.user.create({
@@ -364,6 +367,19 @@ authRouter.post("/invite", requireAuth, async (req, res) => {
   const organizationId = req.user!.organizationId;
 
   try {
+    if (role === "office") {
+      const org = await prisma.organization.findUnique({ where: { id: organizationId }, select: { plan: true } });
+      const cap = officeSeatCapFor(org?.plan ?? "");
+      if (cap !== null) {
+        const officeCount = await prisma.user.count({ where: { organizationId, role: "office" } });
+        if (officeCount >= cap) {
+          return res.status(402).json({
+            error: `Your plan includes ${cap} office seat${cap === 1 ? "" : "s"}. Upgrade in Settings to invite more office staff.`,
+          });
+        }
+      }
+    }
+
     // Check if a user with that email already exists in this org
     let user = await prisma.user.findFirst({
       where: { email, organizationId },

@@ -8,8 +8,9 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { Loader2, AlertCircle, Building2, User, Mail, Lock } from "lucide-react"
 import { AuroraBackdrop } from "@/components/aurora-backdrop"
 
-const VALID_PLANS = new Set(["shop", "fleet", "enterprise"])
+const VALID_PLANS = new Set(["starter", "shop", "fleet", "enterprise"])
 const PLAN_LABELS: Record<string, string> = {
+  starter: "Starter — $249/mo",
   shop: "Shop — $799/mo",
   fleet: "Fleet — $1,499/mo",
   enterprise: "Enterprise — $2,999/mo",
