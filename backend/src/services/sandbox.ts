@@ -48,11 +48,14 @@ export async function seedSandboxData(organizationId: string): Promise<void> {
       cust("Sunrise Office Park", "(303) 555-0125", "300 Sunrise Blvd", "80211", "After-hours access requires building security."),
     ])
 
+    // lastServicedAt is set close to "now" (not derived from the old installDate) so the
+    // maintenance-due math lands on realistic small numbers — a few days/weeks overdue or
+    // upcoming — instead of years, which is what installDate-only equipment produced.
     const [vegaFurnace, vegaAc, dellBoiler, sunriseRtu] = await Promise.all([
-      tx.equipment.create({ data: { organizationId, customerId: vega.id, equipmentType: "furnace", make: "Carrier", model: "59TP6A", serialNumber: "SAMPLE-1001", installDate: at(-2400, 9), serviceIntervalMonths: 12 } }),
-      tx.equipment.create({ data: { organizationId, customerId: vega.id, equipmentType: "ac", make: "Trane", model: "XR14", serialNumber: "SAMPLE-1002", installDate: at(-1800, 9), serviceIntervalMonths: 12 } }),
-      tx.equipment.create({ data: { organizationId, customerId: dell.id, equipmentType: "boiler", make: "Lochinvar", model: "KBN-285", serialNumber: "SAMPLE-2001", installDate: at(-1200, 9), serviceIntervalMonths: 6 } }),
-      tx.equipment.create({ data: { organizationId, customerId: sunrise.id, equipmentType: "rtu", make: "Lennox", model: "LGH072", serialNumber: "SAMPLE-3001", installDate: at(-900, 9), serviceIntervalMonths: 3 } }),
+      tx.equipment.create({ data: { organizationId, customerId: vega.id, equipmentType: "furnace", make: "Carrier", model: "59TP6A", serialNumber: "SAMPLE-1001", installDate: at(-2400, 9), lastServicedAt: at(-395, 9), serviceIntervalMonths: 12 } }), // ~30 days overdue
+      tx.equipment.create({ data: { organizationId, customerId: vega.id, equipmentType: "ac", make: "Trane", model: "XR14", serialNumber: "SAMPLE-1002", installDate: at(-1800, 9), lastServicedAt: at(-90, 9), serviceIntervalMonths: 12 } }), // not due
+      tx.equipment.create({ data: { organizationId, customerId: dell.id, equipmentType: "boiler", make: "Lochinvar", model: "KBN-285", serialNumber: "SAMPLE-2001", installDate: at(-1200, 9), lastServicedAt: at(-165, 9), serviceIntervalMonths: 6 } }), // due in ~2-3 weeks
+      tx.equipment.create({ data: { organizationId, customerId: sunrise.id, equipmentType: "rtu", make: "Lennox", model: "LGH072", serialNumber: "SAMPLE-3001", installDate: at(-900, 9), lastServicedAt: at(-45, 9), serviceIntervalMonths: 3 } }), // not due
     ])
 
     const job = (data: {
