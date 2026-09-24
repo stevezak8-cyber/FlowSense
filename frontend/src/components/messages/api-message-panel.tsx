@@ -157,13 +157,18 @@ export function ApiMessagePanel({ viewerRole = "dispatch", viewerName = "Dispatc
                 className="h-8 bg-secondary pl-8 text-xs border-border placeholder:text-muted-foreground"
               />
             </div>
-            <Button
-              size="sm"
-              className="h-8 w-8 bg-primary p-0 text-primary-foreground hover:bg-primary/90"
-              onClick={() => setNewDialogOpen(true)}
-            >
-              <Plus className="h-3.5 w-3.5" />
-            </Button>
+            {/* Only internal messaging is live, and a customer can't start an internal
+                conversation (server-enforced) — so there's nothing this button could
+                successfully create for them yet. Hidden rather than left as a dead end. */}
+            {viewerRole !== "customer" && (
+              <Button
+                size="sm"
+                className="h-8 w-8 bg-primary p-0 text-primary-foreground hover:bg-primary/90"
+                onClick={() => setNewDialogOpen(true)}
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </Button>
+            )}
           </div>
           {/* Channel filter — only internal messaging is live */}
           <div className="flex gap-1 overflow-x-auto">
