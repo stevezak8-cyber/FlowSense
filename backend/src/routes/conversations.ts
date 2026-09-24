@@ -1,4 +1,5 @@
 import { Router } from "express";
+import type { Request } from "express";
 import { prisma } from "../lib/prisma.js";
 import { z } from "zod";
 import { sendPushToUser } from "../services/push.js";
@@ -6,11 +7,23 @@ import twilio from "twilio";
 
 export const conversationsRouter = Router();
 
+// A customer login is the one trust boundary here — they're not an employee,
+// so they may only ever see conversations tied to their own customer record,
+// and never an internal (office/technician-only) one. Office and technician
+// logins are staff and keep seeing everything in the org, as before.
+function scopeForViewer(req: Request) {
+  if (req.user!.role === "customer") {
+    if (!req.user!.customerId) return { organizationId: req.user!.organizationId, id: "__none__" }; // no linked customer — see nothing
+    return { organizationId: req.user!.organizationId, customerId: req.user!.customerId, channel: { not: "internal" } };
+  }
+  return { organizationId: req.user!.organizationId };
+}
+
 // GET /api/conversations
 conversationsRouter.get("/", async (req, res) => {
   try {
     const conversations = await prisma.conversation.findMany({
-      where: { organizationId: req.user!.organizationId },
+      where: scopeForViewer(req),
       include: {
         messages: {
           orderBy: { createdAt: "desc" },
@@ -29,7 +42,7 @@ conversationsRouter.get("/", async (req, res) => {
 conversationsRouter.get("/:id", async (req, res) => {
   try {
     const conversation = await prisma.conversation.findFirst({
-      where: { id: req.params.id, organizationId: req.user!.organizationId },
+      where: { id: req.params.id, ...scopeForViewer(req) },
       include: {
         messages: { orderBy: { createdAt: "asc" } },
       },
@@ -63,10 +76,19 @@ conversationsRouter.post("/", async (req, res) => {
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.flatten() });
   }
+  // A customer can only ever start a conversation as themselves, and never an
+  // internal (staff-only) one — both are enforced here, not trusted from the client.
+  if (req.user!.role === "customer") {
+    if (!req.user!.customerId) return res.status(403).json({ error: "Forbidden" });
+    if (parsed.data.channel === "internal") {
+      return res.status(403).json({ error: "Customers can't start an internal conversation" });
+    }
+  }
   try {
     const conversation = await prisma.conversation.create({
       data: {
         organizationId: req.user!.organizationId,
+        customerId: req.user!.role === "customer" ? req.user!.customerId : null,
         subject: parsed.data.subject,
         channel: parsed.data.channel,
         participants: parsed.data.participants,
@@ -103,7 +125,7 @@ conversationsRouter.post("/:id/messages", async (req, res) => {
   }
   try {
     const conversation = await prisma.conversation.findFirst({
-      where: { id: req.params.id, organizationId: req.user!.organizationId },
+      where: { id: req.params.id, ...scopeForViewer(req) },
     });
     if (!conversation) return res.status(404).json({ error: "Conversation not found" });
 

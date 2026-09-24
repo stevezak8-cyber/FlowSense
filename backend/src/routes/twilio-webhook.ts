@@ -60,13 +60,14 @@ twilioWebhookRouter.post("/", async (req: Request, res: Response) => {
           where: {
             organizationId: customer.organizationId,
             channel: "sms",
-            subject: { contains: customer.id },
+            customerId: customer.id,
           },
         })
         if (!conversation) {
           conversation = await prisma.conversation.create({
             data: {
               organizationId: customer.organizationId,
+              customerId: customer.id,
               subject: `SMS — ${customer.name} (${customer.id})`,
               channel: "sms",
               participants: [],

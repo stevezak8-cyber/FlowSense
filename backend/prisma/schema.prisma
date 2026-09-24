@@ -161,6 +161,7 @@ model Customer {
   recurringJobs RecurringJob[]
   maintenancePlans MaintenancePlan[]
   reviews       JobReview[]
+  conversations Conversation[]
 
   @@index([organizationId])
 }
@@ -345,6 +346,11 @@ model Conversation {
   id             String       @id @default(cuid())
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  // Which customer this conversation is with — null for internal (office/technician-only)
+  // conversations. A customer login may only ever see conversations where this matches
+  // their own customer record, and never an internal one.
+  customerId     String?
+  customer       Customer?    @relation(fields: [customerId], references: [id], onDelete: Cascade)
   subject        String
   isSample       Boolean      @default(false) // loaded by sandbox mode; removed when the account exits sandbox
   channel        String       @default("internal") // internal | sms | email | phone
@@ -357,6 +363,7 @@ model Conversation {
   messages Message[]
 
   @@index([organizationId])
+  @@index([customerId])
 }
 
 model Message {
