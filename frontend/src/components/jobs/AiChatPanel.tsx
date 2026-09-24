@@ -219,6 +219,9 @@ export function AiChatPanel({ jobId, jobContext, onClose }: Props) {
             <span style={{ color: "#6366f1" }}>✦</span>
             Job context · Tech profile · Org history loaded
           </div>
+          <div style={{ marginTop: 6, fontSize: 10, color: "#64748b" }}>
+            Reference only — verify against manufacturer spec and your own judgment. Never bypass a safety switch.
+          </div>
         </div>
 
         {/* Messages area */}

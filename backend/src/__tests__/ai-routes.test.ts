@@ -13,6 +13,10 @@ vi.mock("../lib/prisma.js", () => ({
       findMany: vi.fn().mockResolvedValue([]),
     },
     job: { findFirst: vi.fn() },
+    complianceLog: {
+      findFirst: vi.fn().mockResolvedValue(null),
+      create: vi.fn().mockResolvedValue({ id: "log-1" }),
+    },
   },
 }))
 
@@ -85,6 +89,38 @@ describe("POST /api/ai/chat/stream", () => {
     expect(res.text).toContain("[DONE]")
     // user message + assistant message
     expect(prisma.aiMessage.create).toHaveBeenCalledTimes(2)
+  })
+
+  it("logs an ai_disclaimer compliance entry the first time a job uses the AI", async () => {
+    vi.stubEnv("ANTHROPIC_API_KEY", "test-key")
+    vi.mocked(prisma.job.findFirst).mockResolvedValue({ id: "job-1" } as any)
+    vi.mocked(prisma.complianceLog.findFirst).mockResolvedValue(null)
+    vi.mocked(streamFieldAiResponse).mockImplementation(
+      async (_jobId, _userId, _orgId, onToken, onDone) => {
+        onToken("hi")
+        await onDone("hi")
+      }
+    )
+    const app = buildApp()
+    await request(app).post("/api/ai/chat/stream").send({ jobId: "job-1", message: "test" })
+    expect(prisma.complianceLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ jobId: "job-1", type: "ai_disclaimer" }) })
+    )
+  })
+
+  it("doesn't log a second ai_disclaimer entry once one already exists for the job", async () => {
+    vi.stubEnv("ANTHROPIC_API_KEY", "test-key")
+    vi.mocked(prisma.job.findFirst).mockResolvedValue({ id: "job-1" } as any)
+    vi.mocked(prisma.complianceLog.findFirst).mockResolvedValue({ id: "existing-log" } as any)
+    vi.mocked(streamFieldAiResponse).mockImplementation(
+      async (_jobId, _userId, _orgId, onToken, onDone) => {
+        onToken("hi")
+        await onDone("hi")
+      }
+    )
+    const app = buildApp()
+    await request(app).post("/api/ai/chat/stream").send({ jobId: "job-1", message: "test" })
+    expect(prisma.complianceLog.create).not.toHaveBeenCalled()
   })
 })
 

@@ -39,6 +39,23 @@ aiRouter.post("/chat/stream", async (req, res) => {
     data: { jobId, role: "user", content: message },
   })
 
+  // Log once per job that the AI was used and the disclaimer applied — an audit
+  // trail for the "AI gave bad advice, who's responsible" question, not just a
+  // Terms of Service line nobody read.
+  const alreadyLogged = await prisma.complianceLog.findFirst({
+    where: { jobId, type: "ai_disclaimer" },
+    select: { id: true },
+  })
+  if (!alreadyLogged) {
+    await prisma.complianceLog.create({
+      data: {
+        jobId,
+        type: "ai_disclaimer",
+        payload: { message: "AI field assistant used on this job — output is a reference, not a substitute for the technician's judgment or manufacturer spec." },
+      },
+    }).catch(() => {}) // never block the chat over a logging failure
+  }
+
   // Set SSE headers
   res.setHeader("Content-Type", "text/event-stream")
   res.setHeader("Cache-Control", "no-cache")
