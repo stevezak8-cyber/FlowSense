@@ -15,6 +15,7 @@ import { AiChatPanel } from "@/components/jobs/AiChatPanel"
 import { ComplianceForm } from "@/components/compliance/ComplianceForm"
 import { JobPhotos } from "@/components/jobs/JobPhotos"
 import { useTheme } from "@/theme/theme-context"
+import { useAuth } from "@/auth/auth-context"
 
 type ApiStatus = ApiJob["status"]
 type TabType = "priority" | "active" | "completed" | "cancelled"
@@ -110,6 +111,8 @@ function avatarBg(status: string) {
 
 export default function TechnicianJobsPage() {
   const { theme } = useTheme()
+  const { user } = useAuth()
+  const firstName = user?.name?.trim().split(/\s+/)[0] || "there"
   const isDark = theme === "dark"
   Object.assign(T, isDark ? DARK_T : LIGHT_T)
   const card = glassCard(isDark)
@@ -395,7 +398,7 @@ export default function TechnicianJobsPage() {
       <div style={{ padding: "20px 16px 16px" }}>
         <div style={{ fontSize: 10, letterSpacing: "0.16em", color: T.n600, textTransform: "uppercase" }}>{dateLabel}</div>
         <div style={{ fontWeight: 800, fontSize: 30, lineHeight: 1.05, letterSpacing: "-0.03em", marginTop: 6 }}>
-          Good {greeting},<br />Jordan
+          Good {greeting},<br />{firstName}
         </div>
       </div>
 
