@@ -3,6 +3,7 @@ import { prisma } from "../lib/prisma.js";
 import { getAtRiskReasons, getAnalyticsNarrative } from "../services/analytics-ai.js";
 import type { AnalyticsTrends } from "../services/analytics-ai.js";
 import { requireAdvancedPlan } from "../middleware/require-plan.js";
+import { AI_MODEL } from "../lib/ai-config.js";
 
 export const dashboardRouter = Router();
 
@@ -478,7 +479,7 @@ dashboardRouter.get("/news", async (req, res) => {
         const client = new Anthropic({ apiKey: anthropicKey })
         const prompt = `Summarize each headline in one crisp sentence (max 20 words). Return as JSON array of strings in the same order:\n${allArticles.map((a, i) => `${i + 1}. ${a.title}`).join("\n")}`
         const msg = await client.messages.create({
-          model: "claude-haiku-4-5-20251001",
+          model: AI_MODEL,
           max_tokens: 600,
           messages: [{ role: "user", content: prompt }],
         })
