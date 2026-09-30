@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "../lib/prisma.js";
 import { AI_MODEL } from "../lib/ai-config.js";
 import { jobTitle } from "../lib/job-title.js";
+import { stripJsonFence } from "../lib/ai-json.js";
 
 const apiKey = process.env.ANTHROPIC_API_KEY;
 if (!apiKey) {
@@ -42,7 +43,7 @@ Return ONLY valid JSON array, no markdown, no explanation.`,
     });
 
     const text = response.content[0].type === "text" ? response.content[0].text : "";
-    const items = JSON.parse(text) as Array<{
+    const items = JSON.parse(stripJsonFence(text)) as Array<{
       name: string;
       description: string;
       category: string;
@@ -145,7 +146,7 @@ Customer equipment history:\n${jobHistory || "No prior history"}`,
     });
 
     const text = response.content[0].type === "text" ? response.content[0].text : "{}";
-    const tiers = JSON.parse(text) as {
+    const tiers = JSON.parse(stripJsonFence(text)) as {
       good: Array<{ pricebookItemId: string | null; quantity: number; name: string; unitPrice: number }>;
       better: Array<{ pricebookItemId: string | null; quantity: number; name: string; unitPrice: number }>;
       best: Array<{ pricebookItemId: string | null; quantity: number; name: string; unitPrice: number }>;

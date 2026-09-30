@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk"
 import { AI_MODEL } from "../lib/ai-config.js"
+import { stripJsonFence } from "../lib/ai-json.js"
 
 const apiKey = process.env.ANTHROPIC_API_KEY
 if (!apiKey) console.log("[AnalyticsAI] Skipped — no ANTHROPIC_API_KEY set")
@@ -47,7 +48,7 @@ Return ONLY the JSON object, no other text.`,
 
     const block = response.content.find((b) => b.type === "text")
     const text = block && block.type === "text" ? block.text : ""
-    const raw = JSON.parse(text) as unknown
+    const raw = JSON.parse(stripJsonFence(text)) as unknown
     if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return {}
     const result: Record<string, string | null> = {}
     for (const [k, v] of Object.entries(raw)) {

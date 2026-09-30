@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "../lib/prisma.js";
 import { AI_MODEL } from "../lib/ai-config.js";
+import { stripJsonFence } from "../lib/ai-json.js";
 
 // Silent skip pattern — consistent with email.ts / Resend
 const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -99,7 +100,7 @@ ${historyText}`;
 
     let parsed: PreArrivalResult;
     try {
-      parsed = JSON.parse(textBlock.text) as PreArrivalResult;
+      parsed = JSON.parse(stripJsonFence(textBlock.text)) as PreArrivalResult;
     } catch {
       console.error("[PreArrival] Failed to parse JSON response:", textBlock.text.slice(0, 200));
       return;

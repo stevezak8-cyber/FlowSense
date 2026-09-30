@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk"
 import OpenAI, { toFile } from "openai"
 import { AI_MODEL } from "../lib/ai-config.js"
+import { stripJsonFence } from "../lib/ai-json.js"
 
 const openaiKey = process.env.OPENAI_API_KEY
 if (!openaiKey) {
@@ -90,7 +91,7 @@ Respond with a JSON object (no markdown, no explanation):
 
     let parsed: Partial<ExtractedFields>
     try {
-      parsed = JSON.parse(textBlock.text)
+      parsed = JSON.parse(stripJsonFence(textBlock.text))
     } catch {
       console.error("[VoiceTranscribe] Failed to parse Claude JSON, using defaults")
       parsed = {}

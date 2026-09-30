@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk"
 import { prisma } from "../lib/prisma.js"
 import { AI_MODEL } from "../lib/ai-config.js"
+import { stripJsonFence } from "../lib/ai-json.js"
 
 const apiKey = process.env.ANTHROPIC_API_KEY
 if (!apiKey) console.log("[ConciergeAI] Skipped — no ANTHROPIC_API_KEY set")
@@ -132,7 +133,7 @@ CONSTRAINTS:
     const actionMatch = fullText.match(/^\s*(\{"action":"create_job".*?\})\s*$/m)
     if (actionMatch) {
       try {
-        const parsed = JSON.parse(actionMatch[1]) as {
+        const parsed = JSON.parse(stripJsonFence(actionMatch[1])) as {
           action: string
           equipmentType: string | null
           symptomSummary: string
