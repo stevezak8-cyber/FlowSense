@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Loader2 } from "lucide-react"
 import { api } from "@/api/client"
 import { Button } from "@/components/ui/button"
+import { LoginList } from "@/components/platform/login-list"
 
 interface DemoLogin { role: "office" | "technician" | "customer"; name: string; email: string; password: string }
 interface DemoResetResult { organizationId: string; logins: DemoLogin[]; counts: Record<string, number> }
@@ -14,7 +15,6 @@ export function DemoAccountCard() {
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState<DemoResetResult | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [copied, setCopied] = useState<string | null>(null)
 
   async function reset() {
     setBusy(true)
@@ -25,16 +25,6 @@ export function DemoAccountCard() {
       setError(e instanceof Error ? e.message : "Reset failed")
     } finally {
       setBusy(false)
-    }
-  }
-
-  async function copy(text: string) {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopied(text)
-      setTimeout(() => setCopied((c) => (c === text ? null : c)), 1500)
-    } catch {
-      /* clipboard unavailable; the text is selectable */
     }
   }
 
@@ -61,25 +51,7 @@ export function DemoAccountCard() {
           <p className="text-xs text-muted-foreground">
             Shown once. Sign in at /login in a private window so you stay signed in as yourself here.
           </p>
-          <div className="mt-2 overflow-x-auto rounded-md border">
-            <table className="w-full text-sm">
-              <tbody>
-                {result.logins.map((l) => (
-                  <tr key={l.role} className="border-t first:border-t-0">
-                    <td className="px-3 py-2 font-medium">{ROLE_LABEL[l.role]}</td>
-                    <td className="px-3 py-2 text-muted-foreground">{l.name}</td>
-                    <td className="px-3 py-2 font-mono text-xs">{l.email}</td>
-                    <td className="px-3 py-2 font-mono text-xs">{l.password}</td>
-                    <td className="px-3 py-2 text-right">
-                      <Button size="sm" variant="outline" onClick={() => copy(`${l.email}\t${l.password}`)}>
-                        {copied === `${l.email}\t${l.password}` ? "Copied" : "Copy"}
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <LoginList logins={result.logins.map((l) => ({ label: ROLE_LABEL[l.role], name: l.name, email: l.email, password: l.password }))} />
           <p className="mt-2 text-xs text-muted-foreground">
             {result.counts.customers} customers · {result.counts.jobs} jobs · {result.counts.invoices} invoices ·{" "}
             {result.counts.complianceLogs} compliance entries · {result.counts.estimates} estimates

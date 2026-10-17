@@ -3,6 +3,8 @@ import { prisma } from "../lib/prisma.js"
 import { isPlatformAdminEmail } from "../lib/platform-admin.js"
 import { randomBytes } from "node:crypto"
 import { resetDemoAccount } from "../services/demo-account/reset.js"
+import { createSandboxAccount } from "../services/sandbox-account.js"
+import { z } from "zod"
 
 export const platformRouter = Router()
 
@@ -85,5 +87,23 @@ platformRouter.post("/demo/reset", async (_req, res) => {
     res.status(500).json({ error: "Failed to reset the demo account" })
   } finally {
     demoResetRunning = false
+  }
+})
+
+// A sandbox account for showing a prospect: sample data and the sandbox banner, no card, never billed.
+const sandboxAccountSchema = z.object({
+  companyName: z.string().trim().max(60).optional(),
+  plan: z.enum(["starter", "shop", "fleet", "enterprise"]).default("fleet"),
+})
+
+platformRouter.post("/sandbox-accounts", async (req, res) => {
+  const parsed = sandboxAccountSchema.safeParse(req.body ?? {})
+  if (!parsed.success) return res.status(400).json({ error: "Check the company name and plan" })
+  try {
+    const account = await createSandboxAccount({ ...parsed.data, password: randomBytes(9).toString("base64url") })
+    res.status(201).json(account)
+  } catch (e) {
+    console.error("[sandbox-account] failed:", e instanceof Error ? e.message : e)
+    res.status(500).json({ error: "Failed to create the sandbox account" })
   }
 })

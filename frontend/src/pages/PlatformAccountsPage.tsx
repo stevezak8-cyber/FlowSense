@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { Loader2 } from "lucide-react"
 import { api } from "@/api/client"
@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import NotFoundPage from "@/pages/NotFoundPage"
 import { DemoAccountCard } from "@/components/platform/demo-account-card"
+import { SandboxAccountCard } from "@/components/platform/sandbox-account-card"
 
 interface PlatformOrg {
   id: string
@@ -38,12 +39,14 @@ export default function PlatformAccountsPage() {
   const [denied, setDenied] = useState(false)
   const [query, setQuery] = useState("")
 
-  useEffect(() => {
+  const load = useCallback(() => {
     api
       .get<PlatformOrg[]>("/api/platform/organizations")
       .then(setOrgs)
       .catch(() => setDenied(true))
   }, [])
+
+  useEffect(load, [load])
 
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -80,6 +83,7 @@ export default function PlatformAccountsPage() {
         </div>
 
         <DemoAccountCard />
+        <SandboxAccountCard onCreated={load} />
 
         <div className="mt-6 overflow-x-auto rounded-lg border">
           <table className="w-full text-sm">
