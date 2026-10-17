@@ -1,6 +1,7 @@
 import { Router } from "express"
 import { z } from "zod"
 import { prisma } from "../lib/prisma.js"
+import { customerScope, isCustomer, requireStaff } from "../middleware/roles.js"
 
 export const recurringJobsRouter = Router()
 
@@ -33,7 +34,7 @@ const updateSchema = z.object({
 })
 
 // IMPORTANT: GET /pending-drafts must be registered BEFORE GET / and any /:id routes
-recurringJobsRouter.get("/pending-drafts", async (req, res) => {
+recurringJobsRouter.get("/pending-drafts", requireStaff, async (req, res) => {
   try {
     const { organizationId } = req.user!
     const drafts = await prisma.job.findMany({
@@ -77,7 +78,9 @@ recurringJobsRouter.get("/", async (req, res) => {
     const jobs = await prisma.recurringJob.findMany({
       where: {
         organizationId,
-        ...(customerId ? { customerId } : {}),
+        // A customer sees only their own schedules; the customerId filter is for staff.
+        ...customerScope(req),
+        ...(customerId && !isCustomer(req) ? { customerId } : {}),
         ...(isActiveFilter !== undefined ? { isActive: isActiveFilter } : {}),
       },
       include: {
@@ -93,7 +96,7 @@ recurringJobsRouter.get("/", async (req, res) => {
   }
 })
 
-recurringJobsRouter.post("/", async (req, res) => {
+recurringJobsRouter.post("/", requireStaff, async (req, res) => {
   const parsed = createSchema.safeParse(req.body)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
 
@@ -131,7 +134,7 @@ recurringJobsRouter.post("/", async (req, res) => {
   }
 })
 
-recurringJobsRouter.patch("/:id", async (req, res) => {
+recurringJobsRouter.patch("/:id", requireStaff, async (req, res) => {
   const parsed = updateSchema.safeParse(req.body)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
 
@@ -160,7 +163,7 @@ recurringJobsRouter.patch("/:id", async (req, res) => {
   }
 })
 
-recurringJobsRouter.delete("/:id", async (req, res) => {
+recurringJobsRouter.delete("/:id", requireStaff, async (req, res) => {
   const { organizationId } = req.user!
 
   try {

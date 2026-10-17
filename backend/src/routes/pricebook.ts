@@ -1,8 +1,11 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { z } from "zod";
+import { requireStaff } from "../middleware/roles.js";
 
 export const pricebookRouter = Router();
+
+pricebookRouter.use(requireStaff);
 
 const requireAdmin = (req: any, res: any, next: any) => {
   if (req.user?.role !== "office") return res.status(403).json({ error: "Forbidden" });

@@ -1,8 +1,12 @@
 import { Router } from "express"
 import multer, { MulterError } from "multer"
+import { requireStaff } from "../middleware/roles.js"
 import { transcribeAudio, extractJobFields } from "../services/voice-transcribe.js"
 
 export const voiceRouter = Router()
+
+// Spends AI/transcription credit on job intake — staff tool.
+voiceRouter.use(requireStaff)
 
 const upload = multer({
   storage: multer.memoryStorage(),

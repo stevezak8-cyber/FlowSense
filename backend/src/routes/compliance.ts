@@ -1,8 +1,11 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { z } from "zod";
+import { requireStaff } from "../middleware/roles.js";
 
 export const complianceRouter = Router();
+
+complianceRouter.use(requireStaff);
 
 const createLogSchema = z.object({
   jobId: z.string().cuid(),
@@ -13,7 +16,7 @@ const createLogSchema = z.object({
 complianceRouter.get("/job/:jobId", async (req, res) => {
   try {
     const logs = await prisma.complianceLog.findMany({
-      where: { jobId: req.params.jobId },
+      where: { jobId: req.params.jobId, job: { organizationId: req.user!.organizationId } },
       orderBy: { createdAt: "desc" },
     });
     res.json(logs);
@@ -28,6 +31,11 @@ complianceRouter.post("/", async (req, res) => {
     return res.status(400).json({ error: parsed.error.flatten() });
   }
   try {
+    const job = await prisma.job.findFirst({
+      where: { id: parsed.data.jobId, organizationId: req.user!.organizationId },
+      select: { id: true },
+    });
+    if (!job) return res.status(404).json({ error: "Job not found" });
     const log = await prisma.complianceLog.create({
       data: {
         jobId: parsed.data.jobId,

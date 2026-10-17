@@ -3,11 +3,13 @@ import type { RequestHandler } from "express";
 import crypto from "crypto";
 import { prisma } from "../lib/prisma.js";
 import { stripe, getPriceId } from "../services/stripe.js";
+import { requireOffice } from "../middleware/roles.js";
 
 export const billingRouter = Router();
 
 // POST /billing/portal — create a Stripe billing portal session
-billingRouter.post("/portal", async (req, res) => {
+// Office only: the portal can cancel or change the shop's subscription and payment method.
+billingRouter.post("/portal", requireOffice, async (req, res) => {
   const user = req.user!;
 
   const org = await prisma.organization.findUnique({ where: { id: user.organizationId } });

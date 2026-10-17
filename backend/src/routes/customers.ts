@@ -4,6 +4,7 @@ import Papa from "papaparse";
 import { prisma } from "../lib/prisma.js";
 import { z } from "zod";
 import { requireCsvImportPlan } from "../middleware/require-plan.js";
+import { requireStaff } from "../middleware/roles.js";
 
 export const customersRouter = Router();
 
@@ -371,7 +372,7 @@ customersRouter.get("/me/plans", async (req, res) => {
   return res.json(plans)
 })
 
-customersRouter.get("/:id", async (req, res) => {
+customersRouter.get("/:id", requireStaff, async (req, res) => {
   try {
     const customer = await prisma.customer.findFirst({
       where: { id: req.params.id, organizationId: req.user!.organizationId },
@@ -384,7 +385,7 @@ customersRouter.get("/:id", async (req, res) => {
   }
 });
 
-customersRouter.post("/", async (req, res) => {
+customersRouter.post("/", requireStaff, async (req, res) => {
   const parsed = createCustomerSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.flatten() });
@@ -422,7 +423,7 @@ customersRouter.delete("/:id", async (req, res) => {
   }
 });
 
-customersRouter.patch("/:id", async (req, res) => {
+customersRouter.patch("/:id", requireStaff, async (req, res) => {
   const parsed = updateCustomerSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.flatten() });

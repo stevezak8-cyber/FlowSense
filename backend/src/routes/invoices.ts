@@ -5,6 +5,7 @@ import Stripe from "stripe";
 import { generateInvoicePdf } from "../services/invoice-pdf.js";
 import { sendEmail } from "../services/email.js";
 import { escapeHtml } from "../lib/escape-html.js";
+import { customerScope, requireOffice, requireStaff } from "../middleware/roles.js";
 
 export const invoicesRouter = Router();
 
@@ -22,14 +23,10 @@ const updateInvoiceSchema = createInvoiceSchema.partial();
 // GET /api/invoices
 invoicesRouter.get("/", async (req, res) => {
   try {
-    const { role, customerId: myCustomerId } = req.user!;
-    // Customers only see their own invoices; technicians/office see all
-    const roleFilter = role === "customer" && myCustomerId
-      ? { customerId: myCustomerId }
-      : {};
-
+    // Customers only see their own invoices (and none if their login isn't
+    // linked to a customer record); technicians/office see all
     const invoices = await prisma.invoice.findMany({
-      where: { organizationId: req.user!.organizationId, ...roleFilter },
+      where: { organizationId: req.user!.organizationId, ...customerScope(req) },
       include: {
         customer: { select: { id: true, name: true } },
         job: { select: { id: true, equipmentType: true, symptomSummary: true } },
@@ -43,7 +40,7 @@ invoicesRouter.get("/", async (req, res) => {
 });
 
 // GET /api/invoices/revenue - monthly revenue data for charts
-invoicesRouter.get("/revenue", async (req, res) => {
+invoicesRouter.get("/revenue", requireOffice, async (req, res) => {
   try {
     const now = new Date();
     const months: { month: string; revenue: number; jobs: number }[] = [];
@@ -85,7 +82,7 @@ invoicesRouter.get("/revenue", async (req, res) => {
 });
 
 // POST /api/invoices
-invoicesRouter.post("/", async (req, res) => {
+invoicesRouter.post("/", requireStaff, async (req, res) => {
   const parsed = createInvoiceSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.flatten() });
@@ -121,7 +118,7 @@ invoicesRouter.post("/:id/payment-link", async (req, res) => {
 
   try {
     const invoice = await prisma.invoice.findFirst({
-      where: { id: req.params.id, organizationId: req.user!.organizationId },
+      where: { id: req.params.id, organizationId: req.user!.organizationId, ...customerScope(req) },
       include: { customer: { select: { name: true, email: true } } },
     });
 
@@ -164,7 +161,7 @@ invoicesRouter.post("/:id/payment-link", async (req, res) => {
 invoicesRouter.get("/:id/pdf", async (req, res) => {
   try {
     const invoice = await prisma.invoice.findFirst({
-      where: { id: req.params.id, organizationId: req.user!.organizationId },
+      where: { id: req.params.id, organizationId: req.user!.organizationId, ...customerScope(req) },
       include: {
         organization: { select: { name: true } },
         customer: { select: { name: true, address: true, city: true, state: true, postalCode: true } },
@@ -215,7 +212,7 @@ invoicesRouter.post("/:id/send", async (req, res) => {
 })
 
 // PATCH /api/invoices/:id
-invoicesRouter.patch("/:id", async (req, res) => {
+invoicesRouter.patch("/:id", requireStaff, async (req, res) => {
   const parsed = updateInvoiceSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.flatten() });

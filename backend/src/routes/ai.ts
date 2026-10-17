@@ -2,8 +2,13 @@ import { Router } from "express"
 import { z } from "zod"
 import { prisma } from "../lib/prisma.js"
 import { streamFieldAiResponse } from "../services/field-ai.js"
+import { requireStaff, technicianScope } from "../middleware/roles.js"
 
 export const aiRouter = Router()
+
+// The field assistant is a staff tool and every message spends AI credit. A
+// customer must never read a job's AI history or trigger a reply.
+aiRouter.use(requireStaff)
 
 const chatSchema = z.object({
   jobId: z.string().min(1),
@@ -25,9 +30,10 @@ aiRouter.post("/chat/stream", async (req, res) => {
   const userId = req.user!.userId
   const organizationId = req.user!.organizationId
 
-  // Verify job exists and belongs to this org before writing anything
+  // Verify the job exists, is in this org, and (for a technician) is assigned
+  // to them, before writing anything
   const job = await prisma.job.findFirst({
-    where: { id: jobId, organizationId },
+    where: { id: jobId, organizationId, ...technicianScope(req) },
     select: { id: true },
   })
   if (!job) {
@@ -88,7 +94,7 @@ aiRouter.get("/chat/:jobId", async (req, res) => {
   const organizationId = req.user!.organizationId
 
   const job = await prisma.job.findFirst({
-    where: { id: jobId, organizationId },
+    where: { id: jobId, organizationId, ...technicianScope(req) },
     select: { id: true },
   })
   if (!job) return res.status(404).json({ error: "job_not_found" })

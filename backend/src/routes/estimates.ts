@@ -7,6 +7,7 @@ import { stripe } from "../services/stripe.js";
 import { jobTitle } from "../lib/job-title.js";
 import { escapeHtml } from "../lib/escape-html.js";
 import { z } from "zod";
+import { requireStaff } from "../middleware/roles.js";
 
 export const estimatesRouter = Router();
 export const publicEstimatesRouter = Router();
@@ -17,6 +18,10 @@ const approveSchema = z.object({
 });
 
 // ─── Auth-protected routes (estimatesRouter) ──────────────────────────────────
+// Staff only: generate spends AI credit, and an estimate carries the secret
+// token that approves it. Customers reach their estimate through the public
+// token routes below, never through these.
+estimatesRouter.use(requireStaff);
 
 // POST /api/estimates/generate
 estimatesRouter.post("/generate", async (req, res) => {

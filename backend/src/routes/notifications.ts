@@ -1,7 +1,12 @@
 import { Router } from "express"
 import { prisma } from "../lib/prisma.js"
+import { requireOffice } from "../middleware/roles.js"
 
 export const notificationsRouter = Router()
+
+// Org-wide business events (payments received, new reviews, plans sold) — the
+// office dashboard bell is the only consumer.
+notificationsRouter.use(requireOffice)
 
 // GET /api/notifications — latest 50 for this org
 notificationsRouter.get("/", async (req, res) => {

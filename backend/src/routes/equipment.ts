@@ -2,6 +2,7 @@ import { Router } from "express"
 import { z } from "zod"
 import { addMonths } from "date-fns"
 import { prisma } from "../lib/prisma.js"
+import { customerScope, isCustomer, requireStaff } from "../middleware/roles.js"
 
 export const equipmentRouter = Router()
 
@@ -21,8 +22,9 @@ equipmentRouter.get("/", async (req, res) => {
   const { organizationId } = req.user!
   const { customerId, maintenanceDue } = req.query
 
-  const where: Record<string, unknown> = { organizationId }
-  if (customerId) where.customerId = customerId as string
+  // A customer only ever gets their own equipment; the customerId filter is a staff convenience.
+  const where: Record<string, unknown> = { organizationId, ...customerScope(req) }
+  if (customerId && !isCustomer(req)) where.customerId = customerId as string
 
   const equipment = await prisma.equipment.findMany({
     where,
@@ -60,7 +62,7 @@ const createSchema = z.object({
 })
 
 // POST /api/equipment (create)
-equipmentRouter.post("/", async (req, res) => {
+equipmentRouter.post("/", requireStaff, async (req, res) => {
   const parsed = createSchema.safeParse(req.body)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
 
@@ -83,7 +85,7 @@ equipmentRouter.post("/", async (req, res) => {
 })
 
 // POST /api/equipment/check-maintenance — MUST be before /:id routes
-equipmentRouter.post("/check-maintenance", async (req, res) => {
+equipmentRouter.post("/check-maintenance", requireStaff, async (req, res) => {
   const { organizationId } = req.user!
   const now = new Date()
   const thirtyDaysOut = addMonths(now, 1)
@@ -131,7 +133,7 @@ equipmentRouter.post("/check-maintenance", async (req, res) => {
 const updateSchema = createSchema.partial().omit({ customerId: true })
 
 // PATCH /api/equipment/:id
-equipmentRouter.patch("/:id", async (req, res) => {
+equipmentRouter.patch("/:id", requireStaff, async (req, res) => {
   const parsed = updateSchema.safeParse(req.body)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
 
@@ -152,7 +154,7 @@ equipmentRouter.patch("/:id", async (req, res) => {
 })
 
 // DELETE /api/equipment/:id
-equipmentRouter.delete("/:id", async (req, res) => {
+equipmentRouter.delete("/:id", requireStaff, async (req, res) => {
   const { organizationId } = req.user!
   const existing = await prisma.equipment.findFirst({ where: { id: req.params.id, organizationId } })
   if (!existing) return res.status(404).json({ error: "not_found" })
@@ -164,7 +166,7 @@ equipmentRouter.delete("/:id", async (req, res) => {
 // GET /api/equipment/:id/history
 equipmentRouter.get("/:id/history", async (req, res) => {
   const { organizationId } = req.user!
-  const equipment = await prisma.equipment.findFirst({ where: { id: req.params.id, organizationId } })
+  const equipment = await prisma.equipment.findFirst({ where: { id: req.params.id, organizationId, ...customerScope(req) } })
   if (!equipment) return res.status(404).json({ error: "not_found" })
 
   const jobs = await prisma.job.findMany({

@@ -1,6 +1,7 @@
 import { Router } from "express"
 import { prisma } from "../lib/prisma.js"
 import { z } from "zod"
+import { isCustomer } from "../middleware/roles.js"
 
 export const availabilityRouter = Router()
 
@@ -21,7 +22,12 @@ availabilityRouter.get("/", async (req, res) => {
       where: { organizationId: req.user!.organizationId, date: { gte: today } },
       orderBy: { date: "asc" },
     })
-    return res.json({ schedule: org?.availabilitySchedule ?? null, blockedDates })
+    // A customer booking needs to know which days are closed, not why
+    // ("owner on vacation", "surgery") — the reason is the shop's own note.
+    return res.json({
+      schedule: org?.availabilitySchedule ?? null,
+      blockedDates: isCustomer(req) ? blockedDates.map(({ reason: _reason, ...rest }) => rest) : blockedDates,
+    })
   } catch {
     return res.status(500).json({ error: "Failed to load availability" })
   }

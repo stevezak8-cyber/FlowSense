@@ -16,17 +16,13 @@ const chatSchema = z.object({
 
 conciergeRouter.post("/chat", async (req, res) => {
   try {
-    let customerId = req.user?.customerId
-    // If the user doesn't have a customerId linked, look it up by userId
-    if (!customerId) {
-      const customer = await prisma.customer.findFirst({
-        where: { organizationId: req.user!.organizationId },
-        select: { id: true },
-      })
-      if (!customer) {
-        return res.status(400).json({ error: "Customer account required" })
-      }
-      customerId = customer.id
+    // The concierge speaks to one specific customer and can book jobs for them,
+    // so it needs a login that is linked to a customer record. (It used to fall
+    // back to the org's first customer, which handed one customer's name, jobs
+    // and address to whoever had no link — including staff logins.)
+    const customerId = req.user?.customerId
+    if (req.user?.role !== "customer" || !customerId) {
+      return res.status(400).json({ error: "Customer account required" })
     }
 
     const parsed = chatSchema.safeParse(req.body)

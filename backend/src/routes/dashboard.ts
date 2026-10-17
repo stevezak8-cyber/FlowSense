@@ -4,11 +4,12 @@ import { getAtRiskReasons, getAnalyticsNarrative } from "../services/analytics-a
 import type { AnalyticsTrends } from "../services/analytics-ai.js";
 import { requireAdvancedPlan } from "../middleware/require-plan.js";
 import { AI_MODEL } from "../lib/ai-config.js";
+import { requireOffice } from "../middleware/roles.js";
 
 export const dashboardRouter = Router();
 
 // GET /api/dashboard/stats
-dashboardRouter.get("/stats", async (req, res) => {
+dashboardRouter.get("/stats", requireOffice, async (req, res) => {
   try {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -94,7 +95,7 @@ dashboardRouter.get("/stats", async (req, res) => {
 });
 
 // GET /api/dashboard/chart - weekly job volume
-dashboardRouter.get("/chart", async (req, res) => {
+dashboardRouter.get("/chart", requireOffice, async (req, res) => {
   try {
     const now = new Date();
     const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());

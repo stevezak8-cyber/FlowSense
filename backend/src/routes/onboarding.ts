@@ -1,7 +1,11 @@
 import { Router } from "express"
 import { prisma } from "../lib/prisma.js"
+import { requireOffice } from "../middleware/roles.js"
 
 export const onboardingRouter = Router()
+
+// Setup checklist for the shop owner; reveals Stripe/SMS setup state and POST /dismiss mutates the org.
+onboardingRouter.use(requireOffice)
 
 onboardingRouter.get("/status", async (req, res) => {
   const { organizationId } = req.user!

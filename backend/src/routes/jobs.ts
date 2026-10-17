@@ -22,6 +22,7 @@ import {
   sendJobCompletedSms,
 } from "../services/sms.js";
 import { createNotification } from "../services/create-notification.js";
+import { customerScope, isCustomer, requireStaff } from "../middleware/roles.js";
 
 export const jobsRouter = Router();
 
@@ -162,13 +163,11 @@ jobsRouter.get("/", async (req, res) => {
     const to = req.query.to as string | undefined;
 
     // Scope results to the requesting user's role
-    const { role, technicianId: myTechId, customerId: myCustomerId } = req.user!;
+    const { role, technicianId: myTechId } = req.user!;
     const roleFilter =
       role === "technician" && myTechId
         ? { technicianId: myTechId }
-        : role === "customer" && myCustomerId
-          ? { customerId: myCustomerId }
-          : {};
+        : customerScope(req); // a customer sees only their own jobs, and none if unlinked
 
     const jobs = await prisma.job.findMany({
       where: {
@@ -255,12 +254,16 @@ jobsRouter.post("/:id/review", async (req, res) => {
 jobsRouter.get("/:id", async (req, res) => {
   try {
     const job = await prisma.job.findFirst({
-      where: { id: req.params.id, organizationId: req.user!.organizationId },
-      include: {
-        customer: true,
-        technician: true,
-        complianceLogs: { orderBy: { createdAt: "desc" }, take: 50 },
-      },
+      where: { id: req.params.id, organizationId: req.user!.organizationId, ...customerScope(req) },
+      // A customer sees their own job, but not the internal compliance audit
+      // trail or the technician's contact details (just who is assigned).
+      include: isCustomer(req)
+        ? { customer: true, technician: { select: { id: true, name: true } } }
+        : {
+            customer: true,
+            technician: true,
+            complianceLogs: { orderBy: { createdAt: "desc" }, take: 50 },
+          },
     });
     if (!job) return res.status(404).json({ error: "Job not found" });
     res.json(job);
@@ -393,6 +396,22 @@ jobsRouter.patch("/:id", async (req, res) => {
     return res.status(400).json({ error: parsed.error.flatten() });
   }
   try {
+    // A customer may only cancel one of their own bookings from here — every
+    // other field (technician, schedule, status, summary...) is staff-controlled.
+    if (isCustomer(req)) {
+      const onlyCancelling = Object.keys(parsed.data).length === 1 && parsed.data.status === "cancelled";
+      if (!onlyCancelling) return res.status(403).json({ error: "Forbidden" });
+      const own = await prisma.job.findFirst({
+        where: { id: req.params.id, organizationId: req.user!.organizationId, ...customerScope(req) },
+        select: { status: true },
+      });
+      if (!own) return res.status(404).json({ error: "Job not found" });
+      // Same rule as POST /:id/cancel: not once a technician is on the way.
+      if (!["pending", "scheduled"].includes(own.status)) {
+        return res.status(400).json({ error: "Job cannot be cancelled at this stage" });
+      }
+    }
+
     // Track previous status for auto-trigger logic
     let previousStatus: string | undefined;
 
@@ -623,7 +642,7 @@ jobsRouter.post("/:id/generate-completion-summary", async (req, res) => {
 
 
 // GET /api/jobs/:jobId/estimates
-jobsRouter.get("/:jobId/estimates", async (req, res) => {
+jobsRouter.get("/:jobId/estimates", requireStaff, async (req, res) => {
   try {
     const estimates = await prisma.estimate.findMany({
       where: { jobId: req.params.jobId, organizationId: req.user!.organizationId },

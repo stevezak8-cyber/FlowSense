@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { z } from "zod";
+import { isCustomer } from "../middleware/roles.js";
 import { exitSandbox, SandboxNotActiveError } from "../services/sandbox.js";
 
 export const organizationsRouter = Router();
@@ -24,12 +25,24 @@ const updateOrgSchema = z.object({
   verseOfTheDayEnabled: z.boolean().optional(),
 });
 
+// What a customer may know about the shop they book with: how to reach it.
+// Everything else (Stripe account, notification and deposit settings, SMS and
+// sandbox flags) is the shop's own configuration.
+const CUSTOMER_ORG_SELECT = {
+  id: true,
+  name: true,
+  slug: true,
+  phone: true,
+  email: true,
+  address: true,
+} as const;
+
 // GET /api/organizations/me — return the current user's org
 organizationsRouter.get("/me", async (req, res) => {
   try {
     const org = await prisma.organization.findUnique({
       where: { id: req.user!.organizationId },
-      select: {
+      select: isCustomer(req) ? CUSTOMER_ORG_SELECT : {
         id: true,
         name: true,
         slug: true,

@@ -2,8 +2,12 @@ import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { z } from "zod";
 import { technicianCapFor } from "../lib/plan-access.js";
+import { requireStaff } from "../middleware/roles.js";
 
 export const techniciansRouter = Router();
+
+// The roster carries phone/email; customers see their assigned tech's name via jobs.
+techniciansRouter.use(requireStaff);
 
 const createTechnicianSchema = z.object({
   name: z.string().min(1),
