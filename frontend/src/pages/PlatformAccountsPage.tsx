@@ -5,6 +5,7 @@ import { api } from "@/api/client"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import NotFoundPage from "@/pages/NotFoundPage"
+import { DemoAccountCard } from "@/components/platform/demo-account-card"
 
 interface PlatformOrg {
   id: string
@@ -77,6 +78,8 @@ export default function PlatformAccountsPage() {
             <Link to="/office" className="text-sm text-muted-foreground hover:underline">Back to app</Link>
           </div>
         </div>
+
+        <DemoAccountCard />
 
         <div className="mt-6 overflow-x-auto rounded-lg border">
           <table className="w-full text-sm">

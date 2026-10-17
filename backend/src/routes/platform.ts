@@ -1,6 +1,8 @@
 import { Router } from "express"
 import { prisma } from "../lib/prisma.js"
 import { isPlatformAdminEmail } from "../lib/platform-admin.js"
+import { randomBytes } from "node:crypto"
+import { resetDemoAccount } from "../services/demo-account/reset.js"
 
 export const platformRouter = Router()
 
@@ -66,5 +68,22 @@ platformRouter.get("/organizations", async (_req, res) => {
     )
   } catch {
     res.status(500).json({ error: "Failed to load organizations" })
+  }
+})
+
+// Rebuilds the founder's demo organization with a month of data dated around today.
+// A fresh random password is generated each time and returned once; it's never logged.
+let demoResetRunning = false
+platformRouter.post("/demo/reset", async (_req, res) => {
+  if (demoResetRunning) return res.status(409).json({ error: "A reset is already running" })
+  demoResetRunning = true
+  try {
+    const result = await resetDemoAccount({ password: randomBytes(9).toString("base64url") })
+    res.json(result)
+  } catch (e) {
+    console.error("[demo-reset] failed:", e instanceof Error ? e.message : e)
+    res.status(500).json({ error: "Failed to reset the demo account" })
+  } finally {
+    demoResetRunning = false
   }
 })

@@ -16,6 +16,7 @@ import { ComplianceForm } from "@/components/compliance/ComplianceForm"
 import { JobPhotos } from "@/components/jobs/JobPhotos"
 import { useTheme } from "@/theme/theme-context"
 import { useAuth } from "@/auth/auth-context"
+import { deriveJobBoard } from "./job-board"
 
 type ApiStatus = ApiJob["status"]
 type TabType = "priority" | "active" | "completed" | "cancelled"
@@ -165,12 +166,14 @@ export default function TechnicianJobsPage() {
     }
   }, [expandedId, jobs])
 
-  const priorityJobs = jobs.filter((j) => j.priority === "high" || j.priority === "urgent")
-  const activeJobs = jobs.filter((j) => j.status !== "completed" && j.status !== "cancelled")
-  const completedJobs = jobs.filter((j) => j.status === "completed")
-  const cancelledJobs = jobs.filter((j) => j.status === "cancelled")
-  const totalJobs = activeJobs.length + completedJobs.length
-  const progressPct = totalJobs > 0 ? Math.round((completedJobs.length / totalJobs) * 100) : 0
+  // "Today" is worked out from the schedule: the API returns the technician's whole history.
+  const board = deriveJobBoard(jobs)
+  const priorityJobs = board.priority
+  const activeJobs = board.open
+  const completedJobs = board.completedToday
+  const cancelledJobs = board.cancelled
+  const totalJobs = board.totalToday
+  const progressPct = board.progressPct
 
   const hour = new Date().getHours()
   const greeting = hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening"
@@ -409,8 +412,8 @@ export default function TechnicianJobsPage() {
           <div style={{ fontSize: 9, letterSpacing: "0.12em", color: T.n600, marginTop: 6 }}>JOBS · TODAY</div>
         </div>
         <div style={{ padding: "14px 16px", borderRight: `1px solid ${T.n300}` }}>
-          <div style={{ fontWeight: 800, fontSize: 30, lineHeight: 1, letterSpacing: "-0.03em", color: T.accent }}>{activeJobs.length}</div>
-          <div style={{ fontSize: 9, letterSpacing: "0.12em", color: T.n600, marginTop: 6 }}>ACTIVE</div>
+          <div style={{ fontWeight: 800, fontSize: 30, lineHeight: 1, letterSpacing: "-0.03em", color: T.accent }}>{board.leftToday}</div>
+          <div style={{ fontSize: 9, letterSpacing: "0.12em", color: T.n600, marginTop: 6 }}>LEFT TODAY</div>
         </div>
         <div style={{ padding: "14px 16px" }}>
           <div style={{ fontWeight: 800, fontSize: 30, lineHeight: 1, letterSpacing: "-0.03em" }}>{completedJobs.length}</div>

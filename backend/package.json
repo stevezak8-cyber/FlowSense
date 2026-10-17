@@ -14,7 +14,8 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "demo:reset": "tsx src/scripts/reset-demo.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
