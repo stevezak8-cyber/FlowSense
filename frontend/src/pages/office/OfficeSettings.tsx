@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Building2, User, Bell, Mail, Phone, Loader2, AlertCircle, BookOpen, CreditCard, CheckCircle, MessageSquare } from "lucide-react"
 import { PricebookSettings } from "@/components/pricebook/pricebook-settings"
+import { DataExportCard } from "@/components/office/data-export-card"
 import { toast } from "sonner"
 
 const DAYS: { key: keyof AvailabilitySchedule; label: string }[] = [
@@ -673,6 +674,8 @@ export default function OfficeSettings() {
           </div>
         </CardContent>
       </Card>
+
+      <DataExportCard />
 
       <ChangePasswordCard />
 

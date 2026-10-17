@@ -73,6 +73,7 @@ import { billingRouter, billingConnectCallbackHandler } from "./routes/billing.j
 import { twilioWebhookRouter } from "./routes/twilio-webhook.js"
 import { onboardingRouter } from "./routes/onboarding.js";
 import { platformRouter } from "./routes/platform.js";
+import { exportsRouter } from "./routes/exports.js";
 import { pricebookRouter } from "./routes/pricebook.js";
 import { estimatesRouter, publicEstimatesRouter } from "./routes/estimates.js";
 import { pushRouter } from "./routes/push.js"
@@ -146,6 +147,9 @@ app.use("/api/admin/billing", apiLimiter, requireAuth, billingRouter);
 
 // Platform admin (the founders, by email allow-list) — no subscription check
 app.use("/api/platform", apiLimiter, requireAuth, platformRouter);
+
+// Data export — no subscription check, so a shop can always take its own records with it
+app.use("/api/exports", apiLimiter, requireAuth, exportsRouter);
 
 // Protected routes (auth + subscription check + general rate limit)
 app.use("/api/jobs", apiLimiter, requireAuth, requireSubscription, jobsRouter);

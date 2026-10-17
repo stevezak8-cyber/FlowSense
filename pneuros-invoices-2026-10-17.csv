@@ -1,0 +1,287 @@
+﻿Invoice #,Invoice ID,Customer,Issued,Due,Description,Amount,Status,Service date,Service type
+33296B62,b459d1a5-a788-4157-90c4-520433296b62,Thomas Okafor,2025-08-13,2025-08-28,"Comfort Club, 2 System Plan (annual)",249,paid,,
+AF29370B,22905540-4913-4b19-a4f3-d065af29370b,Walter Dobbs,2025-11-11,2025-11-26,"Comfort Club, 2 System Plan (annual)",249,paid,,
+C601180D,135d6132-9917-4d68-ac64-1fe6c601180d,Jennifer Castillo,2026-02-19,2026-03-06,"Comfort Club, 2 System Plan (annual)",249,paid,,
+28FBCDF0,3766583a-849e-4d8b-bf5b-40c628fbcdf0,Oakmont Senior Living,2026-04-20,2026-05-05,Quarterly rooftop unit service,317,paid,2026-04-20,maintenance
+8C56DBA8,29e7971d-16c3-4eb9-a7f9-20498c56dba8,Jennifer Castillo,2026-04-20,2026-05-05,AC repair: condenser fan motor and capacitor,556,paid,2026-04-20,repair
+9FDAF984,2a3f99e4-bd9d-4dc5-9b51-6ce49fdaf984,Zachary Zimmerman,2026-04-21,2026-05-06,AC repair: zone damper freed,250,paid,2026-04-21,repair
+6B6A2A3F,29c79d3f-01b0-441a-bef7-32af6b6a2a3f,Carmen Cardenas,2026-04-22,2026-05-07,Mini-split repair: interconnect cable,273,paid,2026-04-22,repair
+126408DD,e884a8b8-7d5f-4b81-95eb-5ca6126408dd,Thomas Okafor,2026-04-22,2026-05-07,AC repair: contactor replaced,258,paid,2026-04-22,repair
+8DF83D9C,71ed1425-9ebe-4600-bbb9-fe4b8df83d9c,Grace Tran,2026-04-23,2026-05-08,Furnace repair: igniter replaced,250,paid,2026-04-23,repair
+FE5BA9AE,72d2e708-2469-4d9b-95c6-238cfe5ba9ae,Elena Eastman,2026-04-23,2026-05-08,Furnace tune-up,145,paid,2026-04-23,maintenance
+0035D930,ff2d16ac-d883-443e-accd-556e0035d930,Oakmont Senior Living,2026-04-24,2026-05-09,Quarterly rooftop unit service,192,paid,2026-04-24,maintenance
+E9F32A39,27f44c65-a627-42f5-a8ff-9339e9f32a39,Westlake Montessori,2026-04-27,2026-05-12,AC repair: dual-run capacitor,191,paid,2026-04-27,repair
+58265474,3f0e278a-197b-45fe-9c43-054a58265474,Gabriela Gallegos,2026-04-27,2026-05-12,Heat pump repair: defrost sensor,293,paid,2026-04-27,repair
+950A6358,c3a4875a-29fe-4d45-bc9f-5389950a6358,Bruce Bennett,2026-04-28,2026-05-13,Heat pump tune-up,136,paid,2026-04-28,maintenance
+F8A7471E,be843874-13f8-4b56-a97f-b0daf8a7471e,Brandon Bishop,2026-04-29,2026-05-14,Heat pump tune-up,124,paid,2026-04-29,maintenance
+9D43E165,04c26b39-d32d-4b07-868f-52ce9d43e165,Rosa Rasmussen,2026-04-29,2026-05-14,AC repair: zone damper freed,208,paid,2026-04-29,repair
+3A7CCEB2,3df16ed7-05cf-451a-a189-f1f63a7cceb2,Hartwell Family Dental,2026-04-30,2026-05-15,"RTU repair: leak at TXV, recharged",632,paid,2026-04-30,repair
+3F3C03A8,b845c47c-d8f5-4302-a023-e7583f3c03a8,Yolanda Yamamoto,2026-05-01,2026-05-16,AC repair: condenser fan motor and capacitor,544,paid,2026-05-01,repair
+62252E53,7be0b732-b97c-4a48-a924-60a062252e53,Daniel Fischer,2026-05-01,2026-05-16,AC repair: condensate drain cleared,180,paid,2026-05-01,repair
+5F634182,b820da73-600c-4ec3-984d-ed845f634182,Marcus Webb,2026-05-04,2026-05-19,AC repair: condenser fan motor and capacitor,531,paid,2026-05-04,repair
+09A4E83D,9dbbf118-2426-4c45-bd26-4bee09a4e83d,Xavier Whitfield,2026-05-04,2026-05-19,AC repair: contactor replaced,260,paid,2026-05-04,repair
+0126E7A9,599191da-33bb-4dde-8857-80200126e7a9,Zachary Zimmerman,2026-05-05,2026-05-20,AC repair: condensate drain cleared,153,paid,2026-05-05,repair
+4A7DA031,e43a8963-8518-4a4c-bec6-3ae84a7da031,Hannah Lindqvist,2026-05-06,2026-05-21,Mini-split repair: drain pan cleared,173,paid,2026-05-06,repair
+874DC2A9,abee2f20-44d2-40bd-abd2-a4f1874dc2a9,Priya Nair,2026-05-07,2026-05-22,"AC repair: low refrigerant, leak sealed and recharged",350,paid,2026-05-07,repair
+70233684,a56e7713-9446-47df-9dde-1c4770233684,Southpark Veterinary Clinic,2026-05-08,2026-05-23,"AC repair: low refrigerant, leak sealed and recharged",329,paid,2026-05-08,repair
+A22F0716,fbbee079-b21d-481c-9ee2-c056a22f0716,Dennis Dawson,2026-05-08,2026-05-23,Furnace repair: igniter replaced,330,paid,2026-05-08,repair
+30FCEBAE,a9851c04-9ed1-4a70-8c50-edde30fcebae,Patricia Pruitt,2026-05-11,2026-05-26,Furnace repair: pressure switch hose,305,paid,2026-05-11,repair
+52F19094,c1fec52a-1fa5-498e-b9d9-389d52f19094,Lamar Street Lofts HOA,2026-05-12,2026-05-27,RTU repair: blower bearing and belt,508,paid,2026-05-12,repair
+873BAD3B,6564d4b6-3295-4b8c-9aff-db88873bad3b,Walter Dobbs,2026-05-13,2026-05-28,Furnace repair: inducer gasket,293,paid,2026-05-13,repair
+BE567483,64db3644-5704-48b9-8b25-fd3dbe567483,Victor Underwood,2026-05-13,2026-05-28,AC tune-up,147,paid,2026-05-13,maintenance
+412F8B64,d7eec25e-36db-4e6f-a8ed-8118412f8b64,Monica Montoya,2026-05-14,2026-05-29,Furnace repair: flame sensor cleaned,188,paid,2026-05-14,repair
+170E1279,44f8c321-960a-42a0-a315-abc8170e1279,Courtney Calloway,2026-05-14,2026-05-29,"AC repair: low refrigerant, leak sealed and recharged",322,paid,2026-05-14,repair
+A09F7ED2,3b8df28d-e4be-4f58-8262-b86ea09f7ed2,Sofia Alvarez,2026-05-15,2026-05-30,Furnace repair: inducer gasket,198,paid,2026-05-15,repair
+C38450E9,d5b6beba-c37f-44df-b7af-6907c38450e9,Hartwell Family Dental,2026-05-18,2026-06-02,RTU repair: blower bearing and belt,714,paid,2026-05-18,repair
+AE886F8A,27f9cb18-346e-4bce-86f0-b252ae886f8a,Priya Nair,2026-05-18,2026-06-02,Furnace repair: flame sensor cleaned,136,paid,2026-05-18,repair
+009E1541,8240e8b7-bc69-4950-959c-350d009e1541,Daniel Fischer,2026-05-19,2026-06-03,"AC repair: low refrigerant, leak sealed and recharged",296,paid,2026-05-19,repair
+4244BD6F,eb2b28e2-97bf-4a91-be4a-ef134244bd6f,Oakmont Senior Living,2026-05-20,2026-06-04,Commercial Quarterly Service Agreement (annual),3840,paid,,
+461FEA77,0e4e9fcf-6c7c-4bd9-98bd-9e24461fea77,David Kim,2026-05-20,2026-06-04,Mini-split repair: interconnect cable,241,paid,2026-05-20,repair
+C9907EF9,9e9b8f05-29df-4239-9f6b-d486c9907ef9,Michael Brennan,2026-05-20,2026-06-04,Furnace repair: pressure switch hose,302,paid,2026-05-20,repair
+FB1CF161,b2dffe9b-970c-4033-a9eb-83fcfb1cf161,Harold Hamilton,2026-05-21,2026-06-05,AC repair: condensate drain cleared,163,paid,2026-05-21,repair
+A906C170,943a58d8-74de-4e95-bdbb-7300a906c170,Rosa Rasmussen,2026-05-21,2026-06-05,Mini-split repair: interconnect cable,231,paid,2026-05-21,repair
+2A96D283,067109fb-e530-4ddb-a889-07ed2a96d283,Jamal Jennings,2026-05-22,2026-06-06,Heat pump tune-up,165,paid,2026-05-22,maintenance
+6BB7117D,e3400bfa-085f-4516-895e-e1436bb7117d,Gloria Gutierrez,2026-05-22,2026-06-06,Heat pump tune-up,168,paid,2026-05-22,maintenance
+35ACB78B,b83f77dc-a276-4511-842f-469435acb78b,Ben Carver,2026-05-25,2026-06-09,AC repair: dual-run capacitor,252,paid,2026-05-25,repair
+14895805,20840fbc-f858-4c20-972d-0c8c14895805,Tanya Tillman,2026-05-25,2026-06-09,Heat pump repair: defrost sensor,417,paid,2026-05-25,repair
+1AAA1D98,6cb184fe-9c49-4831-97d1-17431aaa1d98,Walter Dobbs,2026-05-26,2026-06-10,Thermostat repair,144,paid,2026-05-26,repair
+18805CA7,521978d0-6512-4e25-b2db-061418805ca7,Grace Tran,2026-05-26,2026-06-10,AC tune-up,112,paid,2026-05-26,maintenance
+6156ABFA,9dcba560-45e4-4138-b960-5cb16156abfa,Westlake Montessori,2026-05-27,2026-06-11,"AC repair: low refrigerant, leak sealed and recharged",392,paid,2026-05-27,repair
+1D982A05,63808a0f-a693-44a9-86d8-e53a1d982a05,Barton Creek Coffee Co.,2026-05-27,2026-06-11,RTU repair: blower bearing and belt,676,paid,2026-05-27,repair
+414C2475,bea373fd-787f-421f-891a-f1fd414c2475,Robert Hayes,2026-05-28,2026-06-12,AC repair: compressor replacement,1925,overdue,2026-05-28,repair
+1996C51F,73671475-18d1-4b34-93a8-74a41996c51f,Oakmont Senior Living,2026-05-29,2026-06-13,Quarterly rooftop unit service,342,paid,2026-05-29,maintenance
+1245BAAD,04f227b4-8481-427c-a564-d50e1245baad,Southpark Veterinary Clinic,2026-05-29,2026-06-13,AC repair: zone damper freed,205,paid,2026-05-29,repair
+99414B24,6f51a283-c4fa-4edb-aa5f-ca0f99414b24,Barton Creek Coffee Co.,2026-05-30,2026-06-14,Quarterly rooftop unit service,232,overdue,2026-05-30,maintenance
+571C24A8,cb9a6eca-6f70-473c-a344-ce10571c24a8,Frank Fitzgerald,2026-06-01,2026-06-16,AC tune-up,109,paid,2026-06-01,maintenance
+3FAF067C,25509dce-b4b7-42a4-a71c-085b3faf067c,Harold Hamilton,2026-06-01,2026-06-16,Smart thermostat install,293,paid,2026-06-01,installation
+3BF6B599,95db3257-6036-4891-8c9d-52963bf6b599,Emily Thornton,2026-06-02,2026-06-17,AC repair: condenser fan motor and capacitor,445,paid,2026-06-02,repair
+9003AF8D,d85ad36a-b32a-4c64-bd84-41539003af8d,Hartwell Family Dental,2026-06-02,2026-06-17,Quarterly rooftop unit service,327,paid,2026-06-02,maintenance
+C00965A7,32669d5e-facf-4225-9423-26ccc00965a7,Derek Delgado,2026-06-03,2026-06-18,AC repair: compressor replacement,1719,paid,2026-06-03,repair
+0E06268F,0160ec9b-7c05-4513-b4e0-36350e06268f,Elena Eastman,2026-06-03,2026-06-18,"AC repair: iced coil, airflow restored",292,overdue,2026-06-03,repair
+CED3DA04,1c78b632-fc55-49e6-9ee3-fbd1ced3da04,David Kim,2026-06-04,2026-06-19,Heat pump repair: defrost sensor,299,paid,2026-06-04,repair
+16FD04B1,6d9a57d0-0ead-4b7c-96d9-9b5116fd04b1,Alicia Abernathy,2026-06-04,2026-06-19,"AC repair: low refrigerant, leak sealed and recharged",292,overdue,2026-06-04,repair
+0B98DBA2,a208ef23-1882-4a88-8800-c7b60b98dba2,Jamal Jennings,2026-06-05,2026-06-20,Heat pump repair: defrost sensor,414,paid,2026-06-05,repair
+91E439DD,42c796ff-887a-4aea-b83c-437791e439dd,Orlando Oyelaran,2026-06-05,2026-06-20,AC repair: contactor replaced,273,paid,2026-06-05,repair
+82B7C50F,08296212-46c7-41d1-85e3-dd7a82b7c50f,Samuel Sandoval,2026-06-08,2026-06-23,AC repair: condensate drain cleared,194,paid,2026-06-08,repair
+D5C3DDB7,25cede96-d799-4d63-b791-51fed5c3ddb7,Luis Lombardi,2026-06-09,2026-06-24,Heat pump repair: defrost sensor,272,overdue,2026-06-09,repair
+023C128F,dffd11ba-8469-4a85-aea3-45e0023c128f,Harold Hamilton,2026-06-09,2026-06-24,Mini-split repair: interconnect cable,286,paid,2026-06-09,repair
+16E970A0,a2d87e77-0c23-4d60-9d38-eedd16e970a0,Congress Ave Law Group,2026-06-10,2026-06-25,RTU repair: blower bearing and belt,540,paid,2026-06-10,repair
+5A664028,d7bac4d8-3367-4324-9cd4-73a75a664028,Felix Fontaine,2026-06-10,2026-06-25,Full system inspection with written report,154,paid,2026-06-10,inspection
+64EE90C9,36fea681-c059-4fd8-83ad-0dda64ee90c9,David Kim,2026-06-11,2026-06-26,Mini-split repair: drain pan cleared,129,paid,2026-06-11,repair
+3CCB199F,54c4724e-f2f9-4c5c-9ac9-a35c3ccb199f,Evelyn Espinoza,2026-06-12,2026-06-27,Thermostat repair,87,paid,2026-06-12,repair
+B0B78B3D,c4ffcecc-92fe-4e6a-a879-e7dab0b78b3d,Carmen Cardenas,2026-06-15,2026-06-30,Mini-split repair: interconnect cable,278,paid,2026-06-15,repair
+A76744A4,5c7c9106-bab7-4de0-a166-472fa76744a4,Hannah Lindqvist,2026-06-15,2026-06-30,Mini-split repair: drain pan cleared,177,paid,2026-06-15,repair
+7B53CFFE,09568286-3f79-4df5-ab70-bf987b53cffe,Emily Thornton,2026-06-16,2026-07-01,AC repair: dual-run capacitor,201,paid,2026-06-16,repair
+4D7658C5,87cfed70-2ee8-42de-891a-be484d7658c5,Carlos Mendoza,2026-06-16,2026-07-01,New 3-ton AC and coil installation,7617,overdue,2026-06-16,installation
+5BE7393B,349ac4a5-3299-4dc3-a0a6-fc965be7393b,Yolanda Yamamoto,2026-06-17,2026-07-02,"AC repair: low refrigerant, leak sealed and recharged",333,paid,2026-06-17,repair
+F90CCD0C,e6b595ac-0564-4684-be77-6b02f90ccd0c,Elena Eastman,2026-06-17,2026-07-02,AC tune-up,112,paid,2026-06-17,maintenance
+3DEBE320,33c1b29c-a614-481e-a41e-50d13debe320,Oakmont Senior Living,2026-06-18,2026-07-03,RTU repair: blower bearing and belt,551,paid,2026-06-18,repair
+00878E67,f6680ca9-8bf1-4590-8e1b-0c9500878e67,Courtney Calloway,2026-06-18,2026-07-03,Diagnostic fee,119,paid,2026-06-18,repair
+71F04FD3,a00ca803-cd9d-4a45-bd19-f2b471f04fd3,Grace Tran,2026-06-19,2026-07-04,"AC repair: low refrigerant, leak sealed and recharged",385,paid,2026-06-19,repair
+6E2E5B17,a09eab6e-f104-4455-b20a-22d96e2e5b17,Yolanda Yamamoto,2026-06-19,2026-07-04,AC repair: contactor replaced,260,paid,2026-06-19,repair
+5D82CBB0,436e0827-d61d-4283-8009-d2495d82cbb0,Jennifer Castillo,2026-06-20,2026-07-05,Furnace tune-up,148,paid,2026-06-20,maintenance
+B71C4649,468afbdf-435e-4ae2-8858-b14bb71c4649,Jamal Jennings,2026-06-22,2026-07-07,Heat pump tune-up,124,paid,2026-06-22,maintenance
+4F80030D,d8ba0059-8ddb-4170-8398-29444f80030d,Ben Carver,2026-06-23,2026-07-08,AC repair: dual-run capacitor,165,paid,2026-06-23,repair
+BEB6A2EC,098aff3a-a7d8-4a40-829a-49b8beb6a2ec,Elena Eastman,2026-06-23,2026-07-08,Furnace repair: inducer gasket,262,paid,2026-06-23,repair
+26654404,703c3f32-0c70-4924-ba49-cc4e26654404,Derek Delgado,2026-06-24,2026-07-09,AC tune-up,117,paid,2026-06-24,maintenance
+1426E788,b13767ce-c7c4-4c2f-a96d-6a9e1426e788,Riverside Self Storage,2026-06-24,2026-07-09,RTU repair: blower bearing and belt,574,paid,2026-06-24,repair
+CF6A8629,8e6004c6-6363-4346-8166-0a17cf6a8629,Walter Dobbs,2026-06-25,2026-07-10,"AC repair: low refrigerant, leak sealed and recharged",316,paid,2026-06-25,repair
+2BE94D56,af4e6727-9305-4a22-8357-367f2be94d56,Amelia Alvarado,2026-06-25,2026-07-10,"AC repair: low refrigerant, leak sealed and recharged",453,paid,2026-06-25,repair
+880C604A,ea6b08ba-2bad-468d-bc12-0589880c604a,Patricia Pruitt,2026-06-26,2026-07-11,"AC repair: iced coil, airflow restored",320,paid,2026-06-26,repair
+B7241A21,15374201-3599-4175-b73c-ed98b7241a21,Gloria Gutierrez,2026-06-26,2026-07-11,Heat pump repair: defrost sensor,395,paid,2026-06-26,repair
+35F133C9,35955096-b73b-4997-b3cc-1e7d35f133c9,Monica Montoya,2026-06-29,2026-07-14,AC repair: condensate drain cleared,156,paid,2026-06-29,repair
+9C85FB78,5bb95344-06cb-44ef-87d3-d6bb9c85fb78,Courtney Calloway,2026-06-29,2026-07-14,"AC repair: iced coil, airflow restored",234,paid,2026-06-29,repair
+C3CA1266,1909cba0-b2f6-4362-acb9-3d1ac3ca1266,David Kim,2026-06-30,2026-07-15,Mini-split repair: drain pan cleared,199,paid,2026-06-30,repair
+F6B9AD06,063caf9a-4664-40ad-b4d8-f906f6b9ad06,Gabriela Gallegos,2026-06-30,2026-07-15,Heat pump tune-up,164,paid,2026-06-30,maintenance
+320EAB41,991448be-3e1c-4378-bf91-f421320eab41,Courtney Calloway,2026-07-01,2026-07-16,"AC repair: low refrigerant, leak sealed and recharged",326,paid,2026-07-01,repair
+F0475C15,d4b41b3e-b502-428f-a329-6e7bf0475c15,Derek Delgado,2026-07-01,2026-07-16,Smart thermostat install,314,paid,2026-07-01,installation
+05CE22A8,c02252cf-ac65-4eba-a47f-348f05ce22a8,Harold Hamilton,2026-07-02,2026-07-17,AC repair: condensate drain cleared,188,paid,2026-07-02,repair
+1AC1D3BD,e520222c-8c52-4825-934f-a46e1ac1d3bd,Jennifer Castillo,2026-07-02,2026-07-17,AC repair: zone damper freed,194,paid,2026-07-02,repair
+043E3911,b7cc50d4-59fb-4c19-96c5-1ebc043e3911,Nathan Novak,2026-07-03,2026-07-18,Furnace repair: igniter replaced,257,paid,2026-07-03,repair
+4ACD86DB,c29285c6-bd47-41d3-bc8a-50f04acd86db,Robert Hayes,2026-07-03,2026-07-18,"AC repair: low refrigerant, leak sealed and recharged",381,paid,2026-07-03,repair
+90B7DFD0,1e6c362a-eae7-4c93-9ba9-eced90b7dfd0,Jennifer Castillo,2026-07-06,2026-07-21,AC repair: dual-run capacitor,223,overdue,2026-07-06,repair
+A53DB342,3c46d7e5-3d2c-47ed-9b7f-95faa53db342,Riverside Self Storage,2026-07-06,2026-07-21,"RTU repair: leak at TXV, recharged",926,paid,2026-07-06,repair
+7B86673B,3b8b2552-549e-4308-bad3-52467b86673b,Katherine Kowalski,2026-07-07,2026-07-22,Full system inspection with written report,134,paid,2026-07-07,inspection
+FA615259,5942d4f0-babd-4041-8345-a41efa615259,Dennis Dawson,2026-07-08,2026-07-23,Furnace repair: flame sensor cleaned,192,overdue,2026-07-08,repair
+E66FE2D8,f1664fbc-6c1b-44bb-9aa5-0cbae66fe2d8,Luis Lombardi,2026-07-08,2026-07-23,Heat pump repair: refrigerant leak at flare fitting,518,paid,2026-07-08,repair
+30115340,48816f7f-ea6a-401e-ad82-289830115340,Isabel Ibarra,2026-07-09,2026-07-24,"AC repair: low refrigerant, leak sealed and recharged",295,paid,2026-07-09,repair
+12EF2DEE,b1ef03c8-740c-4f4a-9a6e-c09412ef2dee,Congress Ave Law Group,2026-07-09,2026-07-24,RTU repair: blower bearing and belt,713,overdue,2026-07-09,repair
+4AC64499,971cbd39-9ef8-4b83-a1ac-9e124ac64499,Emily Thornton,2026-07-10,2026-07-25,AC repair: condenser fan motor and capacitor,451,paid,2026-07-10,repair
+170DB7CF,74756282-83d0-4cd8-870c-8fe6170db7cf,Alicia Abernathy,2026-07-10,2026-07-25,Full system inspection with written report,178,paid,2026-07-10,inspection
+8F52A1E4,040b10fe-c147-4763-b4eb-975c8f52a1e4,Elena Eastman,2026-07-13,2026-07-28,AC repair: zone damper freed,175,paid,2026-07-13,repair
+307E9919,6783749a-1c98-421c-8bbb-a61a307e9919,Courtney Calloway,2026-07-13,2026-07-28,AC repair: zone damper freed,226,paid,2026-07-13,repair
+CCA87713,408af1ea-2ae7-4d50-ae9f-8defcca87713,Robert Hayes,2026-07-14,2026-07-29,"Comfort Club, 2 System Plan (annual)",249,paid,,
+7D92F000,7fc361e7-b3ff-486e-a685-0bb87d92f000,Michael Brennan,2026-07-14,2026-07-29,AC repair: zone damper freed,187,paid,2026-07-14,repair
+130F76B1,ca3b0ac3-588c-4554-ac73-52fe130f76b1,Tanya Tillman,2026-07-14,2026-07-29,Thermostat repair,146,paid,2026-07-14,repair
+671B76CA,b77341fa-f51f-4158-befe-7f80671b76ca,Bruce Bennett,2026-07-15,2026-07-30,Heat pump repair: defrost sensor,410,paid,2026-07-15,repair
+B5232BA3,8f95bc73-a3e1-436f-be39-cf14b5232ba3,David Kim,2026-07-15,2026-07-30,Mini-split repair: drain pan cleared,208,paid,2026-07-15,repair
+3C3157A0,90bcca07-950d-4609-9bd5-fade3c3157a0,Rosa Rasmussen,2026-07-16,2026-07-31,AC repair: contactor replaced,270,paid,2026-07-16,repair
+EB81AD24,16b80da5-0494-460f-93d1-7ecceb81ad24,Xavier Whitfield,2026-07-16,2026-07-31,AC repair: compressor replacement,2264,paid,2026-07-16,repair
+DC86B21B,2cc982d0-b20b-474c-8f04-80a4dc86b21b,Congress Ave Law Group,2026-07-17,2026-08-01,RTU repair: blower bearing and belt,693,paid,2026-07-17,repair
+58C7F637,6ffd3bd5-068b-409e-bd3d-e62458c7f637,Marcus Webb,2026-07-17,2026-08-01,"AC repair: low refrigerant, leak sealed and recharged",433,paid,2026-07-17,repair
+81FFCFE7,d4eafc3d-4934-4a17-bc29-9bc281ffcfe7,Congress Ave Law Group,2026-07-20,2026-08-04,"RTU repair: leak at TXV, recharged",1048,paid,2026-07-20,repair
+608F3EF3,5f796f45-641f-4832-9ac9-9b6c608f3ef3,Westlake Montessori,2026-07-20,2026-08-04,AC tune-up,147,paid,2026-07-20,maintenance
+8B84E2FE,25d43188-c7e0-47af-a82c-c4aa8b84e2fe,Carmen Cardenas,2026-07-21,2026-08-05,Mini-split repair: interconnect cable,225,paid,2026-07-21,repair
+15606A31,3fd2023b-f9f1-4b72-b364-8fd115606a31,Hartwell Family Dental,2026-07-21,2026-08-05,Quarterly rooftop unit service,255,paid,2026-07-21,maintenance
+186E7921,85e07ce9-fd4a-47b7-aa7f-32d7186e7921,Nathan Novak,2026-07-22,2026-08-06,Furnace repair: flame sensor cleaned,133,paid,2026-07-22,repair
+15BAEE4D,30df5375-6ec7-4777-9f9a-b17515baee4d,Grace Tran,2026-07-22,2026-08-06,AC repair: compressor replacement,2139,paid,2026-07-22,repair
+9774D13E,3af04b3e-249b-48c7-81c7-8d919774d13e,Marcus Webb,2026-07-23,2026-08-07,AC repair: dual-run capacitor,249,paid,2026-07-23,repair
+8202CA86,7a3fbe8c-619d-430a-98d1-8aa18202ca86,Congress Ave Law Group,2026-07-23,2026-08-07,Quarterly rooftop unit service,217,paid,2026-07-23,maintenance
+CD857D2F,e804a5fd-09f6-4c17-80f9-bd77cd857d2f,Quincy Quintero,2026-07-24,2026-08-08,Heat pump repair: refrigerant leak at flare fitting,412,paid,2026-07-24,repair
+E954B306,530cf641-dc89-42fb-8f8d-008ce954b306,Evelyn Espinoza,2026-07-24,2026-08-08,Heat pump repair: refrigerant leak at flare fitting,404,paid,2026-07-24,repair
+E2FBD290,f325a2a4-9153-46eb-bf7e-cb63e2fbd290,Wendy Vasquez,2026-07-27,2026-08-11,Heat pump tune-up,126,paid,2026-07-27,maintenance
+D3445C52,af7a749d-4185-4090-8818-c57ad3445c52,Gabriela Gallegos,2026-07-27,2026-08-11,Heat pump tune-up,132,paid,2026-07-27,maintenance
+C68A7EEA,13e18066-f527-4eab-a531-5d77c68a7eea,Riverside Self Storage,2026-07-28,2026-08-12,RTU repair: blower bearing and belt,623,paid,2026-07-28,repair
+D1DE874D,6abff9e0-ad35-4aab-bf5d-7eafd1de874d,Elena Eastman,2026-07-29,2026-08-13,"AC repair: low refrigerant, leak sealed and recharged",353,paid,2026-07-29,repair
+42A34955,0080e9f2-a0cb-435b-82ad-5b0742a34955,Alicia Abernathy,2026-07-29,2026-08-13,AC repair: condensate drain cleared,185,paid,2026-07-29,repair
+F14C146D,7172837d-ff74-40e6-b4fa-1c88f14c146d,Lamar Street Lofts HOA,2026-07-30,2026-08-14,Boiler repair: expansion tank replaced,446,paid,2026-07-30,repair
+8E917A43,6d2f73a5-b96e-431e-8b3b-f9528e917a43,Xavier Whitfield,2026-07-30,2026-08-14,AC tune-up,148,paid,2026-07-30,maintenance
+FB26C9AA,00b9f379-05bc-4a82-a2be-a35cfb26c9aa,Samuel Sandoval,2026-07-31,2026-08-15,Furnace tune-up,100,paid,2026-07-31,maintenance
+64C8BB8C,92c5b4d8-20d6-45fd-ba9f-ef2664c8bb8c,Zachary Zimmerman,2026-07-31,2026-08-15,Furnace repair: pressure switch hose,324,overdue,2026-07-31,repair
+E6E1700F,90a13f2a-6004-4337-ba80-6ef6e6e1700f,Zachary Zimmerman,2026-08-03,2026-08-18,AC repair: condensate drain cleared,186,paid,2026-08-03,repair
+85CE23FB,e4276ba9-0fa0-4a35-b7dd-554e85ce23fb,Orlando Oyelaran,2026-08-03,2026-08-18,AC repair: dual-run capacitor,238,paid,2026-08-03,repair
+CDB8355E,950a0caf-a8e9-4083-a65b-5fe7cdb8355e,Thomas Okafor,2026-08-04,2026-08-19,AC repair: dual-run capacitor,249,paid,2026-08-04,repair
+DE03D50B,dd90d861-c006-4637-8edf-8128de03d50b,Walter Dobbs,2026-08-04,2026-08-19,Smart thermostat install,250,paid,2026-08-04,installation
+22AA9869,05717d39-16e1-4ee0-ba60-54e522aa9869,Carlos Mendoza,2026-08-05,2026-08-20,AC repair: contactor replaced,220,paid,2026-08-05,repair
+C0EE148D,c39a01f9-c5db-4aca-85e9-977dc0ee148d,Oakmont Senior Living,2026-08-06,2026-08-21,RTU repair: blower bearing and belt,496,paid,2026-08-06,repair
+AC183375,209be9fe-4000-4344-baaa-f56eac183375,Oakmont Senior Living,2026-08-07,2026-08-22,Quarterly rooftop unit service,240,paid,2026-08-07,maintenance
+082EA892,e5f0b113-8be8-4129-9a9d-35a4082ea892,Courtney Calloway,2026-08-07,2026-08-22,AC repair: dual-run capacitor,167,paid,2026-08-07,repair
+77940764,a8ab0934-3cc3-4d70-bf14-0e8f77940764,Hartwell Family Dental,2026-08-08,2026-08-23,Commercial Quarterly Service Agreement (annual),1480,paid,,
+EF4414B0,f184e234-b666-4053-80af-bd9def4414b0,Oakmont Senior Living,2026-08-10,2026-08-25,"RTU repair: leak at TXV, recharged",662,overdue,2026-08-10,repair
+0FDF133F,dc506f47-5452-4c1b-b516-3cd70fdf133f,Walter Dobbs,2026-08-10,2026-08-25,Furnace tune-up,134,paid,2026-08-10,maintenance
+AA373D6B,2baf64a6-8824-47c3-a7cb-8ba0aa373d6b,Ben Carver,2026-08-11,2026-08-26,AC repair: dual-run capacitor,185,paid,2026-08-11,repair
+EE472754,b48e5f6e-a2b7-4561-a8ca-fa92ee472754,Orlando Oyelaran,2026-08-11,2026-08-26,AC repair: zone damper freed,204,paid,2026-08-11,repair
+C6E2D671,da074633-8502-4cef-b548-31a6c6e2d671,Thomas Okafor,2026-08-12,2026-08-27,AC repair: compressor replacement,2623,paid,2026-08-12,repair
+30693F84,ddcbaaf0-b2b5-4fd3-b77a-471f30693f84,Robert Hayes,2026-08-12,2026-08-27,Thermostat repair,126,paid,2026-08-12,repair
+B448E648,313215d0-a139-479a-bf6f-60d6b448e648,Barton Creek Coffee Co.,2026-08-13,2026-08-28,Quarterly rooftop unit service,291,paid,2026-08-13,maintenance
+30A2713D,e996bdd8-03d6-450e-b5e6-49dd30a2713d,Lamar Street Lofts HOA,2026-08-14,2026-08-29,"RTU repair: leak at TXV, recharged",1063,paid,2026-08-14,repair
+B6F7D0C4,396e8ddd-d73d-4427-8dff-b265b6f7d0c4,Rosa Rasmussen,2026-08-14,2026-08-29,Mini-split repair: interconnect cable,241,paid,2026-08-14,repair
+2F7C7D19,7e53de8e-3094-4223-b289-d5fe2f7c7d19,Hannah Lindqvist,2026-08-17,2026-09-01,Mini-split repair: interconnect cable,234,paid,2026-08-17,repair
+40D59325,3ad79481-83d1-4890-890b-2c3840d59325,Derek Delgado,2026-08-17,2026-09-01,AC repair: condenser fan motor and capacitor,1119,paid,2026-08-17,repair
+CA8A378E,2552ec56-1fdf-408f-94c8-49afca8a378e,Brandon Bishop,2026-08-18,2026-09-02,Heat pump repair: defrost sensor,336,paid,2026-08-18,repair
+2414D976,a2787dc8-96bc-41a3-96ad-d30a2414d976,Olivia Santos,2026-08-18,2026-09-02,Heat pump repair: refrigerant leak at flare fitting,354,paid,2026-08-18,repair
+5C692714,463aac65-9deb-4ab0-88b2-002c5c692714,Monica Montoya,2026-08-19,2026-09-03,AC repair: condenser fan motor and capacitor,765,paid,2026-08-19,repair
+BA503C5E,05ce78fb-83b3-4a09-8118-8446ba503c5e,Sofia Alvarez,2026-08-19,2026-09-03,"AC repair: iced coil, airflow restored",333,paid,2026-08-19,repair
+0EAB9C99,9ac05c26-6ed9-40f0-ac58-f72d0eab9c99,Oakmont Senior Living,2026-08-20,2026-09-04,RTU repair: blower bearing and belt,582,paid,2026-08-20,repair
+C19E5B06,6a7c6cc2-0fd1-4a33-b9a9-0ef7c19e5b06,Walter Dobbs,2026-08-20,2026-09-04,"AC repair: iced coil, airflow restored",202,paid,2026-08-20,repair
+093CA485,d6c006a0-24fc-40d2-a076-b639093ca485,Xavier Whitfield,2026-08-21,2026-09-05,Furnace repair: flame sensor cleaned,156,paid,2026-08-21,repair
+F2FB6403,cd2d971d-89ff-46b6-88b3-682ef2fb6403,Monica Montoya,2026-08-21,2026-09-05,"AC repair: low refrigerant, leak sealed and recharged",287,paid,2026-08-21,repair
+C60E9551,2dd37ca8-e088-4b1b-adbe-a590c60e9551,Carmen Cardenas,2026-08-24,2026-09-08,New 3-ton AC and coil installation,9173,paid,2026-08-24,installation
+2BBAF868,e61f29b9-f95e-4de3-85d8-f1882bbaf868,Emily Thornton,2026-08-24,2026-09-08,AC tune-up,156,overdue,2026-08-24,maintenance
+0A722774,6ac6ede1-3200-4c7b-8f57-d7510a722774,Rosa Rasmussen,2026-08-25,2026-09-09,Mini-split repair: interconnect cable,334,paid,2026-08-25,repair
+F05E4025,654076a6-b9b3-432f-ba14-0deef05e4025,Luis Lombardi,2026-08-25,2026-09-09,Heat pump repair: defrost sensor,298,paid,2026-08-25,repair
+F903765B,be9fb616-0465-4495-b9dd-05fdf903765b,Felix Fontaine,2026-08-26,2026-09-10,AC repair: contactor replaced,201,paid,2026-08-26,repair
+C1EB9625,73b19f4c-f147-402d-92aa-0fb1c1eb9625,Wendy Vasquez,2026-08-26,2026-09-10,Heat pump tune-up,158,paid,2026-08-26,maintenance
+856C9710,e05bd1ad-916b-459c-9321-e24f856c9710,Isabel Ibarra,2026-08-27,2026-09-11,AC repair: condenser fan motor and capacitor,1119,overdue,2026-08-27,repair
+6DE30A98,5ff24d61-f0d6-43d8-bc90-5e186de30a98,Southpark Veterinary Clinic,2026-08-27,2026-09-11,AC repair: zone damper freed,206,paid,2026-08-27,repair
+F2C7796A,e0b55a1c-b2f7-4368-85da-d079f2c7796a,Amelia Alvarado,2026-08-28,2026-09-12,Thermostat repair,118,paid,2026-08-28,repair
+FF8E7C1D,53ac359a-8c9a-40c6-b483-e4c0ff8e7c1d,Frank Fitzgerald,2026-08-28,2026-09-12,AC tune-up,146,paid,2026-08-28,maintenance
+125B2E8B,2b16d6c3-91bb-4175-a248-107b125b2e8b,Barton Creek Coffee Co.,2026-08-28,2026-09-12,RTU repair: blower bearing and belt,496,paid,2026-08-28,repair
+0F194892,04a7ba47-223c-4665-8c2d-b7990f194892,Courtney Calloway,2026-08-31,2026-09-15,"AC repair: iced coil, airflow restored",205,paid,2026-08-31,repair
+693F4005,39bb84f0-8d58-4219-9568-e9bc693f4005,Harold Hamilton,2026-08-31,2026-09-15,Mini-split repair: interconnect cable,202,paid,2026-08-31,repair
+B9FB96A7,1d2499d4-b4d8-49ff-b5a3-e74ab9fb96a7,Rosa Rasmussen,2026-09-01,2026-09-16,Mini-split repair: interconnect cable,296,paid,2026-09-01,repair
+679CE59B,43379d9e-4b5b-46fc-84da-3efc679ce59b,Katherine Kowalski,2026-09-01,2026-09-16,AC repair: dual-run capacitor,236,paid,2026-09-01,repair
+1BD19740,529408bf-5cc2-460a-89a1-0cd51bd19740,Southpark Veterinary Clinic,2026-09-02,2026-09-17,AC repair: contactor replaced,232,paid,2026-09-02,repair
+7C153609,70c36c25-e7c9-4fd2-b61f-d1f17c153609,Quincy Quintero,2026-09-02,2026-09-17,Heat pump repair: refrigerant leak at flare fitting,549,paid,2026-09-02,repair
+AEB35F44,3cba6138-2924-47ed-8d46-2b60aeb35f44,Ben Carver,2026-09-03,2026-09-18,Furnace repair: inducer gasket,254,paid,2026-09-03,repair
+D6637DAD,e96720e2-f70f-4412-a4c6-d6d8d6637dad,Rachel Goldberg,2026-09-03,2026-09-18,Heat pump repair: refrigerant leak at flare fitting,475,paid,2026-09-03,repair
+56EE7F66,12b7af0f-c59b-43d5-a6ce-48e056ee7f66,Ben Carver,2026-09-04,2026-09-19,Furnace repair: fan relay,382,paid,2026-09-04,repair
+89102880,1a7a1503-7c9c-48d6-9aad-93d989102880,Dennis Dawson,2026-09-04,2026-09-19,Thermostat repair,145,paid,2026-09-04,repair
+494866C3,5610c63e-d604-4087-a6fd-7043494866c3,Jennifer Castillo,2026-09-05,2026-09-20,AC repair: dual-run capacitor,188,paid,2026-09-05,repair
+EBCCB382,525f5596-8655-49ba-9c46-7df7ebccb382,Hannah Lindqvist,2026-09-05,2026-09-20,Mini-split repair: drain pan cleared,158,overdue,2026-09-05,repair
+E025CB2B,881e1a59-1470-493e-990d-4394e025cb2b,Aisha Johnson,2026-09-07,2026-09-22,Heat pump repair: defrost sensor,343,paid,2026-09-07,repair
+E6FC2B71,683b9bc4-569e-4d43-bae1-baaee6fc2b71,Robert Hayes,2026-09-07,2026-09-22,AC repair: zone damper freed,238,paid,2026-09-07,repair
+5798C59C,457e5009-33cf-4f65-a578-3a275798c59c,Thomas Okafor,2026-09-08,2026-09-23,AC repair: dual-run capacitor,193,paid,2026-09-08,repair
+09A75D27,f70a9dbc-1e0c-43a6-a3d7-dc8709a75d27,Amelia Alvarado,2026-09-08,2026-09-23,Diagnostic fee,116,paid,2026-09-08,repair
+9AB7DC01,cc8413b8-09a9-4e27-b9ea-153a9ab7dc01,Aisha Johnson,2026-09-09,2026-09-24,Heat pump repair: refrigerant leak at flare fitting,534,paid,2026-09-09,repair
+C3652E9F,5416961c-edb3-4593-84ec-2d58c3652e9f,Rosa Rasmussen,2026-09-09,2026-09-24,Smart thermostat install,304,paid,2026-09-09,installation
+D6364EFC,d296f3fb-3f74-4d7a-8a8d-cedbd6364efc,Priya Nair,2026-09-10,2026-09-25,AC repair: compressor replacement,2623,paid,2026-09-10,repair
+CCFAF8BB,e46dede8-3095-4ae7-9425-c5b6ccfaf8bb,Carlos Mendoza,2026-09-10,2026-09-25,Furnace repair: fan relay,287,paid,2026-09-10,repair
+600EC3AE,10e00b2d-b1fd-437b-8175-797d600ec3ae,Carmen Cardenas,2026-09-11,2026-09-26,"AC repair: low refrigerant, leak sealed and recharged",423,paid,2026-09-11,repair
+F604E6BD,81dadb86-2091-4560-9196-88e3f604e6bd,Amelia Alvarado,2026-09-11,2026-09-26,AC repair: contactor replaced,208,paid,2026-09-11,repair
+768FCA3F,e790ec29-ff62-4375-ad5f-af08768fca3f,Katherine Kowalski,2026-09-11,2026-09-26,Furnace repair: pressure switch hose,277,paid,2026-09-11,repair
+F7424FE5,cb68b943-aaeb-4c2c-bc84-bc11f7424fe5,Samuel Sandoval,2026-09-14,2026-09-29,AC repair: contactor replaced,242,paid,2026-09-14,repair
+372CB2F0,c49675d6-40ad-443b-bc7d-e4cb372cb2f0,Robert Hayes,2026-09-14,2026-09-29,AC repair: contactor replaced,186,paid,2026-09-14,repair
+77034CCF,9dc971bc-8a53-4122-bd1d-850677034ccf,Xavier Whitfield,2026-09-15,2026-09-30,Furnace tune-up,99,paid,2026-09-15,maintenance
+A5D76AD4,af538e6a-553d-4421-80fc-1ce8a5d76ad4,Walter Dobbs,2026-09-15,2026-09-30,"AC repair: iced coil, airflow restored",310,paid,2026-09-15,repair
+3C8E72E8,441f9b26-155a-41d1-9666-b4cf3c8e72e8,Derek Delgado,2026-09-16,2026-10-01,AC tune-up,150,paid,2026-09-16,maintenance
+2BA75D35,da339ebb-8502-4e3c-b87d-f2222ba75d35,Nathan Novak,2026-09-16,2026-10-01,"AC repair: iced coil, airflow restored",280,paid,2026-09-16,repair
+05F1D334,2ac2f16a-689f-4ebd-b8b9-45d505f1d334,Natalie Ruiz,2026-09-16,2026-10-01,Heat pump repair: refrigerant leak at flare fitting,480,paid,2026-09-16,repair
+2CAD0FF8,1343daa9-93b1-42ee-a608-c50a2cad0ff8,Lamar Street Lofts HOA,2026-09-16,2026-10-01,RTU repair: blower bearing and belt,672,paid,2026-09-16,repair
+B3F08884,79490366-b006-4639-b462-d5b0b3f08884,Bruce Bennett,2026-09-17,2026-10-02,Heat pump repair: refrigerant leak at flare fitting,479,paid,2026-09-17,repair
+C2F22FE3,7a8ef822-37dd-4f31-95d7-0f56c2f22fe3,Priya Nair,2026-09-17,2026-10-02,"AC repair: low refrigerant, leak sealed and recharged",348,paid,2026-09-17,repair
+A5B8DF38,2e35d194-8825-4eb3-b5ab-c16aa5b8df38,Xavier Whitfield,2026-09-17,2026-10-02,"AC repair: iced coil, airflow restored",330,paid,2026-09-17,repair
+F5AE8DE1,02feca42-61ac-4ca5-962c-d1e2f5ae8de1,Ben Carver,2026-09-18,2026-10-03,AC tune-up,113,paid,2026-09-18,maintenance
+47457178,dd98e660-c4f3-44ad-b823-be6d47457178,Oakmont Senior Living,2026-09-18,2026-10-03,"RTU repair: leak at TXV, recharged",693,paid,2026-09-18,repair
+6836A95E,8e2dece6-eb98-4cfa-a93b-ed736836a95e,Rosa Rasmussen,2026-09-21,2026-10-06,Mini-split repair: interconnect cable,242,paid,2026-09-21,repair
+9B77130F,cab911c5-1b07-46f0-81b3-77239b77130f,Olivia Santos,2026-09-21,2026-10-06,Heat pump repair: refrigerant leak at flare fitting,365,paid,2026-09-21,repair
+3C09B4A9,c833b46e-ccd6-4edb-83a3-a8083c09b4a9,Westlake Montessori,2026-09-21,2026-10-06,AC repair: zone damper freed,172,paid,2026-09-21,repair
+F01621F1,1baf000a-e480-43d2-bc32-c07af01621f1,Michael Brennan,2026-09-22,2026-10-07,"AC repair: low refrigerant, leak sealed and recharged",398,paid,2026-09-22,repair
+9A90C95F,e7f90bd1-e862-470f-88c0-dc799a90c95f,Oakmont Senior Living,2026-09-22,2026-10-07,RTU repair: blower bearing and belt,509,paid,2026-09-22,repair
+05A30057,a756c715-71e9-4bab-9029-70ea05a30057,Isabel Ibarra,2026-09-22,2026-10-07,AC repair: zone damper freed,209,paid,2026-09-22,repair
+8C9207CF,44bce9c0-0fff-43b9-bccc-12a68c9207cf,Harold Hamilton,2026-09-23,2026-10-08,Mini-split repair: interconnect cable,332,overdue,2026-09-23,repair
+76FDCE5F,5bcd8e5d-bbf4-41ee-ae6f-73d776fdce5f,Hartwell Family Dental,2026-09-23,2026-10-08,RTU repair: blower bearing and belt,574,paid,2026-09-23,repair
+5692C665,3e74a3c0-e55f-4ab3-84b4-91e45692c665,Katherine Kowalski,2026-09-23,2026-10-08,Furnace repair: flame sensor cleaned,141,paid,2026-09-23,repair
+03F2CC3B,f5be76f7-2210-42f6-abc1-852b03f2cc3b,Isabel Ibarra,2026-09-24,2026-10-09,Furnace repair: flame sensor cleaned,209,paid,2026-09-24,repair
+E3B0FF43,90bf2e07-34a5-4123-b6cf-2b79e3b0ff43,Aisha Johnson,2026-09-24,2026-10-09,Heat pump tune-up,128,paid,2026-09-24,maintenance
+628A5285,8d2b8a20-287e-4283-be55-fb7c628a5285,Riverside Self Storage,2026-09-25,2026-10-10,RTU repair: blower bearing and belt,567,paid,2026-09-25,repair
+4BE740F8,1dcc9cd7-9cbb-4543-8563-f70c4be740f8,Harold Hamilton,2026-09-25,2026-10-10,AC repair: condensate drain cleared,138,paid,2026-09-25,repair
+A0EDD9DE,2da87114-b280-4fcb-a085-59bfa0edd9de,Hartwell Family Dental,2026-09-25,2026-10-10,"RTU repair: leak at TXV, recharged",908,overdue,2026-09-25,repair
+E979B0D0,bd9bc684-a703-4797-a33c-f46ce979b0d0,Olivia Santos,2026-09-28,2026-10-13,Heat pump tune-up,143,paid,2026-09-28,maintenance
+624425C2,9431189a-be0d-4121-b499-1e97624425c2,Priya Nair,2026-09-28,2026-10-13,AC tune-up,153,paid,2026-09-28,maintenance
+668B7D8D,8be5067d-bc09-4a81-bae0-060f668b7d8d,James Whitmore,2026-09-28,2026-10-13,Furnace repair: pressure switch hose,289,paid,2026-09-28,repair
+1DA10578,074fd205-54d6-46fd-9032-b7811da10578,Grace Tran,2026-09-29,2026-10-14,AC repair: condensate drain cleared,166,paid,2026-09-29,repair
+A3D9DC8C,0ed14e44-1141-427b-a854-b864a3d9dc8c,David Kim,2026-09-29,2026-10-14,Heat pump repair: refrigerant leak at flare fitting,430,overdue,2026-09-29,repair
+3F397C50,3b5e3374-9598-4272-a1cd-02a53f397c50,Isabel Ibarra,2026-09-29,2026-10-14,"AC repair: low refrigerant, leak sealed and recharged",336,paid,2026-09-29,repair
+042F12BA,fefa1575-6c1a-4604-86d5-2bf6042f12ba,Alicia Abernathy,2026-09-29,2026-10-14,"AC repair: low refrigerant, leak sealed and recharged",297,paid,2026-09-29,repair
+E09C9683,070651f6-a510-4a79-af9f-ad74e09c9683,Southpark Veterinary Clinic,2026-09-30,2026-10-15,"AC repair: iced coil, airflow restored",330,paid,2026-09-30,repair
+2B07FC86,37766196-5de0-472c-a353-2bbf2b07fc86,Michael Brennan,2026-09-30,2026-10-15,Furnace repair: igniter replaced,270,paid,2026-09-30,repair
+E3F45CA7,0dbf48f6-8b1c-4080-b986-aa9ce3f45ca7,Priya Nair,2026-09-30,2026-10-15,AC repair: zone damper freed,196,paid,2026-09-30,repair
+D1596A4E,0fc884b6-8c07-4d7f-8090-078bd1596a4e,Wendy Vasquez,2026-10-01,2026-10-16,Heat pump repair: refrigerant leak at flare fitting,492,overdue,2026-10-01,repair
+4D25E339,6d46f086-c2b0-4318-9154-bec14d25e339,Katherine Kowalski,2026-10-01,2026-10-16,AC tune-up,154,paid,2026-10-01,maintenance
+FF994848,b11fbf1b-69c2-41ac-b905-d97fff994848,Frank Fitzgerald,2026-10-01,2026-10-16,AC repair: dual-run capacitor,211,paid,2026-10-01,repair
+8F798D4B,3edf2f1a-c5db-451a-9647-8f8a8f798d4b,Oakmont Senior Living,2026-10-01,2026-10-16,"RTU repair: leak at TXV, recharged",971,overdue,2026-10-01,repair
+9BC3EE13,1356be79-6841-4463-b612-a3ac9bc3ee13,Southpark Veterinary Clinic,2026-10-02,2026-10-17,AC repair: condensate drain cleared,187,paid,2026-10-02,repair
+BF2F094C,bb942c5e-cd19-40c8-9a06-22debf2f094c,Felix Fontaine,2026-10-02,2026-10-17,AC tune-up,119,paid,2026-10-02,maintenance
+BD30E239,6c644393-b71c-45bc-9325-2d3bbd30e239,Katherine Kowalski,2026-10-02,2026-10-17,Furnace repair: inducer gasket,274,paid,2026-10-02,repair
+3B9B82E3,b87c3d35-7d09-4b60-b6b3-20dd3b9b82e3,Derek Delgado,2026-10-02,2026-10-17,Furnace repair: pressure switch hose,294,pending,2026-10-02,repair
+3181B558,a1cdd6c9-50c2-412f-8bf6-7db43181b558,Carlos Mendoza,2026-10-05,2026-10-20,AC repair: dual-run capacitor,188,pending,2026-10-05,repair
+90CCE1E4,6396a860-8f2a-45b7-9031-1d7690cce1e4,Victor Underwood,2026-10-05,2026-10-20,Thermostat repair,92,pending,2026-10-05,repair
+193B6E6E,4610fdd2-9051-450a-8627-a66b193b6e6e,Natalie Ruiz,2026-10-05,2026-10-20,Heat pump repair: defrost sensor,343,paid,2026-10-05,repair
+6E971D66,37334281-6b5f-419b-b86d-c51b6e971d66,Courtney Calloway,2026-10-06,2026-10-21,Furnace repair: flame sensor cleaned,176,paid,2026-10-06,repair
+068CF875,e275d561-b1c5-4a0c-ba41-3ca3068cf875,Olivia Santos,2026-10-06,2026-10-21,Heat pump tune-up,153,paid,2026-10-06,maintenance
+CC832FAE,5a6645ca-e31a-4599-a457-46e2cc832fae,Xavier Whitfield,2026-10-06,2026-10-21,"AC repair: low refrigerant, leak sealed and recharged",376,pending,2026-10-06,repair
+2FD14800,35031885-73d9-4359-bd4a-e5d42fd14800,Dennis Dawson,2026-10-07,2026-10-22,"AC repair: low refrigerant, leak sealed and recharged",406,paid,2026-10-07,repair
+520E5497,10040833-e2de-4fd4-ad30-178c520e5497,Grace Tran,2026-10-07,2026-10-22,Furnace repair: flame sensor cleaned,179,pending,2026-10-07,repair
+476B7E0C,ba76cb1b-093f-4330-aea4-cd84476b7e0c,Thomas Okafor,2026-10-07,2026-10-22,Smart thermostat install,311,paid,2026-10-07,installation
+E7D8DC1F,4bff373b-e580-4ce1-a1e3-8515e7d8dc1f,Harold Hamilton,2026-10-08,2026-10-23,Mini-split repair: drain pan cleared,136,paid,2026-10-08,repair
+9090CE15,3e25e0f4-47cf-40dd-8851-7b929090ce15,Rosa Rasmussen,2026-10-08,2026-10-23,Mini-split repair: drain pan cleared,140,paid,2026-10-08,repair
+B887261E,1fb12d89-2de5-42f2-9844-f271b887261e,Westlake Montessori,2026-10-08,2026-10-23,AC repair: contactor replaced,257,paid,2026-10-08,repair
+E9791CF3,24e533b3-aba7-40f4-af4f-7321e9791cf3,Olivia Santos,2026-10-09,2026-10-24,Heat pump tune-up,161,paid,2026-10-09,maintenance
+6F55B8BC,7b77dc3c-396f-456c-a4a3-cae56f55b8bc,Evelyn Espinoza,2026-10-09,2026-10-24,Heat pump tune-up,149,paid,2026-10-09,maintenance
+EBBDB8B3,29d14d28-aaab-4282-b232-a269ebbdb8b3,Frank Fitzgerald,2026-10-09,2026-10-24,Thermostat repair,115,paid,2026-10-09,repair
+45C6F958,c3c8bba7-a9eb-4e97-9469-ce1d45c6f958,Daniel Fischer,2026-10-09,2026-10-24,AC tune-up,145,paid,2026-10-09,maintenance
+3CCEC90F,2d14ab70-b6fa-4c2c-91a5-6ddc3ccec90f,Frank Fitzgerald,2026-10-10,2026-10-25,Furnace repair: flame sensor cleaned,205,paid,2026-10-10,repair
+362733AB,f82d47bf-a37e-4e62-8d62-ce69362733ab,Jennifer Castillo,2026-10-11,2026-10-26,AC tune-up,139,pending,2026-10-11,maintenance
+76FB025B,29f88162-6b27-40dc-9a7f-f35476fb025b,Alicia Abernathy,2026-10-12,2026-10-27,AC repair: condenser fan motor and capacitor,765,pending,2026-10-12,repair
+228E7D3C,010e5f51-d8bd-495f-9285-8ca0228e7d3c,Daniel Fischer,2026-10-12,2026-10-27,Furnace repair: inducer gasket,218,pending,2026-10-12,repair
+9C79A1BE,b363b731-83d4-406b-855c-7b179c79a1be,Jamal Jennings,2026-10-12,2026-10-27,Heat pump repair: refrigerant leak at flare fitting,402,pending,2026-10-12,repair
+E0578B22,828ccd5c-8bbb-4648-a220-5a9fe0578b22,Orlando Oyelaran,2026-10-13,2026-10-28,Furnace repair: igniter replaced,327,pending,2026-10-13,repair
+5E3F733B,42a4a302-a236-4f5d-b194-f1a95e3f733b,Elena Eastman,2026-10-13,2026-10-28,AC repair: condensate drain cleared,154,pending,2026-10-13,repair
+837EE88B,fb99365e-9796-4206-9eb8-4a91837ee88b,Oakmont Senior Living,2026-10-13,2026-10-28,Boiler annual inspection,325,paid,2026-10-13,maintenance
+CCF1E1DE,841d1107-c19e-4bab-bff5-df7fccf1e1de,Isabel Ibarra,2026-10-13,2026-10-28,Thermostat repair,88,pending,2026-10-13,repair
+A2FCBE50,116bbd8c-bd01-48d6-b98b-5e3ea2fcbe50,Lamar Street Lofts HOA,2026-10-14,2026-10-29,Boiler repair: circulator pump,694,paid,2026-10-14,repair
+78EE3D89,9b33561f-e733-45ac-a066-6b3d78ee3d89,Dennis Dawson,2026-10-14,2026-10-29,AC tune-up,124,paid,2026-10-14,maintenance
+65192E9A,99423fcf-1d7d-4a38-9e12-1a3065192e9a,Gloria Gutierrez,2026-10-14,2026-10-29,Heat pump repair: defrost sensor,311,paid,2026-10-14,repair
+988E0294,319c3a2a-7e25-427e-8d92-7d2d988e0294,Bruce Bennett,2026-10-15,2026-10-30,Heat pump tune-up,149,paid,2026-10-15,maintenance
+9F24E08F,c57816bb-4b43-4fe5-979d-1a699f24e08f,Westlake Montessori,2026-10-15,2026-10-30,AC repair: condenser fan motor and capacitor,765,pending,2026-10-15,repair
+15BA43F4,448673d8-2c81-44a3-aae6-340515ba43f4,Rosa Rasmussen,2026-10-15,2026-10-30,"AC repair: low refrigerant, leak sealed and recharged",288,pending,2026-10-15,repair
+7C4F8266,2a2d0cf4-8be9-407f-8c2f-26427c4f8266,Walter Dobbs,2026-10-16,2026-10-31,AC tune-up,147,pending,2026-10-16,maintenance
+9ACA7402,158db061-444f-4d3c-b655-d73e9aca7402,Patricia Pruitt,2026-10-16,2026-10-31,"AC repair: iced coil, airflow restored",307,paid,2026-10-16,repair
+F7F6FD22,776539c1-bed7-4399-8c24-72ecf7f6fd22,James Whitmore,2026-10-16,2026-10-31,Furnace repair: igniter replaced,328,pending,2026-10-16,repair
+287079B5,d20078d2-7f05-46f3-b4ea-5012287079b5,Hartwell Family Dental,2026-10-16,2026-10-31,Quarterly rooftop unit service,267,pending,2026-10-16,maintenance
+8AD58F37,34a12c21-c723-42d3-8167-5c978ad58f37,Riverside Self Storage,2026-10-16,2026-10-31,RTU repair: blower bearing and belt,732,pending,2026-10-16,repair
+85E895D4,e51b8c95-08f5-42a7-b0c9-446485e895d4,Jennifer Castillo,2026-10-16,2026-10-31,"AC repair: low refrigerant, leak sealed and recharged",407,paid,2026-10-16,repair
+BE9C2EE6,4a7e0104-77e5-4870-b296-34b3be9c2ee6,Nathan Novak,2026-10-16,2026-10-31,AC repair: contactor replaced,193,paid,2026-10-16,repair
+0D5F9A78,0f66f8fe-1253-473b-9fca-00d70d5f9a78,Samuel Sandoval,2026-10-16,2026-10-31,AC repair: contactor replaced,218,pending,2026-10-16,repair
+3BBE96F1,d17dc676-a19b-4588-8e89-11a43bbe96f1,Congress Ave Law Group,2026-10-16,2026-10-31,Quarterly rooftop unit service,274,paid,2026-10-16,maintenance

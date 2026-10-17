@@ -478,7 +478,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-gray-200">
             {[
               ["Practice before you go live","Every new account starts in a sandbox with sample data — the real app, not a video. Clear it with one click when you're ready."],
-              ["Your data stays yours","Customers, jobs and equipment records export on request. Payments run through your own Stripe account."],
+              ["Your data stays yours","Download your customers, equipment, jobs and invoices as spreadsheets from Settings, any time. Payments run through your own Stripe account."],
               ["Built for the audit","EPA 608 entries are written at the job with technician, date and refrigerant detail attached."],
               ["No long contract","Month to month. Billing is managed inside the app, and you can cancel there too."],
             ].map(([title, desc]) => (

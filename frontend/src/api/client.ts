@@ -87,3 +87,30 @@ export const api = {
   delete: <T = void>(path: string, body?: unknown) =>
     request<T>(path, { method: "DELETE", ...(body !== undefined ? { body: JSON.stringify(body) } : {}) }),
 };
+
+/**
+ * Downloads a file from an authenticated endpoint. A plain link can't send the
+ * login token, so the file is fetched and handed to the browser as a blob.
+ */
+export async function downloadFile(path: string): Promise<void> {
+  const token = getToken()
+  const res = await fetch(`${BASE}${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+  if (res.status === 401) {
+    localStorage.removeItem(TOKEN_KEY)
+    window.dispatchEvent(new CustomEvent("flowsense:session-expired"))
+    throw new Error("Session expired")
+  }
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }))
+    throw new Error((err as { error?: string }).error ?? "Download failed")
+  }
+  const name = /filename="([^"]+)"/.exec(res.headers.get("Content-Disposition") ?? "")?.[1] ?? "export.csv"
+  const url = URL.createObjectURL(await res.blob())
+  const a = document.createElement("a")
+  a.href = url
+  a.download = name
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  setTimeout(() => URL.revokeObjectURL(url), 100)
+}
