@@ -11,11 +11,14 @@ vi.mock("../services/email.js", () => ({ sendEmail: vi.fn() }))
 
 import { prisma } from "../lib/prisma.js"
 import { sendEmail } from "../services/email.js"
+import { founderAlertEmails, isPlatformAdminEmail } from "../lib/platform-admin.js"
 import { describeEvent, notifyFounder, alertIfFirstUse, alertLeftSandbox, type FounderEvent } from "../services/founder-alerts.js"
 
 const ORIGINAL = process.env.PLATFORM_ADMIN_EMAILS
+const ORIGINAL_ALERTS = process.env.FOUNDER_ALERT_EMAILS
 beforeEach(() => {
   vi.clearAllMocks()
+  delete process.env.FOUNDER_ALERT_EMAILS
   process.env.PLATFORM_ADMIN_EMAILS = "founder@pneuros.com"
   vi.mocked(sendEmail).mockResolvedValue(undefined)
   vi.mocked(prisma.organization.findUnique).mockResolvedValue({ name: "Cool Air LLC" } as never)
@@ -23,6 +26,8 @@ beforeEach(() => {
 afterEach(() => {
   if (ORIGINAL === undefined) delete process.env.PLATFORM_ADMIN_EMAILS
   else process.env.PLATFORM_ADMIN_EMAILS = ORIGINAL
+  if (ORIGINAL_ALERTS === undefined) delete process.env.FOUNDER_ALERT_EMAILS
+  else process.env.FOUNDER_ALERT_EMAILS = ORIGINAL_ALERTS
 })
 
 describe("describeEvent", () => {
@@ -75,6 +80,32 @@ describe("notifyFounder", () => {
     expect([first.to, vi.mocked(sendEmail).mock.calls[1][0].to]).toEqual(["founder@pneuros.com", "partner@pneuros.com"])
     expect(first.subject).toBe("[Pneuros] New signup: Cool Air LLC (shop)")
     expect(first.html).toContain("/platform")
+  })
+
+  it("sends to FOUNDER_ALERT_EMAILS instead of the admins when it is set", async () => {
+    process.env.FOUNDER_ALERT_EMAILS = "Inbox@Example.com, second@example.com"
+    await notifyFounder(event)
+    expect(vi.mocked(sendEmail).mock.calls.map(([m]) => m.to)).toEqual(["inbox@example.com", "second@example.com"])
+  })
+
+  it("falls back to the admins when FOUNDER_ALERT_EMAILS is empty or blank", async () => {
+    process.env.FOUNDER_ALERT_EMAILS = " , "
+    await notifyFounder(event)
+    expect(vi.mocked(sendEmail).mock.calls.map(([m]) => m.to)).toEqual(["founder@pneuros.com"])
+  })
+
+  it("an alert-only address gets alerts without gaining access to /platform", async () => {
+    process.env.FOUNDER_ALERT_EMAILS = "inbox@example.com"
+    expect(founderAlertEmails()).toEqual(["inbox@example.com"])
+    expect(isPlatformAdminEmail("inbox@example.com")).toBe(false)
+    expect(isPlatformAdminEmail("founder@pneuros.com")).toBe(true)
+  })
+
+  it("still alerts when only FOUNDER_ALERT_EMAILS is set and no admins are configured", async () => {
+    delete process.env.PLATFORM_ADMIN_EMAILS
+    process.env.FOUNDER_ALERT_EMAILS = "inbox@example.com"
+    await notifyFounder(event)
+    expect(sendEmail).toHaveBeenCalledTimes(1)
   })
 
   it("does nothing when no admins are configured", async () => {

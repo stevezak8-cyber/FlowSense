@@ -1,6 +1,6 @@
 import { prisma } from "../lib/prisma.js"
 import { sendEmail } from "./email.js"
-import { platformAdminEmails } from "../lib/platform-admin.js"
+import { founderAlertEmails } from "../lib/platform-admin.js"
 import { escapeHtml } from "../lib/escape-html.js"
 
 export type FounderEvent =
@@ -101,13 +101,13 @@ ${rows ? `<table style="border-collapse:collapse;margin:0 0 16px">${rows}</table
 }
 
 /**
- * Emails the platform admins about something happening on the product. Never
+ * Emails the founder (see founderAlertEmails) about something happening on the product. Never
  * rejects: an alert failing must not break signup, billing or anything else
- * that triggers it. With no admins configured it does nothing.
+ * that triggers it. With no recipients configured it does nothing.
  */
 export async function notifyFounder(event: FounderEvent): Promise<void> {
   try {
-    const to = platformAdminEmails()
+    const to = founderAlertEmails()
     if (to.length === 0) return
     const message = describeEvent(event)
     const link = `${process.env.APP_URL ?? "http://localhost:5173"}/platform`
@@ -132,7 +132,7 @@ export async function notifyFounder(event: FounderEvent): Promise<void> {
  */
 export async function alertIfFirstUse(organizationId: string, kind: "customer" | "job", justCreated = 1): Promise<void> {
   try {
-    if (platformAdminEmails().length === 0) return
+    if (founderAlertEmails().length === 0) return
     const total =
       kind === "job"
         ? await prisma.job.count({ where: { organizationId, customer: { isSample: false } } })
@@ -149,7 +149,7 @@ export async function alertIfFirstUse(organizationId: string, kind: "customer" |
 /** Alerts that a shop left sandbox mode. Looks up the company name itself. */
 export async function alertLeftSandbox(organizationId: string): Promise<void> {
   try {
-    if (platformAdminEmails().length === 0) return
+    if (founderAlertEmails().length === 0) return
     const org = await prisma.organization.findUnique({ where: { id: organizationId }, select: { name: true } })
     if (!org) return
     await notifyFounder({ type: "left_sandbox", company: org.name })
