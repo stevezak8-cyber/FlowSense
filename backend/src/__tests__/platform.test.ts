@@ -54,6 +54,28 @@ describe("isPlatformAdminEmail", () => {
   })
 })
 
+describe("GET /me", () => {
+  it("confirms a platform admin", async () => {
+    process.env.PLATFORM_ADMIN_EMAILS = "founder@pneuros.com"
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ email: "founder@pneuros.com" } as never)
+    const res = await request(makeApp()).get("/me")
+    expect(res.status).toBe(200)
+    expect(res.body).toEqual({ admin: true })
+  })
+
+  it("is a 404 for any other signed-in user, so the sign-in page can't be used to probe who is an admin", async () => {
+    process.env.PLATFORM_ADMIN_EMAILS = "founder@pneuros.com"
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ email: "shopowner@example.com" } as never)
+    expect((await request(makeApp()).get("/me")).status).toBe(404)
+  })
+
+  it("is a 404 for everyone when no admins are configured", async () => {
+    delete process.env.PLATFORM_ADMIN_EMAILS
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ email: "founder@pneuros.com" } as never)
+    expect((await request(makeApp()).get("/me")).status).toBe(404)
+  })
+})
+
 describe("GET /organizations", () => {
   it("looks like a missing route (404) to anyone not on the allow-list", async () => {
     process.env.PLATFORM_ADMIN_EMAILS = "founder@pneuros.com"

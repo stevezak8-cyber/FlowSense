@@ -25,6 +25,7 @@ import NotFoundPage from "./pages/NotFoundPage";
 
 // Office
 const PlatformAccountsPage = lazy(() => import("./pages/PlatformAccountsPage"));
+const FounderLoginPage = lazy(() => import("./pages/FounderLoginPage"));
 const OfficeLayout = lazy(() => import("./pages/office/OfficeLayout"));
 const OfficeDashboard = lazy(() => import("./pages/office/OfficeDashboard"));
 const OfficeJobs = lazy(() => import("./pages/office/OfficeJobs"));
@@ -99,10 +100,11 @@ function App() {
       <Route path="/privacy" element={<PrivacyPolicyPage />} />
 
       {/* Platform admin — founders only; the API 404s for everyone else */}
+      <Route path="/founder" element={<FounderLoginPage />} />
       <Route
         path="/platform"
         element={
-          <RequireAuth role="office">
+          <RequireAuth role="office" loginPath="/founder">
             <PlatformAccountsPage />
           </RequireAuth>
         }

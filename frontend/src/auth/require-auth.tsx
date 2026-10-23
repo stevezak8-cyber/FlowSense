@@ -6,9 +6,11 @@ import { Loader2 } from "lucide-react"
 interface RequireAuthProps {
   role: UserRole
   children: React.ReactNode
+  /** Where a signed-out visitor is sent. Defaults to the normal login page. */
+  loginPath?: string
 }
 
-export function RequireAuth({ role, children }: RequireAuthProps) {
+export function RequireAuth({ role, children, loginPath = "/login" }: RequireAuthProps) {
   const { user, loading } = useAuth()
 
   if (loading) {
@@ -21,7 +23,7 @@ export function RequireAuth({ role, children }: RequireAuthProps) {
 
   // Not logged in → go to login
   if (!user) {
-    return <Navigate to="/login" replace />
+    return <Navigate to={loginPath} replace />
   }
 
   // Wrong role → redirect to their correct dashboard

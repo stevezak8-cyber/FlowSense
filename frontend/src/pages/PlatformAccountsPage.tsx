@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { Loader2 } from "lucide-react"
 import { api } from "@/api/client"
+import { useAuth } from "@/auth/auth-context"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import NotFoundPage from "@/pages/NotFoundPage"
@@ -41,6 +42,8 @@ export default function PlatformAccountsPage() {
   const [denied, setDenied] = useState(false)
   const [query, setQuery] = useState("")
   const [sort, setSort] = useState<"signup" | "active">("signup")
+  const { logout } = useAuth()
+  const navigate = useNavigate()
 
   const load = useCallback(() => {
     api
@@ -95,6 +98,13 @@ export default function PlatformAccountsPage() {
             </select>
             <Input className="w-64" placeholder="Search company or email" value={query} onChange={(e) => setQuery(e.target.value)} />
             <Link to="/office" className="text-sm text-muted-foreground hover:underline">Back to app</Link>
+            <button
+              type="button"
+              className="text-sm text-muted-foreground hover:underline"
+              onClick={() => { logout(); navigate("/founder", { replace: true }) }}
+            >
+              Sign out
+            </button>
           </div>
         </div>
 

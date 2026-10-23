@@ -26,6 +26,12 @@ platformRouter.use(async (req, res, next) => {
   }
 })
 
+// Lets the founder sign-in page confirm the account it just signed in is a platform
+// admin. Behind the gate above, so anyone else gets the same 404 as every route here.
+platformRouter.get("/me", (_req, res) => {
+  res.json({ admin: true })
+})
+
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000
 
 platformRouter.get("/organizations", async (_req, res) => {
