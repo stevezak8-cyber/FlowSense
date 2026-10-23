@@ -42,6 +42,8 @@ vi.mock("../services/org-notifications.js", () => ({
   notifyOfficeDepositReceived: vi.fn().mockResolvedValue(undefined),
 }))
 
+vi.mock("../services/founder-alerts.js", () => ({ notifyFounder: vi.fn() }))
+
 import { prisma } from "../lib/prisma.js"
 import * as stripeModule from "stripe"
 import { webhooksRouter } from "../routes/webhooks.js"

@@ -8,7 +8,10 @@ vi.mock("jsonwebtoken", () => ({
   },
 }));
 
+vi.mock("../services/user-activity.js", () => ({ recordActivity: vi.fn() }));
+
 import jwt from "jsonwebtoken";
+import { recordActivity } from "../services/user-activity.js";
 import { requireAuth } from "../middleware/auth.js";
 
 describe("requireAuth middleware", () => {
@@ -59,5 +62,17 @@ describe("requireAuth middleware", () => {
     expect(req.user).toEqual(payload);
     expect(next).toHaveBeenCalled();
     expect(res.status).not.toHaveBeenCalled();
+  });
+
+  it("notes the user's activity on a valid token, but not on a rejected one", () => {
+    req.headers = { authorization: "Bearer valid-token" };
+    (jwt.verify as ReturnType<typeof vi.fn>).mockReturnValue({ userId: "user-9", role: "office", organizationId: "org-1" });
+    requireAuth(req as Request, res as Response, next);
+    expect(recordActivity).toHaveBeenCalledWith("user-9");
+
+    vi.mocked(recordActivity).mockClear();
+    (jwt.verify as ReturnType<typeof vi.fn>).mockImplementation(() => { throw new Error("bad"); });
+    requireAuth(req as Request, res as Response, next);
+    expect(recordActivity).not.toHaveBeenCalled();
   });
 });

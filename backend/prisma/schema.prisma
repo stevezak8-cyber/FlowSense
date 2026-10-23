@@ -89,6 +89,8 @@ model User {
   customer       Customer?    @relation(fields: [customerId], references: [id])
   technicianId   String?      @unique
   technician     Technician?  @relation(fields: [technicianId], references: [id])
+  lastLoginAt    DateTime? // set on each sign-in; null for users who haven't signed in since this was added
+  lastActiveAt   DateTime? // last authenticated request, written at most every few minutes
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 

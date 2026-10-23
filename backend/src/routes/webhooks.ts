@@ -4,8 +4,11 @@ import { prisma } from "../lib/prisma.js";
 import { sendDepositReceiptEmail, sendInvoiceReceiptEmail } from "../services/email.js";
 import { notifyOfficeDepositReceived, notifyOfficePaymentReceived } from "../services/org-notifications.js";
 import { createNotification } from "../services/create-notification.js";
+import { notifyFounder } from "../services/founder-alerts.js";
 
 export const webhooksRouter = Router();
+
+const PAID_TIERS = new Set(["starter", "shop", "fleet", "enterprise"]);
 
 // Stripe moved Invoice.subscription to Invoice.parent.subscription_details.subscription
 // in newer API versions, but the actual webhook payload shape depends on the API
@@ -190,6 +193,16 @@ webhooksRouter.post("/stripe", async (req: Request, res: Response) => {
           ...(trialEnd ? { trialEndsAt: trialEnd } : {}),
         },
       });
+
+      // Tell the founder. First sight of a subscription is a new trial (or a new
+      // paid account); after that only a real move between tiers is news. The
+      // stored subscription id makes this fire once even if Stripe retries.
+      if (!org.stripeSubscriptionId) {
+        if (sub.status === "trialing") notifyFounder({ type: "trial_started", company: org.name, plan, trialEndsAt: trialEnd });
+        else if (sub.status === "active") notifyFounder({ type: "subscribed", company: org.name, plan });
+      } else if (plan !== org.plan && PAID_TIERS.has(org.plan) && PAID_TIERS.has(plan)) {
+        notifyFounder({ type: "plan_changed", company: org.name, from: org.plan, to: plan });
+      }
       break;
     }
 
@@ -200,6 +213,7 @@ webhooksRouter.post("/stripe", async (req: Request, res: Response) => {
       });
       if (!org || org.plan === "cancelled") break;
       await prisma.organization.update({ where: { id: org.id }, data: { plan: "cancelled" } });
+      notifyFounder({ type: "cancelled", company: org.name, plan: org.plan });
       break;
     }
 
@@ -232,10 +246,13 @@ webhooksRouter.post("/stripe", async (req: Request, res: Response) => {
         where: { stripeCustomerId: inv.customer as string },
       });
       if (!failedOrg) break;
+      const alreadyFailed = failedOrg.plan === "payment_failed";
       await prisma.organization.update({
         where: { id: failedOrg.id },
         data: { plan: "payment_failed" },
       });
+      // Stripe retries a failing card several times; only the first one is news.
+      if (!alreadyFailed) notifyFounder({ type: "payment_failed", company: failedOrg.name, plan: failedOrg.plan });
       createNotification({
         organizationId: failedOrg.id,
         type: "payment.failed",

@@ -10,6 +10,8 @@ import { seedSandboxData } from "../services/sandbox.js";
 import { demoLoginEnabled } from "../lib/demo-access.js";
 import { officeSeatCapFor } from "../lib/plan-access.js";
 import { sendEmail } from "../services/email.js";
+import { recordLogin } from "../services/user-activity.js";
+import { notifyFounder } from "../services/founder-alerts.js";
 import { sendSms } from "../services/sms.js";
 
 export const authRouter = Router();
@@ -133,6 +135,9 @@ authRouter.post("/register", async (req, res) => {
       console.error("[Register] Sandbox seeding error:", err);
     }
 
+    await recordLogin(newUser.id)
+    notifyFounder({ type: "signup", company: companyName, ownerName: name, ownerEmail: email, plan })
+
     // Issue a JWT so the frontend can store it before redirecting to Stripe
     const token = jwt.sign(
       { userId: newUser.id, organizationId: org.id, role: newUser.role },
@@ -200,6 +205,8 @@ authRouter.post("/login", async (req, res) => {
     if (!valid) {
       return res.status(401).json({ error: "Invalid email or password" });
     }
+
+    await recordLogin(user.id);
 
     const token = jwt.sign(
       {
@@ -523,6 +530,8 @@ authRouter.post("/invite/:token/accept", async (req, res) => {
       where: { id: user.id },
       data: { name: parsed.data.name, passwordHash },
     });
+
+    await recordLogin(updated.id)
 
     // Issue a regular auth token so they're logged in immediately
     const authToken = jwt.sign(

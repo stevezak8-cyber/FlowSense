@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import type { AuthPayload } from "./types.js";
+import { recordActivity } from "../services/user-activity.js";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -14,6 +15,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   try {
     const payload = jwt.verify(token, JWT_SECRET!) as AuthPayload;
     req.user = payload;
+    recordActivity(payload.userId);
     next();
   } catch {
     return res.status(401).json({ error: "Unauthorized" });

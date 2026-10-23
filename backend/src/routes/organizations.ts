@@ -3,6 +3,7 @@ import { prisma } from "../lib/prisma.js";
 import { z } from "zod";
 import { isCustomer } from "../middleware/roles.js";
 import { exitSandbox, SandboxNotActiveError } from "../services/sandbox.js";
+import { alertLeftSandbox } from "../services/founder-alerts.js";
 
 export const organizationsRouter = Router();
 
@@ -115,6 +116,7 @@ organizationsRouter.post("/me/sandbox/exit", async (req, res) => {
   try {
     const removed = await exitSandbox(req.user!.organizationId);
     res.json({ ok: true, removed });
+    alertLeftSandbox(req.user!.organizationId);
   } catch (e) {
     if (e instanceof SandboxNotActiveError) {
       return res.status(409).json({ error: "This account is not in sandbox mode" });

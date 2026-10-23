@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import NotFoundPage from "@/pages/NotFoundPage"
 import { DemoAccountCard } from "@/components/platform/demo-account-card"
 import { SandboxAccountCard } from "@/components/platform/sandbox-account-card"
+import { byRecentActivity, isActiveToday, timeAgo, weekSummary, type OrgActivity } from "@/components/platform/activity"
 
 interface PlatformOrg {
   id: string
@@ -19,6 +20,7 @@ interface PlatformOrg {
   stripeCustomerId: string | null
   owner: { email: string; name: string | null } | null
   counts: { users: number; customers: number; technicians: number; jobs: number }
+  activity: OrgActivity
 }
 
 const fmtDate = (iso: string) =>
@@ -38,6 +40,7 @@ export default function PlatformAccountsPage() {
   const [orgs, setOrgs] = useState<PlatformOrg[] | null>(null)
   const [denied, setDenied] = useState(false)
   const [query, setQuery] = useState("")
+  const [sort, setSort] = useState<"signup" | "active">("signup")
 
   const load = useCallback(() => {
     api
@@ -49,10 +52,13 @@ export default function PlatformAccountsPage() {
   useEffect(load, [load])
 
   const shown = useMemo(() => {
+    if (!orgs) return orgs
     const q = query.trim().toLowerCase()
-    if (!orgs || !q) return orgs
-    return orgs.filter((o) => `${o.name} ${o.owner?.email ?? ""} ${o.owner?.name ?? ""}`.toLowerCase().includes(q))
-  }, [orgs, query])
+    const matching = q
+      ? orgs.filter((o) => `${o.name} ${o.owner?.email ?? ""} ${o.owner?.name ?? ""}`.toLowerCase().includes(q))
+      : orgs
+    return sort === "active" ? byRecentActivity(matching) : matching
+  }, [orgs, query, sort])
 
   if (denied) return <NotFoundPage />
   if (!shown) {
@@ -65,6 +71,7 @@ export default function PlatformAccountsPage() {
 
   const total = orgs?.length ?? 0
   const practicing = orgs?.filter((o) => o.sandboxMode).length ?? 0
+  const activeToday = orgs?.filter((o) => isActiveToday(o.activity.lastActiveAt)).length ?? 0
 
   return (
     <div className="min-h-screen bg-background">
@@ -73,10 +80,19 @@ export default function PlatformAccountsPage() {
           <div>
             <h1 className="text-2xl font-semibold">Accounts</h1>
             <p className="text-sm text-muted-foreground">
-              {total} total · {practicing} still in sandbox · account-level details only, no customer records
+              {total} total · {practicing} still in sandbox · {activeToday} active in the last day · account-level details only, no customer records
             </p>
           </div>
           <div className="flex items-center gap-3">
+            <select
+              aria-label="Sort accounts"
+              className="h-9 rounded-md border bg-background px-3 text-sm"
+              value={sort}
+              onChange={(e) => setSort(e.target.value as "signup" | "active")}
+            >
+              <option value="signup">Newest signup</option>
+              <option value="active">Most recently active</option>
+            </select>
             <Input className="w-64" placeholder="Search company or email" value={query} onChange={(e) => setQuery(e.target.value)} />
             <Link to="/office" className="text-sm text-muted-foreground hover:underline">Back to app</Link>
           </div>
@@ -94,6 +110,8 @@ export default function PlatformAccountsPage() {
                 <th className="px-3 py-2">Signed up</th>
                 <th className="px-3 py-2">Status</th>
                 <th className="px-3 py-2">Mode</th>
+                <th className="px-3 py-2">Last active</th>
+                <th className="px-3 py-2">Last 7 days</th>
                 <th className="px-3 py-2 text-right">Users</th>
                 <th className="px-3 py-2 text-right">Techs</th>
                 <th className="px-3 py-2 text-right">Customers</th>
@@ -119,6 +137,15 @@ export default function PlatformAccountsPage() {
                       : o.sandboxEndedAt ? <Badge>Live</Badge>
                       : <span className="text-muted-foreground">—</span>}
                   </td>
+                  <td
+                    className={`px-3 py-2 whitespace-nowrap ${isActiveToday(o.activity.lastActiveAt) ? "font-medium" : "text-muted-foreground"}`}
+                    title={o.activity.lastActiveAt ? `Last sign-in ${timeAgo(o.activity.lastLoginAt)}` : "Not seen since activity tracking began"}
+                  >
+                    {timeAgo(o.activity.lastActiveAt)}
+                  </td>
+                  <td className="px-3 py-2 whitespace-nowrap">
+                    {weekSummary(o.activity) ?? <span className="text-muted-foreground">—</span>}
+                  </td>
                   <td className="px-3 py-2 text-right tabular-nums">{o.counts.users}</td>
                   <td className="px-3 py-2 text-right tabular-nums">{o.counts.technicians}</td>
                   <td className="px-3 py-2 text-right tabular-nums">{o.counts.customers}</td>
@@ -126,13 +153,13 @@ export default function PlatformAccountsPage() {
                 </tr>
               ))}
               {shown.length === 0 && (
-                <tr><td colSpan={9} className="px-3 py-6 text-center text-muted-foreground">No accounts match.</td></tr>
+                <tr><td colSpan={11} className="px-3 py-6 text-center text-muted-foreground">No accounts match.</td></tr>
               )}
             </tbody>
           </table>
         </div>
         <p className="mt-3 text-xs text-muted-foreground">
-          Customers, techs and jobs exclude sandbox sample data. Accounts created before sandbox mode show “—” for mode.
+          Customers, techs and jobs exclude sandbox sample data. “Last active” is the last time anyone on the shop's team made a request, so an open browser tab counts. “Last 7 days” is real customers and jobs added, never sample data. A “—” in Last active means not seen since tracking began. Accounts created before sandbox mode show “—” for mode.
         </p>
       </div>
     </div>

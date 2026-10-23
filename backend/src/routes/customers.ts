@@ -5,6 +5,7 @@ import { prisma } from "../lib/prisma.js";
 import { z } from "zod";
 import { requireCsvImportPlan } from "../middleware/require-plan.js";
 import { requireStaff } from "../middleware/roles.js";
+import { alertIfFirstUse } from "../services/founder-alerts.js";
 
 export const customersRouter = Router();
 
@@ -232,6 +233,7 @@ customersRouter.post("/import/commit", requireCsvImportPlan, async (req, res) =>
       data: toCreate.map((c) => ({ organizationId, ...c })),
     });
     res.json({ created: toCreate.length, skipped });
+    alertIfFirstUse(req.user!.organizationId, "customer", toCreate.length);
   } catch (e) {
     res.status(500).json({ error: e instanceof Error ? e.message : "Failed to import customers" });
   }
@@ -398,6 +400,7 @@ customersRouter.post("/", requireStaff, async (req, res) => {
       },
     });
     res.status(201).json(customer);
+    alertIfFirstUse(req.user!.organizationId, "customer");
   } catch (e) {
     res.status(500).json({ error: e instanceof Error ? e.message : "Failed to create customer" });
   }

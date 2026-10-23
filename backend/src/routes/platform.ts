@@ -26,35 +26,61 @@ platformRouter.use(async (req, res, next) => {
   }
 })
 
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000
+
 platformRouter.get("/organizations", async (_req, res) => {
   try {
-    const orgs = await prisma.organization.findMany({
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        name: true,
-        createdAt: true,
-        plan: true,
-        trialEndsAt: true,
-        sandboxMode: true,
-        sandboxEndedAt: true,
-        stripeCustomerId: true,
-        users: {
-          where: { role: "office" },
-          orderBy: { createdAt: "asc" },
-          take: 1,
-          select: { email: true, name: true },
-        },
-        _count: {
-          select: {
-            users: true,
-            customers: { where: { isSample: false } },
-            technicians: { where: { isSample: false } },
-            jobs: { where: { customer: { isSample: false } } },
+    const since = new Date(Date.now() - WEEK_MS)
+    const [orgs, lastSeen, newCustomers, newJobs] = await Promise.all([
+      prisma.organization.findMany({
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          name: true,
+          createdAt: true,
+          plan: true,
+          trialEndsAt: true,
+          sandboxMode: true,
+          sandboxEndedAt: true,
+          stripeCustomerId: true,
+          users: {
+            where: { role: "office" },
+            orderBy: { createdAt: "asc" },
+            take: 1,
+            select: { email: true, name: true },
+          },
+          _count: {
+            select: {
+              users: true,
+              customers: { where: { isSample: false } },
+              technicians: { where: { isSample: false } },
+              jobs: { where: { customer: { isSample: false } } },
+            },
           },
         },
-      },
-    })
+      }),
+      // How recently anyone on the shop's own team (not their end customers) was in the app.
+      prisma.user.groupBy({
+        by: ["organizationId"],
+        where: { role: { not: "customer" } },
+        _max: { lastActiveAt: true, lastLoginAt: true },
+      }),
+      // What they've actually done lately. Counts only; never the records.
+      prisma.customer.groupBy({
+        by: ["organizationId"],
+        where: { isSample: false, createdAt: { gte: since } },
+        _count: { _all: true },
+      }),
+      prisma.job.groupBy({
+        by: ["organizationId"],
+        where: { createdAt: { gte: since }, customer: { isSample: false } },
+        _count: { _all: true },
+      }),
+    ])
+
+    const seenBy = new Map(lastSeen.map((r) => [r.organizationId, r._max]))
+    const customersBy = new Map(newCustomers.map((r) => [r.organizationId, r._count._all]))
+    const jobsBy = new Map(newJobs.map((r) => [r.organizationId, r._count._all]))
 
     res.json(
       orgs.map(({ users, _count, ...org }) => ({
@@ -65,6 +91,12 @@ platformRouter.get("/organizations", async (_req, res) => {
           customers: _count.customers,
           technicians: _count.technicians,
           jobs: _count.jobs,
+        },
+        activity: {
+          lastActiveAt: seenBy.get(org.id)?.lastActiveAt ?? null,
+          lastLoginAt: seenBy.get(org.id)?.lastLoginAt ?? null,
+          customers7d: customersBy.get(org.id) ?? 0,
+          jobs7d: jobsBy.get(org.id) ?? 0,
         },
       })),
     )

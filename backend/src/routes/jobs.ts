@@ -23,6 +23,7 @@ import {
 } from "../services/sms.js";
 import { createNotification } from "../services/create-notification.js";
 import { customerScope, isCustomer, requireStaff } from "../middleware/roles.js";
+import { alertIfFirstUse } from "../services/founder-alerts.js";
 
 export const jobsRouter = Router();
 
@@ -338,6 +339,7 @@ jobsRouter.post("/", async (req, res) => {
       },
     });
     res.status(201).json(job);
+    alertIfFirstUse(req.user!.organizationId, "job");
 
     // Notify office users of new booking
     broadcastToRole(req.user!.organizationId, "office", {
