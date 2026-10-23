@@ -39,8 +39,7 @@ export default function CustomerEquipment() {
   }, [])
 
   useEffect(() => {
-    fetch("/api/customers/me/plans")
-      .then((r) => r.ok ? r.json() : [])
+    api.get<MaintenancePlan[]>("/api/customers/me/plans")
       .then(setPlans)
       .catch(() => {})
   }, [])
